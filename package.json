@@ -1,0 +1,11 @@
+{
+  "name": "usherinmaking",
+  "version": "1.0.0",
+  "private": true,
+  "description": "usher in making — Okinawa wedding photo studio. Static site + Vercel serverless functions.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "seo": "python3 seo/build_seo.py apply",
+    "localize-images": "python3 scripts/localize_images.py"
+  }
+}
