@@ -89,7 +89,14 @@ def extract():
         canon = find_attr(c, r'<link\s+rel="canonical"\s+href="(.*?)"')
         ogimg = find_attr(c, r'<meta\s+property="og:image"\s+content="(.*?)"')
         ogtype = find_attr(c, r'<meta\s+property="og:type"\s+content="(.*?)"') or "website"
-        slug = canon[len(base):] if canon.startswith(base) else (("en/" if f.startswith("en/") else "") )
+        # slug mirrors the ACTUAL deployed file structure (flat .html), so canonical
+        # matches the real URL on the host (no old-WordPress URL mismatch).
+        if f == "index.html":
+            slug = ""
+        elif f == "en/index.html":
+            slug = "en/"
+        else:
+            slug = f  # e.g. "about.html" or "en/about.html"
         entry = {
             "slug": slug,
             "title": html.unescape(title),
