@@ -53,13 +53,18 @@ ul{list-style:none}
 .site-header.scrolled .logo,.site-header.scrolled .nav a,.site-header.scrolled .lang{color:var(--ink)}
 .site-header.scrolled .nav a.current{color:var(--gold)}
 
-.menu-toggle{display:none;flex-direction:column;gap:6px;background:none;border:0;cursor:pointer;z-index:110;padding:6px}
-.menu-toggle span{width:26px;height:2px;border-radius:2px;background:#fff;transition:.3s;
-  box-shadow:0 0 3px rgba(0,0,0,.55)}
-.site-header.scrolled .menu-toggle span{background:var(--ink);box-shadow:none}
-/* open state: dark bars on light drawer + simple X */
-.nav.open ~ .header-right .menu-toggle span,
-.menu-toggle.is-open span{background:var(--ink);box-shadow:none}
+/* hamburger: a subtle dark chip behind white bars over the hero — visible on ANY
+   background brightness. On scroll (light header) or when the menu is open (light
+   drawer), the chip drops away and the bars turn dark. */
+.menu-toggle{display:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  width:40px;height:40px;padding:9px;background:rgba(0,0,0,.30);border:0;border-radius:9px;cursor:pointer;z-index:110;
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);transition:background .4s var(--ease)}
+.menu-toggle span{width:22px;height:2px;border-radius:2px;background:#fff;transition:background .3s}
+.site-header.scrolled .menu-toggle{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+.site-header.scrolled .menu-toggle span{background:var(--ink)}
+/* open state: light drawer behind — dark bars, no chip */
+.nav.open ~ .header-right .menu-toggle{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+.nav.open ~ .header-right .menu-toggle span{background:var(--ink)}
 
 /* =================================================================
    PAGE HERO (sub-pages) — pinned, scroll fade/scale
