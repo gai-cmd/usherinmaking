@@ -1,0 +1,45 @@
+name: Optimize images
+
+# Compresses images in CI (GitHub), commits the optimized files back, which then
+# triggers a fresh Vercel deploy. Pushes made with the default GITHUB_TOKEN do NOT
+# re-trigger workflows, so there is no loop (the [img-opt] guard is a backup).
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'images/**'
+      - 'scripts/optimize-images.mjs'
+      - '.github/workflows/optimize-images.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: optimize-images
+  cancel-in-progress: false
+
+jobs:
+  optimize:
+    if: ${{ !contains(github.event.head_commit.message, '[img-opt]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install sharp
+        run: npm install --no-save sharp
+      - name: Optimize
+        run: node scripts/optimize-images.mjs
+      - name: Commit optimized images
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: optimize images [img-opt]"
+            git push
+          else
+            echo "No image changes to commit."
+          fi
