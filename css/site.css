@@ -57,13 +57,13 @@ ul{list-style:none}
    background brightness. On scroll (light header) or when the menu is open (light
    drawer), the chip drops away and the bars turn dark. */
 .menu-toggle{display:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  width:40px;height:40px;padding:9px;background:rgba(0,0,0,.30);border:0;border-radius:9px;cursor:pointer;z-index:110;
-  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);transition:background .4s var(--ease)}
+  width:40px;height:40px;padding:9px;background:rgba(0,0,0,.55);border:0;border-radius:9px;cursor:pointer;z-index:110;
+  box-shadow:0 2px 10px rgba(0,0,0,.25);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);transition:background .4s var(--ease)}
 .menu-toggle span{width:22px;height:2px;border-radius:2px;background:#fff;transition:background .3s}
-.site-header.scrolled .menu-toggle{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+.site-header.scrolled .menu-toggle{background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 .site-header.scrolled .menu-toggle span{background:var(--ink)}
 /* open state: light drawer behind — dark bars, no chip */
-.nav.open ~ .header-right .menu-toggle{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+.nav.open ~ .header-right .menu-toggle{background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 .nav.open ~ .header-right .menu-toggle span{background:var(--ink)}
 
 /* =================================================================
