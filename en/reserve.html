@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RESERVE – Book your photo session｜Okinawa Wedding Photo usher in making</title>
+<meta name="description" content="Book your shooting date with Okinawa wedding photographer usher in making. Check the availability calendar, choose your preferred date and plan, and apply online." />
+<meta name="keywords" content="Okinawa wedding photo, reservation, booking, shooting date, calendar, pre-wedding, usherinmaking" />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://usherinmaking.vercel.app/en/reserve.html" />
+<link rel="alternate" hreflang="ja" href="https://usherinmaking.vercel.app/reserve.html" />
+<link rel="alternate" hreflang="en" href="https://usherinmaking.vercel.app/en/reserve.html" />
+<link rel="alternate" hreflang="x-default" href="https://usherinmaking.vercel.app/reserve.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="usher in making" />
+<meta property="og:title" content="RESERVE – Book your photo session｜Okinawa Wedding Photo usher in making" />
+<meta property="og:description" content="Check the availability calendar, choose your preferred date and plan, and book online." />
+<meta property="og:url" content="https://usherinmaking.vercel.app/en/reserve.html" />
+<meta property="og:image" content="https://usherinmaking.vercel.app/images/up/0051a0b1de106d89.jpg" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:locale:alternate" content="ja_JP" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="RESERVE – Book your photo session｜usher in making" />
+<meta name="twitter:description" content="Check the availability calendar, choose your preferred date and plan, and book online." />
+<meta name="twitter:image" content="https://usherinmaking.vercel.app/images/up/0051a0b1de106d89.jpg" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Shippori+Mincho+B1:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/site.css" />
+<link rel="stylesheet" href="/css/reserve.css" />
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="logo"><img src="/images/logo.png" alt="usher in making" loading="lazy" decoding="async"></a>
+    <nav class="nav">
+      <a href="about.html">ABOUT</a>
+      <a href="wedding.html">WEDDING</a>
+      <a href="anniversary.html">ANNIVERSARY</a>
+      <a href="dress.html">DRESS</a>
+      <a href="plan.html">PLAN</a>
+      <a href="event.html">EVENT</a>
+      <a href="contact.html">CONTACT</a>
+      <a href="reserve.html" class="current">RESERVE</a>
+    </nav>
+    <div class="header-right">
+      <div class="lang"><a href="/reserve.html">JP</a><span>/</span><a href="#" class="active">EN</a></div>
+      <button class="menu-toggle" aria-label="menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="ph-bg" style="background-image:url(/images/up/0051a0b1de106d89.jpg)"></div>
+  <div class="ph-veil"></div>
+  <div class="ph-copy">
+    <p class="eyebrow">HOME / RESERVE</p>
+    <h1>RESERVE</h1>
+    <p class="ph-jp">Book your photo session</p>
+  </div>
+</section>
+
+<!-- BREADCRUMB -->
+<nav class="section" style="padding:32px 0" aria-label="Breadcrumb">
+  <div class="container">
+    <p style="font-family:var(--en);letter-spacing:.1em;color:var(--muted);font-size:.9rem">
+      <a href="index.html">Home</a> &nbsp;&gt;&nbsp; <span>RESERVE</span>
+    </p>
+  </div>
+</nav>
+
+<!-- RESERVE -->
+<section class="section" style="padding-top:20px">
+  <div class="container">
+    <div class="section-head center reveal">
+      <p class="section-label">Reservation</p>
+      <h2 class="section-title jp">Book your photo session</h2>
+      <p class="section-desc" style="margin-left:auto;margin-right:auto;text-align:center">
+        Check availability on the calendar, choose your preferred shooting date and plan, and apply through the form below.<br>
+        Your reservation is finalized after we contact you and confirm the details together (via LINE).
+      </p>
+    </div>
+
+    <div class="reserve-wrap">
+      <!-- (1) Calendar -->
+      <div class="reserve-panel reveal">
+        <p class="step-tag">Step 1</p>
+        <h3>Choose a date</h3>
+        <p class="panel-note">Grey dates are fully booked or closed.</p>
+
+        <div class="cal-head">
+          <div class="cal-title" id="cal-title"></div>
+          <div class="cal-nav">
+            <button type="button" id="cal-prev" aria-label="Previous month">‹</button>
+            <button type="button" id="cal-next" aria-label="Next month">›</button>
+          </div>
+        </div>
+
+        <div class="cal-grid" id="cal-grid" role="grid" aria-label="Shooting date calendar"></div>
+        <div class="cal-loading" id="cal-loading" style="display:none">Loading availability…</div>
+
+        <div class="cal-legend">
+          <span><i class="lg-open"></i>Available</span>
+          <span><i class="lg-full"></i>Booked / closed</span>
+          <span><i class="lg-sel"></i>Selected</span>
+        </div>
+      </div>
+
+      <!-- (2)(3) Plan + form -->
+      <div class="reserve-panel reveal">
+        <p class="step-tag">Step 2</p>
+        <h3>Choose a plan</h3>
+        <p class="panel-note">See the <a href="plan.html" style="color:var(--gold);border-bottom:1px solid var(--gold)">PLAN page</a> for details.</p>
+
+        <div class="plan-pick">
+          <label class="plan-opt">
+            <span class="po-radio"></span>
+            <span class="po-main">
+              <span class="po-name">Simple</span>
+              <span class="po-desc">1 hour · 1 location / 200+ photos with 30 edited</span>
+            </span>
+            <span class="po-price">¥76,000</span>
+            <input type="radio" name="plan" value="Simple ¥76,000 (tax incl.)">
+          </label>
+          <label class="plan-opt">
+            <span class="po-radio"></span>
+            <span class="po-main">
+              <span class="po-name">Basic</span>
+              <span class="po-desc">approx. 2 hours · 2 locations / 400+ photos with 40 edited</span>
+            </span>
+            <span class="po-price">¥100,000</span>
+            <input type="radio" name="plan" value="Basic ¥100,000 (tax incl.)">
+          </label>
+          <label class="plan-opt">
+            <span class="po-radio"></span>
+            <span class="po-main">
+              <span class="po-name">Afterfull</span>
+              <span class="po-desc">approx. 3.5 hours · 3 locations / 600+ photos with 50 edited</span>
+            </span>
+            <span class="po-price">¥128,000</span>
+            <input type="radio" name="plan" value="Afterfull ¥128,000 (tax incl.)">
+          </label>
+        </div>
+
+        <p class="step-tag" style="margin-top:26px">Step 3</p>
+        <h3>Apply</h3>
+
+        <div class="sel-summary empty" id="sel-summary" style="margin:14px 0 18px">Please select a date and a plan.</div>
+
+        <form class="reserve-form" id="reserve-form" novalidate>
+          <input type="hidden" id="field-date" name="date" value="">
+          <input type="hidden" id="field-plan" name="plan" value="">
+
+          <label>Name<span class="req">required</span>
+            <input type="text" id="field-name" name="name" autocomplete="name" placeholder="Hanako Yamada" required>
+          </label>
+
+          <label>Contact (email / phone / LINE ID)<span class="req">required</span>
+            <input type="text" id="field-contact" name="contact" autocomplete="email" placeholder="example@mail.com / LINE ID, etc." required>
+          </label>
+
+          <label>Message / requests
+            <textarea id="field-message" name="message" placeholder="Feel free to tell us your preferred time, location, number of people, dress inquiries, and more."></textarea>
+          </label>
+
+          <!-- honeypot (invisible to humans) -->
+          <div class="hp" aria-hidden="true">
+            <label>Company<input type="text" id="field-company" name="company" tabindex="-1" autocomplete="off"></label>
+          </div>
+
+          <div class="form-msg" id="form-msg" role="status" aria-live="polite"></div>
+
+          <button type="submit" class="btn-fill" id="reserve-submit">Submit this reservation request</button>
+
+          <p class="privacy-line">
+            * The information you send is used solely to handle your reservation. The booking is confirmed after our consultation and a 50% deposit of the shooting fee.
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <p class="logo"><img src="/images/logo.png" alt="usher in making" loading="lazy" decoding="async"></p>
+      <p class="footer-tagline">Okinawa Wedding &amp; Anniversary Photo Studio</p>
+      <div class="sns"><a href="https://line.me/ti/p/8Udy1kYg1l" target="_blank" rel="noopener" aria-label="LINE"><img src="/images/sns/line.png" alt="LINE" loading="lazy" decoding="async"></a><a href="https://www.instagram.com/usherinmaking/" target="_blank" rel="noopener" aria-label="Instagram"><img src="/images/sns/instagram.png" alt="Instagram" loading="lazy" decoding="async"></a><a href="http://qr.kakao.com/talk/YdBfdGeaBd1EXL3ZVVpEJrSpzMU-" target="_blank" rel="noopener" aria-label="KakaoTalk"><img src="/images/sns/kakao.png" alt="KakaoTalk" loading="lazy" decoding="async"></a><a class="sns-blog" href="https://blog.naver.com/moya100" target="_blank" rel="noopener" aria-label="Naver Blog">blog</a></div>
+    </div>
+    <nav class="footer-nav">
+      <a href="about.html">ABOUT</a><a href="wedding.html">WEDDING</a><a href="anniversary.html">ANNIVERSARY</a><a href="dress.html">DRESS</a><a href="plan.html">PLAN</a><a href="event.html">EVENT</a><a href="contact.html">CONTACT</a><a href="reserve.html">RESERVE</a>
+      <a href="/privacy.html">Privacy Policy</a><a href="/tokushoho.html">Commercial Transactions Act Notation</a>
+    </nav>
+  </div>
+  <div class="copyright">© 2026 usher in making. All rights reserved.</div>
+</footer>
+
+<script src="/js/site.js"></script>
+<script src="/js/reserve.js"></script>
+</body>
+</html>

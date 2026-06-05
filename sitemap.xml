@@ -4,6 +4,9 @@
   <url><loc>https://usherinmaking.vercel.app/about.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://usherinmaking.vercel.app/anniversary.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://usherinmaking.vercel.app/contact.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://usherinmaking.vercel.app/reserve.html</loc><lastmod>2026-06-06</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://usherinmaking.vercel.app/privacy.html</loc><lastmod>2026-06-06</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://usherinmaking.vercel.app/tokushoho.html</loc><lastmod>2026-06-06</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://usherinmaking.vercel.app/dress-abreel.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://usherinmaking.vercel.app/dress-annabel-white.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://usherinmaking.vercel.app/dress-hanabi-vintage-line.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
@@ -17,6 +20,7 @@
   <url><loc>https://usherinmaking.vercel.app/en/about.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://usherinmaking.vercel.app/en/anniversary.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://usherinmaking.vercel.app/en/contact.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://usherinmaking.vercel.app/en/reserve.html</loc><lastmod>2026-06-06</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://usherinmaking.vercel.app/en/dress-abreel.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://usherinmaking.vercel.app/en/dress-annabel-white.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://usherinmaking.vercel.app/en/dress-hanabi-vintage-line.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>

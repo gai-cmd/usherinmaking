@@ -54,6 +54,29 @@ Cafe24 DNS의 A/CNAME 레코드를 변경. (또는 네임서버를 Vercel로 변
 `python3 scripts/localize_images.py` — 원격(usherinmaking.jp) 이미지를 `images/up/`로 받아
 `src`/`url()`을 `/images/up/...`로 치환. 새 원격 이미지를 추가했을 때 다시 실행하면 됩니다.
 
+## 신규 기능 (문의 / 예약 / 관리자 / 영문 / 법무)
+2026-06 추가된 동적·법무 기능과 도달 경로입니다.
+
+| 기능 | 공개 페이지 | API (서버리스) | 프런트 JS | 도달 경로 |
+|---|---|---|---|---|
+| **문의 폼** | `contact.html` | `api/contact.js` | `js/contact-form.js` | 헤더/푸터 `CONTACT` |
+| **예약(撮影日カレンダー)** | `reserve.html`, `en/reserve.html` | `api/reservations.js` | `js/reserve.js` | 헤더/푸터 `RESERVE` |
+| **관리자(예약 관리, noindex)** | `admin.html` | `api/admin.js` | `js/admin.js` | 직접 URL만 (메뉴/사이트맵 비노출) |
+| **콘텐츠 API** | — | `api/content.js` | — | 예약 가용일/콘텐츠 제공 |
+| **영문(EN)** | `en/*.html` (`en/reserve.html` 포함) | — | — | 각 페이지 우상단 `JP / EN` 전환 |
+| **법무 표기** | `privacy.html`(プライバシーポリシー), `tokushoho.html`(特定商取引法に基づく表記) | — | — | 공용 푸터 링크 |
+
+- **내비/푸터**: 공개 메인 페이지(헤더 nav)에 `RESERVE` 추가, 공용 푸터에 `RESERVE` + 법무 2종 링크 추가.
+- **언어 전환**: `reserve.html` ↔ `en/reserve.html` 의 `JP / EN` 링크로 상호 연결(hreflang 반영).
+- **admin 비공개**: `admin.html` 은 `robots.txt` 에서 `Disallow`, `<meta robots noindex>`, 사이트맵 제외.
+
+### 예약/관리자 운영 절차
+1. 방문자가 `reserve.html` 캘린더에서 빈 날짜·플랜 선택 → 폼 전송 (`api/reservations.js`).
+2. 관리자가 `admin.html` 에서 들어온 예약을 확인·승인/마감 처리 (`api/admin.js`).
+3. 가용일 변경은 콘텐츠/예약 API(`api/content.js`, `api/reservations.js`)를 통해 캘린더에 반영.
+4. 정식 예약은 LINE 상담 + 촬영료 50% 입금으로 확정 (페이지 안내 문구 기준).
+> 환경변수·서비스 계정 등 운영 상세는 `docs/OPERATIONS.md` 참고.
+
 ## 알아둘 점 (다음 보완 후보)
 - **og:image / JSON-LD image** 와 일부 메타는 아직 `usherinmaking.jp` 절대경로를 가리킵니다.
   실제 도메인 확정 후 새 도메인 절대경로로 바꾸는 게 좋습니다 (구 WP 종료 대비).
@@ -61,6 +84,7 @@ Cafe24 DNS의 A/CNAME 레코드를 변경. (또는 네임서버를 Vercel로 변
 - 다운로드 실패 1건: `…/2021/07/셔리드레스2-300x300.jpg` (원본 404) — 해당 썸네일만 원격 유지.
 - **canonical**은 구 WP URL 구조(`/about/`, `/portfolio/…/`)를 가리킵니다. 정적 파일명은
   `about.html` 등 평면 구조라, 실도메인 URL 구조 확정 시 정렬을 권장합니다.
-- `en/`(영문) 페이지는 아직 미생성 — hreflang만 선반영돼 있습니다.
+- `en/`(영문) 페이지는 주요 페이지가 생성됨(`en/reserve.html` 포함). 나머지 하위 상세 페이지는 순차 보완 예정.
+- **법무 본문**(`privacy.html`·`tokushoho.html`)의 사업자명·주소·연락처 등 실제 값 확인/갱신 필요.
 ```
 ```

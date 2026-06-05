@@ -7,5 +7,9 @@
   "scripts": {
     "seo": "python3 seo/build_seo.py apply",
     "localize-images": "python3 scripts/localize_images.py"
+  },
+  "dependencies": {
+    "@vercel/kv": "^3.0.0",
+    "resend": "^4.0.0"
   }
 }

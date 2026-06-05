@@ -2,7 +2,7 @@
 
 > 목적: 이 사이트 운영에 쓰는 **계정·서비스를 잊지 않기 위한 기록**.
 > ⚠️ 비밀번호·API 키 등 **민감정보는 여기에 적지 마세요** (비밀번호 관리자에 보관). 여기엔 "어디에 무엇이 있는지"만 적습니다.
-> 최종 업데이트: 2026-06-04
+> 최종 업데이트: 2026-06-06
 
 ## 코드 / 배포
 | 항목 | 값 |
@@ -30,6 +30,27 @@
 | KakaoTalk | http://qr.kakao.com/talk/YdBfdGeaBd1EXL3ZVVpEJrSpzMU- (ID: amipaek) |
 | Naver Blog | https://blog.naver.com/moya100 |
 | Facebook | https://www.facebook.com/okinawaphotography |
+
+## 신규 기능 — 문의 / 예약 / 관리자 / 영문 / 법무 (2026-06)
+| 기능 | 공개 경로 | API | 비고 |
+|---|---|---|---|
+| 문의 폼 | `/contact.html` | `/api/contact` (`api/contact.js`) | Resend 발송, 헤더/푸터 `CONTACT` |
+| 예약 캘린더 | `/reserve.html`, `/en/reserve.html` | `/api/reservations` (`api/reservations.js`) | 헤더/푸터 `RESERVE`, `js/reserve.js` |
+| 관리자(예약관리) | `/admin.html` | `/api/admin` (`api/admin.js`) | **noindex·검색 비노출**, 직접 URL 접근만 |
+| 콘텐츠/가용일 | — | `/api/content` (`api/content.js`) | 캘린더 가용일·콘텐츠 제공 |
+| 영문(EN) | `/en/*.html` | — | 페이지 우상단 `JP / EN` 전환 |
+| 법무 표기 | `/privacy.html`, `/tokushoho.html` | — | 공용 푸터 링크(全페이지) |
+
+### 운영 절차
+1. **예약 접수**: 방문자가 `/reserve.html` 에서 날짜·플랜 선택 후 폼 전송 → `/api/reservations` 기록.
+2. **확인/처리**: 운영자가 `/admin.html` 접속 → 예약 목록 확인, 승인/마감(가용일 닫기) → `/api/admin`.
+3. **가용일 관리**: 마감/오픈 처리하면 `/api/content`·`/api/reservations` 를 통해 캘린더에 반영.
+4. **확정**: LINE 상담 + 촬영료 50% 입금으로 정식 확정.
+5. **admin 보호**: `robots.txt` `Disallow: /admin.html` + `Disallow: /api/`, `admin.html` `noindex`, 사이트맵 제외. URL을 공개 공유하지 말 것.
+
+### 예약/관리자 환경변수 (Vercel)
+- 문의: `RESEND_API_KEY`, `CONTACT_TO`, (선택)`CONTACT_FROM`
+- 예약/관리자: `api/reservations.js`·`api/admin.js` 가 요구하는 저장소/인증 키(관리자 토큰 등)는 코드 확인 후 Vercel **Environment Variables** 로 설정. 키 값은 비밀번호 관리자에 보관.
 
 ## 자주 쓰는 작업
 - 로컬 미리보기: `python3 -m http.server 8080` → http://localhost:8080/index.html

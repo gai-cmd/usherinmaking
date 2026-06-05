@@ -4,22 +4,22 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <!-- SEO:START (managed by seo/build_seo.py — edit seo/seo.json then: python3 seo/build_seo.py apply) -->
-<title>contact – 沖縄ソロウェディングならusehrinmaking、沖縄ウェディングフォト</title>
-<meta name="description" content="沖縄ソロウェディング・沖縄ウェディングフォトのusherinmakingへのお問い合わせ。ご予約・ご相談はLINE（ID: usherinmaking）またはInstagram（@usherinmaking）よりお気軽にご連絡ください。" />
-<meta name="keywords" content="沖縄ウェディング, 沖縄ソロウェディング, 沖縄ウェディングフォト, contact, お問い合わせ, usherinmaking, LINE, Instagram" />
+<title>CONTACT – 沖縄ウェディングフォトのご相談・お問い合わせ｜usher in making</title>
+<meta name="description" content="沖縄ウェディングフォト usher in making へのご相談・お問い合わせ。前撮り・セルフウェディング・記念日撮影の内容や料金のご質問、撮影日のご相談はLINE（ID: usherinmaking）またはInstagram（@usherinmaking）からお気軽にどうぞ。撮影日のご予約はRESERVEページからも承ります。" />
+<meta name="keywords" content="沖縄ウェディングフォト お問い合わせ, 沖縄 前撮り 相談, 予約, contact, LINE, Instagram, 韓国人女性カメラマン, usherinmaking" />
 <meta name="robots" content="index,follow" />
 <link rel="canonical" href="https://usherinmaking.vercel.app/contact.html" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="usher in making" />
-<meta property="og:title" content="contact – 沖縄ソロウェディングならusehrinmaking、沖縄ウェディングフォト" />
-<meta property="og:description" content="沖縄ソロウェディング・沖縄ウェディングフォトのusherinmakingへのお問い合わせ。ご予約・ご相談はLINE（ID: usherinmaking）またはInstagram（@usherinmaking）よりお気軽にご連絡ください。" />
+<meta property="og:title" content="CONTACT – 沖縄ウェディングフォトのご相談・お問い合わせ｜usher in making" />
+<meta property="og:description" content="沖縄ウェディングフォト usher in making へのご相談・お問い合わせ。前撮り・セルフウェディング・記念日撮影の内容や料金のご質問、撮影日のご相談はLINE（ID: usherinmaking）またはInstagram（@usherinmaking）からお気軽にどうぞ。撮影日のご予約はRESERVEページからも承ります。" />
 <meta property="og:url" content="https://usherinmaking.vercel.app/contact.html" />
 <meta property="og:image" content="https://usherinmaking.vercel.app/images/logo.png" />
 <meta property="og:locale" content="ja_JP" />
 <meta property="og:locale:alternate" content="en_US" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="contact – 沖縄ソロウェディングならusehrinmaking、沖縄ウェディングフォト" />
-<meta name="twitter:description" content="沖縄ソロウェディング・沖縄ウェディングフォトのusherinmakingへのお問い合わせ。ご予約・ご相談はLINE（ID: usherinmaking）またはInstagram（@usherinmaking）よりお気軽にご連絡ください。" />
+<meta name="twitter:title" content="CONTACT – 沖縄ウェディングフォトのご相談・お問い合わせ｜usher in making" />
+<meta name="twitter:description" content="沖縄ウェディングフォト usher in making へのご相談・お問い合わせ。前撮り・セルフウェディング・記念日撮影の内容や料金のご質問、撮影日のご相談はLINE（ID: usherinmaking）またはInstagram（@usherinmaking）からお気軽にどうぞ。撮影日のご予約はRESERVEページからも承ります。" />
 <meta name="twitter:image" content="https://usherinmaking.vercel.app/images/logo.png" />
 <link rel="alternate" hreflang="ja" href="https://usherinmaking.vercel.app/contact.html" />
 <link rel="alternate" hreflang="en" href="https://usherinmaking.vercel.app/en/contact.html" />
@@ -72,6 +72,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Shippori+Mincho+B1:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/site.css" />
 
+<!-- contact form polish (page-scoped; site.css is shared and left untouched) -->
+<style>
+  .c-form{max-width:620px;margin:0 auto}
+  .c-form .field{display:flex;flex-direction:column;gap:7px}
+  .c-form .field-label{font-family:var(--jp);font-size:.85rem;color:var(--ink);letter-spacing:.02em}
+  .c-form .req{color:var(--gold);font-size:.78rem;margin-left:.35em}
+  .c-form input:focus,
+  .c-form textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(178,146,112,.12)}
+  .c-form input::placeholder,
+  .c-form textarea::placeholder{color:#b7ada3}
+  .c-form input[type=date]{color:var(--ink);font-family:var(--jp)}
+  .c-form textarea{min-height:150px}
+  /* consent row */
+  .c-form .agree{flex-direction:row;align-items:flex-start;gap:10px;cursor:pointer;
+    font-size:.85rem;color:var(--muted);line-height:1.6}
+  .c-form .agree input{flex:0 0 auto;width:18px;height:18px;margin-top:2px;padding:0;border:0;border-radius:0;
+    background:none;accent-color:var(--gold)}
+  /* status line + submit */
+  .c-form .form-status{margin:2px 0 0;min-height:1.2em;font-size:.9rem;color:var(--muted)}
+  .c-form .btn-fill{align-self:flex-start;border:0;cursor:pointer;margin-top:4px}
+  .c-form .btn-fill:disabled{opacity:.6;cursor:progress}
+  /* honeypot */
+  .c-form .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  @media(max-width:600px){
+    .c-form .btn-fill{align-self:stretch;text-align:center}
+  }
+</style>
+
 </head>
 <body>
 <header class="site-header">
@@ -85,6 +113,7 @@
       <a href="plan.html">PLAN</a>
       <a href="event.html">EVENT</a>
       <a href="contact.html" class="current">CONTACT</a>
+      <a href="reserve.html">RESERVE</a>
     </nav>
     <div class="header-right">
       <div class="lang"><a href="#" class="active">JP</a><span>/</span><a href="/en/contact.html">EN</a></div>
@@ -154,6 +183,55 @@
   </div>
 </section>
 
+<!-- CONTACT FORM -->
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="section-head center reveal">
+      <p class="eyebrow">FORM</p>
+      <h2 class="section-title jp">フォームでのお問い合わせ</h2>
+      <p class="section-desc" style="margin-left:auto;margin-right:auto;text-align:center">下記フォームからもご連絡いただけます。ご希望日やご相談内容をお書き添えのうえ、送信してください。<br>2〜3日以内に折り返しご連絡いたします。</p>
+    </div>
+
+    <form id="contact-form" class="c-form reveal" novalidate>
+      <label class="field">
+        <span class="field-label">お名前<span class="req">必須</span></span>
+        <input type="text" name="name" autocomplete="name" required placeholder="山田 花子">
+      </label>
+
+      <label class="field">
+        <span class="field-label">メールアドレス<span class="req">必須</span></span>
+        <input type="email" name="email" autocomplete="email" required placeholder="example@mail.com">
+      </label>
+
+      <label class="field">
+        <span class="field-label">ご希望日（任意）</span>
+        <input type="date" name="date">
+      </label>
+
+      <label class="field">
+        <span class="field-label">メッセージ<span class="req">必須</span></span>
+        <textarea name="message" required placeholder="撮影のご希望やご質問などをご記入ください。"></textarea>
+      </label>
+
+      <!-- honeypot: 通常のユーザーには非表示。ボット対策。 -->
+      <div class="hp" aria-hidden="true">
+        <label>このフィールドは入力しないでください
+          <input type="text" name="_hp" tabindex="-1" autocomplete="off">
+        </label>
+      </div>
+
+      <label class="field agree">
+        <input type="checkbox" name="agree" required>
+        <span>個人情報を、お問い合わせへの返信を目的として利用することに同意します。<span class="req">必須</span></span>
+      </label>
+
+      <p id="contact-status" class="form-status" role="status" aria-live="polite"></p>
+
+      <button type="submit" class="btn-fill">送信する</button>
+    </form>
+  </div>
+</section>
+
 <!-- PORTFOLIO CAROUSEL -->
 <section class="section" style="background:var(--paper)">
   <div class="container">
@@ -186,10 +264,12 @@
     <nav class="footer-nav">
       <a href="about.html">ABOUT</a><a href="wedding.html">WEDDING</a>
       <a href="anniversary.html">ANNIVERSARY</a><a href="dress.html">DRESS</a>
-      <a href="plan.html">PLAN</a><a href="event.html">EVENT</a><a href="contact.html">CONTACT</a>
+      <a href="plan.html">PLAN</a><a href="event.html">EVENT</a><a href="contact.html">CONTACT</a><a href="reserve.html">RESERVE</a>
+      <a href="privacy.html">プライバシーポリシー</a><a href="tokushoho.html">特定商取引法に基づく表記</a>
     </nav>
   </div>
   <div class="copyright">© 2026 usher in making. All rights reserved.</div>
 </footer>
 <script src="js/site.js"></script>
+<script src="js/contact-form.js" defer></script>
 </body></html>

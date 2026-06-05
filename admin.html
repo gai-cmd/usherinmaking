@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>管理画面 – usher in making</title>
+<link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+<!-- ───────── ログイン ───────── -->
+<section id="login-view" class="login-view" hidden>
+  <form id="login-form" class="login-card" autocomplete="off">
+    <h1 class="login-brand">usher in making</h1>
+    <p class="login-sub">管理画面</p>
+    <label class="field">
+      <span>パスワード</span>
+      <input type="password" id="password" name="password" required autocomplete="current-password" />
+    </label>
+    <button type="submit" class="btn btn-primary" id="login-btn">ログイン</button>
+    <p class="form-msg" id="login-msg" role="alert"></p>
+  </form>
+</section>
+
+<!-- ───────── ダッシュボード ───────── -->
+<div id="dashboard-view" class="dashboard" hidden>
+  <header class="topbar">
+    <div class="topbar-brand">usher in making <span>管理画面</span></div>
+    <nav class="tabs" id="tabs">
+      <button class="tab is-active" data-tab="contacts">お問い合わせ</button>
+      <button class="tab" data-tab="reservations">ご予約</button>
+      <button class="tab" data-tab="content">コンテンツ編集</button>
+    </nav>
+    <button class="btn btn-ghost" id="logout-btn">ログアウト</button>
+  </header>
+
+  <main class="content">
+
+    <!-- お問い合わせ -->
+    <section class="panel" data-panel="contacts">
+      <div class="panel-head">
+        <h2>お問い合わせ一覧</h2>
+        <button class="btn btn-ghost btn-sm" data-reload="contacts">再読み込み</button>
+      </div>
+      <div id="contacts-list" class="cards"></div>
+    </section>
+
+    <!-- ご予約 -->
+    <section class="panel" data-panel="reservations" hidden>
+      <div class="panel-head">
+        <h2>ご予約一覧</h2>
+        <button class="btn btn-ghost btn-sm" data-reload="reservations">再読み込み</button>
+      </div>
+      <div id="reservations-list" class="cards"></div>
+    </section>
+
+    <!-- コンテンツ編集 -->
+    <section class="panel" data-panel="content" hidden>
+      <div class="panel-head">
+        <h2>サイトコンテンツ編集</h2>
+        <span class="updated" id="content-updated"></span>
+      </div>
+
+      <form id="content-form">
+        <label class="field">
+          <span>お知らせ（トップに表示）</span>
+          <textarea id="notice" rows="2"></textarea>
+        </label>
+
+        <h3 class="subhead">プラン・料金</h3>
+        <div id="plans" class="plans"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="add-plan">＋ プランを追加</button>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="save-btn">保存する</button>
+          <p class="form-msg" id="content-msg" role="status"></p>
+        </div>
+      </form>
+    </section>
+
+  </main>
+</div>
+
+<!-- プラン行テンプレート -->
+<template id="plan-row-tpl">
+  <div class="plan-row">
+    <div class="plan-grid">
+      <label class="field"><span>タイトル</span><input type="text" data-k="title" /></label>
+      <label class="field"><span>料金</span><input type="text" data-k="price" placeholder="¥120,000〜" /></label>
+      <label class="field field-wide"><span>説明</span><textarea data-k="desc" rows="2"></textarea></label>
+    </div>
+    <button type="button" class="btn btn-danger btn-sm" data-remove>削除</button>
+  </div>
+</template>
+
+<script src="js/admin.js" defer></script>
+</body>
+</html>
