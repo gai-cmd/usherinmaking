@@ -1,0 +1,73 @@
+{
+  "*.html": {
+    "page-hero": {
+      "selector": ".page-hero .ph-copy",
+      "type": "text",
+      "fields": {
+        "eyebrow": ".eyebrow",
+        "title": "h1",
+        "sub": ".ph-jp"
+      }
+    }
+  },
+  "index.html": {
+    "statement": {
+      "selector": ".statement-cine .sc-text",
+      "type": "lines",
+      "fields": {
+        "item": "span.line",
+        "dimClass": "dim"
+      }
+    }
+  },
+  "about.html": {
+    "statement": {
+      "selector": ".statement .big-statement",
+      "type": "lines",
+      "fields": {
+        "item": "span.word",
+        "dimClass": "dim"
+      }
+    },
+    "editorial-1": {
+      "selector": ".editorial-row .ed-text",
+      "nth": 0,
+      "type": "text",
+      "fields": {
+        "title": "h2",
+        "body": "p"
+      }
+    },
+    "editorial-2": {
+      "selector": ".editorial-row .ed-text",
+      "nth": 1,
+      "type": "text",
+      "fields": {
+        "title": "h2",
+        "body": "p"
+      }
+    }
+  },
+  "gallery-*.html": {
+    "photos": {
+      "selector": ".section .grid-3",
+      "type": "photos",
+      "fields": {
+        "item": "figure",
+        "img": "img",
+        "captionFrom": "alt"
+      }
+    }
+  },
+  "dress-*.html": {
+    "photos": {
+      "selector": ".section .grid-3",
+      "type": "photos",
+      "fields": {
+        "item": "figure",
+        "img": "img",
+        "captionFrom": "alt"
+      }
+    }
+  }
+}

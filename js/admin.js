@@ -1,9 +1,10 @@
 // ════════════════════════════════════════════════════════════════
 // 管理コンソール — usher in making
-//  ・ハッシュルーティング（#/dashboard 等）による 5 セクション切替
-//  ・/api/admin（ログイン・stats・一覧・状態更新）と /api/content の連携
+//  ・ハッシュルーティング（#/dashboard 等）による 7 セクション切替
+//    dashboard / reservations / contacts / content / pages / seo / settings
+//  ・/api/admin・/api/content・/api/pages・/api/seo・/api/rebuild と連携
 //  ・トークンは sessionStorage 保持／401 で自動ログアウト
-//  ・契約（.agents/contract.md）のエンドポイント・スキーマに厳密準拠
+//  ・契約（.agents/contract.md：契約 v4）のエンドポイント・スキーマに厳密準拠
 // 公開サイトの site.js には依存しない自己完結スクリプト。
 // ════════════════════════════════════════════════════════════════
 (() => {
@@ -208,6 +209,8 @@
     reservations: { title: '予約管理',       render: renderReservations },
     contacts:     { title: 'お問い合わせ',   render: renderContacts },
     content:      { title: 'コンテンツ管理', render: renderContent },
+    pages:        { title: 'ページ管理',     render: renderPages },
+    seo:          { title: 'SEO / AEO',      render: renderSeo },
     settings:     { title: '設定',           render: renderSettings },
   };
   function routeName() {
@@ -894,6 +897,8 @@
   let galSlot = 'top';        // 表示中スロット
   let manifestImages = null;  // images/manifest.json のキャッシュ
   let pickerSelected = [];    // ピッカーで選択中の src
+  let pickerOnAdd = null;     // 確定時コールバック (srcs[]) => void（ギャラリー / ページ写真 / OG画像で共用）
+  let pickerSingle = false;   // 単一選択モード（OG画像など）
 
   function normGalItem(it) {
     it = it || {};
@@ -936,9 +941,13 @@
         <p class="help-text" style="margin:0">変更は「保存」を押すまで公開されません。</p></div>`;
 
     $('#gal-slot').addEventListener('change', (e) => { galSlot = e.target.value; paintGalItems(); });
-    $('#gal-pick').addEventListener('click', openPicker);
+    $('#gal-pick').addEventListener('click', () => openPicker({ onAdd: addSrcsToGallery }));
     $('#gal-upload').addEventListener('click', () => $('#gal-file').click());
-    $('#gal-file').addEventListener('change', (e) => { uploadFiles(Array.from(e.target.files || [])); e.target.value = ''; });
+    $('#gal-file').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []); e.target.value = '';
+      const urls = await uploadFiles(files);
+      if (urls.length) { addSrcsToGallery(urls); }
+    });
     $('#save-gallery').addEventListener('click', (e) => saveGalleries(e.currentTarget));
     paintGalItems();
   }
@@ -1013,8 +1022,18 @@
     saveContent({ galleries }, btn, 'ギャラリーを保存しました。');
   }
 
-  // ─ 画像ピッカー（manifest.json）─
-  async function openPicker() {
+  function addSrcsToGallery(srcs) {
+    const items = galWorking[galSlot].items;
+    srcs.forEach((src) => items.push(normGalItem({ src, visible: true })));
+    paintGalItems();
+    toast(`${srcs.length} 件の画像を追加しました。保存を忘れずに。`, 'ok');
+  }
+
+  // ─ 画像ピッカー（manifest.json）─ ギャラリー / ページ写真 / OG画像で共用
+  //   opts.onAdd(srcs[]) : 確定時に呼ばれる。opts.single : 単一選択モード。
+  async function openPicker(opts = {}) {
+    pickerOnAdd = typeof opts.onAdd === 'function' ? opts.onAdd : null;
+    pickerSingle = !!opts.single;
     pickerSelected = [];
     $('#picker').hidden = false;
     $('#picker-scrim').hidden = false;
@@ -1057,8 +1076,14 @@
       cell.addEventListener('click', () => {
         const src = cell.dataset.src;
         const idx = pickerSelected.indexOf(src);
-        if (idx >= 0) pickerSelected.splice(idx, 1); else pickerSelected.push(src);
-        cell.classList.toggle('is-sel', pickerSelected.includes(src));
+        if (pickerSingle) {
+          // 単一選択: 他の選択を解除して 1 件だけ
+          pickerSelected = idx >= 0 ? [] : [src];
+          $$('#picker-grid .pick-cell').forEach((c) => c.classList.toggle('is-sel', c.dataset.src === src && idx < 0));
+        } else {
+          if (idx >= 0) pickerSelected.splice(idx, 1); else pickerSelected.push(src);
+          cell.classList.toggle('is-sel', pickerSelected.includes(src));
+        }
         updatePickerCount();
       }));
   }
@@ -1066,13 +1091,12 @@
     $('#picker-count').textContent = `${pickerSelected.length} 件選択中`;
     $('#picker-add').disabled = pickerSelected.length === 0;
   }
-  function addPickedToSlot() {
+  function confirmPicker() {
     if (!pickerSelected.length) return;
-    const items = galWorking[galSlot].items;
-    pickerSelected.forEach((src) => items.push(normGalItem({ src, visible: true })));
+    const srcs = pickerSelected.slice();
+    const cb = pickerOnAdd;
     closePicker();
-    paintGalItems();
-    toast(`${pickerSelected.length} 件の画像を追加しました。保存を忘れずに。`, 'ok');
+    if (cb) cb(srcs);
   }
 
   // ─ アップロード（/api/upload・base64 JSON）─
@@ -1084,9 +1108,10 @@
       r.readAsDataURL(file);
     });
   }
+  //   端末から /api/upload へアップロードし、成功した URL の配列を返す（保存先は呼び出し側が決める）。
   async function uploadFiles(files) {
-    if (!files.length) return;
-    let added = 0;
+    const urls = [];
+    if (!files.length) return urls;
     for (const file of files) {
       try {
         const dataUrl = await readAsDataURL(file);
@@ -1097,19 +1122,469 @@
           body: JSON.stringify({ filename: file.name, contentType: file.type, data: base64 }),
         });
         if (res.status === 501) { toast('画像アップロードは Blob 未接続のため利用できません', 'error'); break; }
-        if (res.status === 401) { clearToken(); showLogin('セッションの有効期限が切れました。再度ログインしてください。'); return; }
+        if (res.status === 401) { clearToken(); showLogin('セッションの有効期限が切れました。再度ログインしてください。'); return urls; }
         const data = await res.json().catch(() => ({}));
         if (!res.ok) { toast(data.error || `アップロードに失敗しました (${res.status})`, 'error'); break; }
-        if (data.url) { galWorking[galSlot].items.push(normGalItem({ src: data.url, visible: true })); added++; }
+        if (data.url) urls.push(data.url);
       } catch (err) {
         toast(err.message || 'アップロードに失敗しました。', 'error');
         break;
       }
     }
-    if (added) { paintGalItems(); toast(`${added} 件の画像を追加しました。保存を忘れずに。`, 'ok'); }
+    return urls;
   }
 
-  // ════════════════ ⑤ 設定 ════════════════
+  // ════════════════ ⑤ ページ管理（契約 v4）════════════════
+  //  GET /api/pages?path=X → {path, regions}（KV+defaults マージ）／ POST {path, regions} 部分マージ。
+  //  region 値の形で型を判定: {lines:[...]}=lines / {items:[...]}=photos / それ以外=text({ja,en})。
+  //  en/ は別エントリではなく同一キーの locale 扱い（契約 v4）→ 非en パスのみ列挙。
+  const PAGE_PATHS_FALLBACK = [
+    'index.html', 'about.html', 'wedding.html', 'anniversary.html', 'dress.html',
+    'plan.html', 'event.html', 'contact.html', 'reserve.html',
+    'gallery-hare-3.html', 'gallery-hare-4.html', 'gallery-hare-6.html', 'gallery-hare-7.html',
+    'gallery-hare-8.html', 'gallery-hare-9.html', 'gallery-kumori-1.html', 'gallery-sakura-2.html',
+    'gallery-11.html', 'gallery-couple-7.html', 'gallery-jp-couple-6.html', 'gallery-self-8.html',
+    'gallery-date.html', 'gallery-date-rain.html', 'gallery-family.html', 'gallery-family-753.html',
+    'gallery-wedding.html', 'gallery-x11.html', 'gallery-x13.html', 'gallery-x17.html',
+    'gallery-x18.html', 'gallery-x20.html',
+    'dress-abreel.html', 'dress-annabel-white.html', 'dress-hanabi-vintage-line.html',
+    'dress-nanimo.html', 'dress-retro-vintage.html', 'dress-roco-29.html',
+    'dress-wearable-33.html', 'dress-yure-30.html',
+  ];
+  // SEO は en/ も別キー（seo.json マイグレーション）→ reserve 以外は en/ 版も候補に。
+  const SEO_PATHS_FALLBACK = (() => {
+    const noEn = new Set(['reserve.html', 'privacy.html', 'tokushoho.html']);
+    const out = [];
+    PAGE_PATHS_FALLBACK.forEach((p) => { out.push(p); if (!noEn.has(p)) out.push('en/' + p); });
+    return out;
+  })();
+
+  let pagesPath = '';      // 選択中ページ
+  let pageRegions = [];    // [{id, type:'text'|'lines'|'photos', value|lines|items}]
+
+  // API レスポンスからパス一覧を寛容に抽出（{paths}/{pages}/配列/オブジェクトキー 等）。
+  function extractPaths(data) {
+    if (!data) return [];
+    if (Array.isArray(data)) return data.filter((x) => typeof x === 'string');
+    for (const key of ['paths', 'pages', 'keys', 'list', 'defaults']) {
+      const v = data[key];
+      if (Array.isArray(v)) return v.filter((x) => typeof x === 'string');
+      if (v && typeof v === 'object') return Object.keys(v);
+    }
+    return [];
+  }
+  async function fetchPathList(endpoint) {
+    try {
+      const data = await api(endpoint, { method: 'GET' });
+      const list = extractPaths(data);
+      if (list.length) return list;
+    } catch (_) { /* path 必須で 400 等 → フォールバックへ */ }
+    return null;
+  }
+  function pageSelectHtml(id, list, current) {
+    return `<select id="${id}">
+      <option value=""${current ? '' : ' selected'}>— ページを選択 —</option>
+      ${list.map((p) => `<option value="${esc(p)}"${p === current ? ' selected' : ''}>${esc(p)}</option>`).join('')}
+    </select>`;
+  }
+
+  // region 正規化（型判定）
+  function normRegion(id, val) {
+    if (val && typeof val === 'object' && Array.isArray(val.lines)) {
+      return { id, type: 'lines', lines: val.lines.map((l) => ({ text: ml(l && l.text), dim: !!(l && l.dim) })) };
+    }
+    if (val && typeof val === 'object' && Array.isArray(val.items)) {
+      return { id, type: 'photos', items: val.items.map((it) => ({ src: it && it.src ? String(it.src) : '', caption: ml(it && it.caption) })).filter((it) => it.src) };
+    }
+    return { id, type: 'text', value: ml(val) };
+  }
+
+  async function renderPages(root) {
+    root.innerHTML = `
+      <div class="section-head"><div><h2>ページ管理</h2>
+        <p class="sub">各ページの本文（ヒーロー・見出し・写真など）を JA / EN で編集</p></div></div>
+      <div class="card card-pad" style="margin-bottom:1.2rem">
+        <label class="field" style="max-width:440px"><span>編集するページ</span>
+          <div id="pg-select-wrap"><select disabled><option>読み込み中…</option></select></div></label>
+        <p class="help-text">英語ページは同じ項目の「English」欄で編集します（en/ の別ページではありません）。</p>
+      </div>
+      <div id="pg-body">${emptyState('ページを選択してください', '上のセレクターから編集するページを選びます。')}</div>`;
+    const list = (await fetchPathList('/api/pages')) || PAGE_PATHS_FALLBACK;
+    const wrap = $('#pg-select-wrap');
+    if (!wrap) return; // ビューが切替済み
+    wrap.innerHTML = pageSelectHtml('pg-select', list, pagesPath);
+    $('#pg-select').addEventListener('change', (e) => loadPage(e.target.value));
+    if (pagesPath && list.includes(pagesPath)) loadPage(pagesPath);
+  }
+
+  async function loadPage(path) {
+    pagesPath = path;
+    const body = $('#pg-body');
+    if (!body) return;
+    if (!path) {
+      body.innerHTML = emptyState('ページを選択してください', '上のセレクターから編集するページを選びます。');
+      return;
+    }
+    body.innerHTML = loadingRow;
+    try {
+      const data = await api(`/api/pages?path=${encodeURIComponent(path)}`, { method: 'GET' });
+      const regions = (data && data.regions) || {};
+      pageRegions = Object.entries(regions).map(([id, val]) => normRegion(id, val));
+      if (!pageRegions.length) {
+        body.innerHTML = emptyState('編集できる領域がありません', 'このページには編集可能な領域（data-region）が定義されていません。');
+        return;
+      }
+      body.innerHTML = `
+        <p class="help-text" style="margin:0 0 1rem">JA / EN 両方を編集できます。EN が空欄の場合、公開時に JA で補完されます。</p>
+        <div id="pg-regions"></div>
+        <div class="save-bar"><button class="btn btn-primary" id="save-pages">このページを保存する</button>
+          <p class="help-text" style="margin:0">保存後、ヘッダーの「公開」で本番サイトに反映されます。</p></div>`;
+      paintPageRegions();
+      $('#save-pages').addEventListener('click', (e) => savePage(e.currentTarget));
+    } catch (err) {
+      if (err.message === 'unauthorized') return;
+      body.innerHTML = emptyState('読み込みに失敗しました', err.message, true);
+      toast(err.message, 'error');
+    }
+  }
+
+  const PG_TYPE_LABEL = { text: 'テキスト', lines: '行リスト', photos: '写真' };
+
+  function paintPageRegions() {
+    const wrap = $('#pg-regions');
+    if (!wrap) return;
+    wrap.innerHTML = pageRegions.map((r, i) => {
+      const head = `<div class="pg-region-head"><span class="pg-rtype">${PG_TYPE_LABEL[r.type] || r.type}</span><code class="pg-rid">${esc(r.id)}</code></div>`;
+      if (r.type === 'text') {
+        return `<div class="pg-region" data-ri="${i}">${head}${mlInputs('data-rk', `r${i}`, r.value, { textarea: true, rows: 2 })}</div>`;
+      }
+      if (r.type === 'lines') {
+        const lines = r.lines.map((l, j) => `
+          <div class="pg-line" data-li="${j}">
+            <div class="pg-line-main">${mlInputs('data-lk', `r${i}l${j}`, l.text)}</div>
+            <div class="pg-line-ctrls">
+              <label class="switch" title="淡色表示（dim）"><input type="checkbox" data-dim ${l.dim ? 'checked' : ''} /><span class="track"></span><span style="font-size:.78rem">淡色</span></label>
+              <button type="button" class="icon-btn gal-mini" data-lact="up" aria-label="上へ" title="上へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+              <button type="button" class="icon-btn gal-mini" data-lact="down" aria-label="下へ" title="下へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+              <button type="button" class="btn btn-danger btn-xs" data-lact="del">削除</button>
+            </div>
+          </div>`).join('');
+        return `<div class="pg-region" data-ri="${i}">${head}
+          <div class="pg-lines">${lines || '<p class="help-text" style="margin:0">行がありません。「＋ 行を追加」で追加してください。</p>'}</div>
+          <button type="button" class="btn btn-ghost btn-sm" data-addline>＋ 行を追加</button></div>`;
+      }
+      // photos
+      const items = r.items.map((it, j) => {
+        const fname = (it.src || '').split('/').pop();
+        return `<div class="gal-item" data-pi="${j}">
+          <div class="gal-thumb"><img src="${esc(it.src)}" alt="" loading="lazy" /></div>
+          <div class="gal-body">
+            <div class="gal-item-head"><span class="gal-fname" title="${esc(it.src)}">${esc(fname)}</span>
+              <div class="gal-ctrls">
+                <button type="button" class="icon-btn gal-mini" data-pact="up" aria-label="上へ" title="上へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+                <button type="button" class="icon-btn gal-mini" data-pact="down" aria-label="下へ" title="下へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+                <button type="button" class="btn btn-danger btn-xs" data-pact="del">削除</button>
+              </div>
+            </div>
+            ${mlInputs('data-pcap', `r${i}p${j}`, it.caption, { ph: 'キャプション' })}
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="pg-region" data-ri="${i}">${head}
+        <div class="gal-add-bar" style="margin-bottom:.7rem">
+          <button type="button" class="btn btn-ghost btn-sm" data-pact="pick">＋ 画像を選ぶ</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-pact="upload">⤴ アップロード</button>
+          <input type="file" data-pfile accept="image/*" multiple hidden />
+        </div>
+        <div class="gal-items">${items || emptyState('画像がありません', '「＋ 画像を選ぶ」または「アップロード」から追加してください。')}</div></div>`;
+    }).join('');
+    bindPageRegions();
+  }
+
+  function bindPageRegions() {
+    $$('#pg-regions .pg-region').forEach((card) => {
+      const r = pageRegions[Number(card.dataset.ri)];
+      if (!r) return;
+      if (r.type === 'text') {
+        card.querySelectorAll('[data-rk]').forEach((inp) => {
+          const lang = inp.getAttribute('data-rk').endsWith('-en') ? 'en' : 'ja';
+          inp.addEventListener('input', () => { r.value[lang] = inp.value; });
+        });
+        return;
+      }
+      if (r.type === 'lines') {
+        $$('.pg-line', card).forEach((row) => {
+          const j = Number(row.dataset.li);
+          const line = r.lines[j];
+          if (!line) return;
+          row.querySelectorAll('[data-lk]').forEach((inp) => {
+            const lang = inp.getAttribute('data-lk').endsWith('-en') ? 'en' : 'ja';
+            inp.addEventListener('input', () => { line.text[lang] = inp.value; });
+          });
+          const dim = row.querySelector('[data-dim]');
+          if (dim) dim.addEventListener('change', () => { line.dim = dim.checked; });
+          row.querySelector('[data-lact="up"]').addEventListener('click', () => moveInArr(r.lines, j, -1));
+          row.querySelector('[data-lact="down"]').addEventListener('click', () => moveInArr(r.lines, j, 1));
+          row.querySelector('[data-lact="del"]').addEventListener('click', () => { r.lines.splice(j, 1); paintPageRegions(); });
+        });
+        card.querySelector('[data-addline]').addEventListener('click', () => { r.lines.push({ text: { ja: '', en: '' }, dim: false }); paintPageRegions(); });
+        return;
+      }
+      // photos
+      $$('.gal-item', card).forEach((row) => {
+        const j = Number(row.dataset.pi);
+        const item = r.items[j];
+        if (!item) return;
+        row.querySelectorAll('[data-pcap]').forEach((inp) => {
+          const lang = inp.getAttribute('data-pcap').endsWith('-en') ? 'en' : 'ja';
+          inp.addEventListener('input', () => { item.caption[lang] = inp.value; });
+        });
+        row.querySelector('[data-pact="up"]').addEventListener('click', () => moveInArr(r.items, j, -1));
+        row.querySelector('[data-pact="down"]').addEventListener('click', () => moveInArr(r.items, j, 1));
+        row.querySelector('[data-pact="del"]').addEventListener('click', () => { r.items.splice(j, 1); paintPageRegions(); });
+      });
+      const pickBtn = card.querySelector('[data-pact="pick"]');
+      if (pickBtn) pickBtn.addEventListener('click', () => openPicker({ onAdd: (srcs) => { srcs.forEach((src) => r.items.push({ src, caption: { ja: '', en: '' } })); paintPageRegions(); toast(`${srcs.length} 件の画像を追加しました。保存を忘れずに。`, 'ok'); } }));
+      const upBtn = card.querySelector('[data-pact="upload"]');
+      const fileInp = card.querySelector('[data-pfile]');
+      if (upBtn && fileInp) {
+        upBtn.addEventListener('click', () => fileInp.click());
+        fileInp.addEventListener('change', async (e) => {
+          const files = Array.from(e.target.files || []); e.target.value = '';
+          const urls = await uploadFiles(files);
+          if (urls.length) { urls.forEach((src) => r.items.push({ src, caption: { ja: '', en: '' } })); paintPageRegions(); toast(`${urls.length} 件の画像を追加しました。保存を忘れずに。`, 'ok'); }
+        });
+      }
+    });
+  }
+
+  function moveInArr(arr, i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    paintPageRegions();
+  }
+
+  function collectPageRegions() {
+    const out = {};
+    pageRegions.forEach((r) => {
+      if (r.type === 'lines') {
+        out[r.id] = { lines: r.lines.map((l) => ({ text: { ja: l.text.ja || '', en: l.text.en || '' }, dim: !!l.dim })) };
+      } else if (r.type === 'photos') {
+        out[r.id] = { items: r.items.map((it) => ({ src: it.src, caption: { ja: it.caption.ja || '', en: it.caption.en || '' } })) };
+      } else {
+        out[r.id] = { ja: r.value.ja || '', en: r.value.en || '' };
+      }
+    });
+    return out;
+  }
+
+  async function savePage(btn) {
+    if (!pagesPath) return;
+    const regions = collectPageRegions();
+    const prev = btn.textContent;
+    btn.disabled = true; btn.textContent = '保存中…';
+    try {
+      await api('/api/pages', { method: 'POST', body: JSON.stringify({ path: pagesPath, regions }) });
+      toast('ページを保存しました。公開で本番に反映されます。', 'ok');
+    } catch (err) {
+      if (err.message !== 'unauthorized') toast(err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = prev;
+    }
+  }
+
+  // ════════════════ ⑥ SEO / AEO（契約 v4）════════════════
+  //  GET /api/seo?path=X → {path, seo}／POST {path, seo} 部分マージ（slug/breadcrumb 等は保持）。
+  //  title/description/keywords/ogImage は選択ページ（言語）単位の単一値。
+  //  英語版は en/ 始まりのパスを選択して編集（seo.json は en/ も別キー）。FAQ は q/a を JA/EN で保持。
+  let seoPath = '';
+  let faqWorking = [];
+
+  function normFaq(arr) {
+    return (Array.isArray(arr) ? arr : []).map((f) => ({ q: ml(f && f.q), a: ml(f && f.a) }));
+  }
+
+  async function renderSeo(root) {
+    root.innerHTML = `
+      <div class="section-head"><div><h2>SEO / AEO</h2>
+        <p class="sub">検索エンジン・AI検索向けのメタ情報と FAQ を編集</p></div></div>
+      <div class="card card-pad aeo-guide">
+        <div class="aeo-head"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/><path d="M9 21h6"/></svg>AEO（AI検索）作成ガイド</div>
+        <ul class="aeo-list">
+          <li><strong>FAQ は「質問形」で</strong> — ユーザーが実際に検索・質問する文をそのまま Q にします。</li>
+          <li><strong>description は「検索意図」を満たす</strong> — 誰に何を提供するかを最初の1〜2文で明確に。</li>
+          <li><strong>固有名詞＋地域キーワード</strong>を含める — 例：沖縄／ウェディングフォト／前撮り。</li>
+        </ul>
+      </div>
+      <div class="card card-pad" style="margin:1.2rem 0">
+        <label class="field" style="max-width:440px"><span>編集するページ</span>
+          <div id="seo-select-wrap"><select disabled><option>読み込み中…</option></select></div></label>
+        <p class="help-text">英語ページは <code>en/</code> 始まりのパスを選択してください。</p>
+      </div>
+      <div id="seo-body">${emptyState('ページを選択してください', '上のセレクターから編集するページを選びます。')}</div>`;
+    const list = (await fetchPathList('/api/seo')) || SEO_PATHS_FALLBACK;
+    const wrap = $('#seo-select-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = pageSelectHtml('seo-select', list, seoPath);
+    $('#seo-select').addEventListener('change', (e) => loadSeo(e.target.value));
+    if (seoPath && list.includes(seoPath)) loadSeo(seoPath);
+  }
+
+  async function loadSeo(path) {
+    seoPath = path;
+    const body = $('#seo-body');
+    if (!body) return;
+    if (!path) {
+      body.innerHTML = emptyState('ページを選択してください', '上のセレクターから編集するページを選びます。');
+      return;
+    }
+    body.innerHTML = loadingRow;
+    try {
+      const data = await api(`/api/seo?path=${encodeURIComponent(path)}`, { method: 'GET' });
+      const s = (data && data.seo && typeof data.seo === 'object') ? data.seo : (data || {});
+      faqWorking = normFaq(s.faq);
+      const og = s.ogImage || '';
+      body.innerHTML = `
+        <div class="card card-pad editor-card">
+          <div class="editor-grid">
+            <label class="field"><span>タイトル（title）</span>
+              <input type="text" id="seo-title" value="${esc(s.title || '')}" placeholder="ページタイトル｜usher in making" /></label>
+            <label class="field"><span>ディスクリプション（description）</span>
+              <textarea id="seo-desc" rows="3" placeholder="検索意図を満たす説明文（120〜160字程度）">${esc(s.description || '')}</textarea></label>
+            <label class="field"><span>キーワード（keywords・カンマ区切り）</span>
+              <textarea id="seo-keywords" rows="2" placeholder="沖縄ウェディングフォト, 前撮り, …">${esc(s.keywords || '')}</textarea></label>
+            <div class="field"><span>OG画像（ogImage）</span>
+              <div class="seo-og-row">
+                <div class="seo-og-thumb"${og ? '' : ' hidden'} id="seo-og-thumb"><img src="${esc(og)}" alt="" /></div>
+                <input type="text" id="seo-og" value="${esc(og)}" placeholder="/images/up/xxxx.jpg" />
+                <button type="button" class="btn btn-ghost btn-sm" id="seo-og-pick">画像を選ぶ</button>
+              </div></div>
+          </div>
+        </div>
+        <h3 class="card-title" style="margin:1.5rem 0 .3rem">FAQ（よくある質問）</h3>
+        <p class="help-text" style="margin:0 0 1rem">AI検索・リッチリザルト向け。質問形の Q と、検索意図に答える A を JA / EN で。</p>
+        <div id="faq-list"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="faq-add">＋ FAQ を追加</button>
+        <div class="save-bar"><button class="btn btn-primary" id="save-seo">SEO / FAQ を保存する</button>
+          <p class="help-text" style="margin:0">保存後、ヘッダーの「公開」で本番サイトに反映されます。</p></div>`;
+      $('#seo-og-pick').addEventListener('click', () => openPicker({ single: true, onAdd: (srcs) => setSeoOg(srcs[0]) }));
+      $('#seo-og').addEventListener('input', (e) => setSeoOg(e.target.value.trim(), true));
+      $('#faq-add').addEventListener('click', () => { faqWorking.push({ q: { ja: '', en: '' }, a: { ja: '', en: '' } }); paintFaq(); });
+      $('#save-seo').addEventListener('click', (e) => saveSeo(e.currentTarget));
+      paintFaq();
+    } catch (err) {
+      if (err.message === 'unauthorized') return;
+      body.innerHTML = emptyState('読み込みに失敗しました', err.message, true);
+      toast(err.message, 'error');
+    }
+  }
+
+  function setSeoOg(src, fromInput) {
+    const input = $('#seo-og');
+    const thumb = $('#seo-og-thumb');
+    if (input && !fromInput) input.value = src || '';
+    if (thumb) {
+      if (src) { thumb.querySelector('img').src = src; thumb.hidden = false; }
+      else thumb.hidden = true;
+    }
+  }
+
+  function paintFaq() {
+    const wrap = $('#faq-list');
+    if (!wrap) return;
+    if (!faqWorking.length) {
+      wrap.innerHTML = '<p class="help-text" style="margin:0 0 .8rem">FAQ はまだありません。「＋ FAQ を追加」から登録してください。</p>';
+      return;
+    }
+    wrap.innerHTML = faqWorking.map((f, i) => `
+      <div class="faq-item" data-fi="${i}">
+        <div class="faq-head"><span class="pg-rtype">FAQ ${i + 1}</span><span class="spacer"></span>
+          <button type="button" class="btn btn-danger btn-xs" data-faq-del>削除</button></div>
+        <div class="field"><span>質問（Q）</span>${mlInputs('data-fq', `f${i}q`, f.q, { ph: '例）沖縄での撮影は何時間かかりますか？' })}</div>
+        <div class="field"><span>回答（A）</span>${mlInputs('data-fa', `f${i}a`, f.a, { textarea: true, rows: 3, ph: '質問に直接答える簡潔な文' })}</div>
+      </div>`).join('');
+    $$('#faq-list .faq-item').forEach((item) => {
+      const i = Number(item.dataset.fi);
+      const f = faqWorking[i];
+      if (!f) return;
+      item.querySelectorAll('[data-fq]').forEach((inp) => {
+        const lang = inp.getAttribute('data-fq').endsWith('-en') ? 'en' : 'ja';
+        inp.addEventListener('input', () => { f.q[lang] = inp.value; });
+      });
+      item.querySelectorAll('[data-fa]').forEach((inp) => {
+        const lang = inp.getAttribute('data-fa').endsWith('-en') ? 'en' : 'ja';
+        inp.addEventListener('input', () => { f.a[lang] = inp.value; });
+      });
+      item.querySelector('[data-faq-del]').addEventListener('click', () => { faqWorking.splice(i, 1); paintFaq(); });
+    });
+  }
+
+  async function saveSeo(btn) {
+    if (!seoPath) return;
+    const seo = {
+      title: $('#seo-title').value.trim(),
+      description: $('#seo-desc').value.trim(),
+      keywords: $('#seo-keywords').value.trim(),
+      ogImage: $('#seo-og').value.trim(),
+      faq: faqWorking
+        .map((f) => ({ q: { ja: f.q.ja || '', en: f.q.en || '' }, a: { ja: f.a.ja || '', en: f.a.en || '' } }))
+        .filter((f) => f.q.ja || f.q.en || f.a.ja || f.a.en),
+    };
+    const prev = btn.textContent;
+    btn.disabled = true; btn.textContent = '保存中…';
+    try {
+      await api('/api/seo', { method: 'POST', body: JSON.stringify({ path: seoPath, seo }) });
+      toast('SEO / FAQ を保存しました。公開で本番に反映されます。', 'ok');
+    } catch (err) {
+      if (err.message !== 'unauthorized') toast(err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = prev;
+    }
+  }
+
+  // ════════════════ 公開（サイト再構築）════════════════
+  //  POST /api/rebuild → 200:再構築開始 / 501:Deploy Hook 未設定の案内。
+  let rebuildBusy = false;
+  async function rebuild() {
+    if (rebuildBusy) return;
+    rebuildBusy = true;
+    try {
+      const res = await fetch('/api/rebuild', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+      });
+      if (res.status === 401) { clearToken(); showLogin('セッションの有効期限が切れました。再度ログインしてください。'); return; }
+      if (res.status === 501) { showRebuildSetup(); return; }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { toast(data.error || `公開に失敗しました (${res.status})`, 'error'); return; }
+      toast('再構築を開始しました（反映まで約1〜2分）', 'ok');
+    } catch (err) {
+      toast(err.message || '公開に失敗しました。', 'error');
+    } finally {
+      rebuildBusy = false;
+    }
+  }
+  function showRebuildSetup() {
+    openDrawer('公開の設定が必要です', `
+      <div class="detail-msg" style="margin-bottom:1.2rem">Vercel で Deploy Hook を作成し、環境変数 <code>DEPLOY_HOOK_URL</code> を設定してください。</div>
+      <p class="drawer-section-label">設定手順</p>
+      <ol class="setup-steps">
+        <li>Vercel プロジェクト → Settings → Git → Deploy Hooks で新規フックを作成。</li>
+        <li>発行された URL を環境変数 <code>DEPLOY_HOOK_URL</code> に設定。</li>
+        <li>再デプロイ後、「公開」ボタンで本番サイトに反映されます。</li>
+      </ol>
+      <p class="help-text">編集内容はすでに保存済みです。Deploy Hook 設定後に「公開」を押すと反映されます。</p>`);
+  }
+  // ヘッダーの「公開」ボタン（アプリシェルの静的要素）
+  $('#publish-top').addEventListener('click', async () => {
+    const b = $('#publish-top');
+    b.disabled = true;
+    await rebuild();
+    b.disabled = false;
+  });
+
+  // ════════════════ ⑦ 設定 ════════════════
   async function renderSettings(root) {
     root.innerHTML = `<div class="section-head"><div><h2>設定</h2>
       <p class="sub">予約システムとシステム情報</p></div></div>${loadingRow}`;
@@ -1131,6 +1606,15 @@
           <input type="number" id="capacity" min="1" step="1" value="${esc(cap)}" /></label>
         <div class="save-bar"><button class="btn btn-primary" id="save-capacity">保存する</button></div>
       </div>
+      <div class="card card-pad editor-card" style="margin-bottom:1.2rem">
+        <h3 class="card-title">公開（サイト再構築）</h3>
+        <p class="help-text" style="margin:.2rem 0 1rem">編集内容は保存済みです。「公開」を押すと本番HTMLに反映されます（反映まで約1〜2分）。SEO・本文の変更はこの公開後にクローラーへ反映されます。</p>
+        <div class="save-bar" style="margin-top:0;border-top:none;padding-top:0">
+          <button class="btn btn-primary" id="publish-settings">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+            公開（サイト再構築）</button>
+        </div>
+      </div>
       <div class="card card-pad editor-card">
         <h3 class="card-title">システム情報</h3>
         <dl class="detail-list" style="margin-top:.6rem">
@@ -1144,6 +1628,13 @@
       const val = parseInt($('#capacity').value, 10);
       if (!Number.isFinite(val) || val < 1) { toast('1以上の数値を入力してください。', 'error'); return; }
       saveContent({ capacityPerDay: val }, e.currentTarget, '予約上限を保存しました。');
+    });
+    $('#publish-settings').addEventListener('click', async (e) => {
+      const b = e.currentTarget;
+      const prev = b.innerHTML;
+      b.disabled = true; b.textContent = '公開中…';
+      await rebuild();
+      b.disabled = false; b.innerHTML = prev;
     });
   }
 
@@ -1165,7 +1656,7 @@
   // 画像ピッカー（静的要素）の制御
   $('#picker-close').addEventListener('click', closePicker);
   $('#picker-scrim').addEventListener('click', closePicker);
-  $('#picker-add').addEventListener('click', addPickedToSlot);
+  $('#picker-add').addEventListener('click', confirmPicker);
   $('#picker-search').addEventListener('input', (e) => paintPicker(e.target.value.trim()));
 
   // ════════════════ 起動 ════════════════
@@ -1173,8 +1664,8 @@
     '%c usher in making %c 管理コンソール ',
     'background:#2f6f6a;color:#fff;border-radius:3px 0 0 3px;padding:2px 6px;font-weight:700',
     'background:#142028;color:#fff;border-radius:0 3px 3px 0;padding:2px 6px',
-    '\n  ルート: #/dashboard, #/reservations, #/contacts, #/content, #/settings' +
-    '\n  API   : /api/admin（login/verify/stats/contacts/reservations/update-*）, /api/content' +
+    '\n  ルート: #/dashboard, #/reservations, #/contacts, #/content, #/pages, #/seo, #/settings' +
+    '\n  API   : /api/admin, /api/content, /api/pages, /api/seo, /api/rebuild, /api/upload' +
     '\n  認証  : Bearer トークン（sessionStorage）／401で自動ログアウト'
   );
 

@@ -477,6 +477,47 @@ table.data .nowrap { white-space: nowrap; }
 .pick-cell.is-sel .pick-check { display: grid; }
 .picker-foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem 1.2rem; border-top: 1px solid var(--border); }
 
+/* ════════════════ ページ管理（契約 v4）════════════════ */
+.pg-region {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); padding: 1.1rem 1.2rem; margin-bottom: 0.9rem;
+}
+.pg-region-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.8rem; }
+.pg-rtype {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em;
+  color: var(--accent-dark); background: var(--accent-soft); padding: 0.15rem 0.55rem; border-radius: 999px; flex: none;
+}
+.pg-rid { font-size: 0.78rem; color: var(--muted); font-weight: 600; word-break: break-all; }
+.pg-lines { display: grid; gap: 0.6rem; margin-bottom: 0.8rem; }
+.pg-line {
+  display: grid; grid-template-columns: 1fr auto; gap: 0.8rem; align-items: start;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.7rem 0.8rem;
+}
+.pg-line-main { min-width: 0; }
+.pg-line-ctrls { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ════════════════ SEO / AEO（契約 v4）════════════════ */
+.aeo-guide { border-left: 3px solid var(--accent); }
+.aeo-head { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.92rem; color: var(--accent-dark); margin-bottom: 0.6rem; }
+.aeo-list { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.35rem; }
+.aeo-list li { font-size: 0.85rem; color: var(--ink-2); }
+.aeo-list strong { color: var(--ink); }
+.seo-og-row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.seo-og-row input { flex: 1; min-width: 180px; }
+.seo-og-thumb { width: 96px; height: 72px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); flex: none; }
+.seo-og-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.faq-item {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); padding: 1rem 1.1rem; margin-bottom: 0.8rem; display: grid; gap: 0.8rem;
+}
+.faq-head { display: flex; align-items: center; gap: 0.6rem; }
+.faq-head .spacer { flex: 1; }
+.setup-steps { margin: 0 0 1rem; padding-left: 1.2rem; display: grid; gap: 0.5rem; font-size: 0.88rem; color: var(--ink-2); }
+.setup-steps code, .detail-msg code, .help-text code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 0.05rem 0.35rem; font-size: 0.85em; }
+
+/* ヘッダーの「公開」ボタン */
+.publish-top { gap: 0.35rem; }
+
 /* ════════════════ ドロワー ════════════════ */
 .drawer-scrim { position: fixed; inset: 0; background: rgba(15,23,30,0.4); z-index: 50; opacity: 0; animation: fade 0.18s forwards; }
 .drawer {
@@ -537,6 +578,11 @@ table.data .nowrap { white-space: nowrap; }
   .gal-thumb { width: 100%; height: 160px; }
   .gal-ctrls { margin-left: 0; }
   .gal-fname { max-width: 100%; }
+  /* ページ管理: 行の操作を下段へ */
+  .pg-line { grid-template-columns: 1fr; }
+  .pg-line-ctrls { justify-content: flex-start; }
+  /* ヘッダーの公開ボタンはアイコンのみ */
+  .publish-top-label { display: none; }
 }
 
 /* 画像ピッカー: モバイルは全画面フィット */

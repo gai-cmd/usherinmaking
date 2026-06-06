@@ -326,6 +326,30 @@
     }
   }
 
+  // コンテナの既存子要素をテンプレートのリングとして使い回し、items を再描画する。
+  //   gallery（data-content）と pages の photos リージョン（data-region）で共用。
+  //   既存と同数のときはレイアウト変種（例: .tile.wide）も位置ごとに保たれる。
+  //   雛形が無い / items が空のときは false を返し、呼び出し側で静的維持する。
+  function renderPhotoItems(container, items) {
+    if (!items || !items.length) return false;
+    var templates = Array.prototype.slice.call(container.children);
+    if (!templates.length) return false; // 雛形が無い → 安全側で何もしない
+
+    // フラグメントを完成させてから一括差し替え（途中失敗で空にしない）
+    var frag = document.createDocumentFragment();
+    items.forEach(function (item, i) {
+      var tpl = templates[i % templates.length];
+      var node = tpl.cloneNode(true);
+      fillGalleryNode(node, item);
+      frag.appendChild(node);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(frag);
+    revealNew(container);
+    return true;
+  }
+
   function renderGalleries(content) {
     var containers = document.querySelectorAll('[data-content^="gallery:"]');
     if (!containers.length) return;
@@ -340,22 +364,7 @@
         var items = normalizeGalleryItems(galleries[slot]);
         if (!items || !items.length) return; // データ無し / 表示項目ゼロ → 静的維持
 
-        // 既存子要素をテンプレートのリングとして確保（パターン保持）
-        var templates = Array.prototype.slice.call(container.children);
-        if (!templates.length) return; // 雛形が無い → 安全側で何もしない
-
-        // フラグメントを完成させてから一括差し替え（途中失敗で空にしない）
-        var frag = document.createDocumentFragment();
-        items.forEach(function (item, i) {
-          var tpl = templates[i % templates.length];
-          var node = tpl.cloneNode(true);
-          fillGalleryNode(node, item);
-          frag.appendChild(node);
-        });
-
-        container.innerHTML = '';
-        container.appendChild(frag);
-        revealNew(container);
+        renderPhotoItems(container, items); // 既存マークアップをテンプレートに再描画
       } catch (e) {
         // このコンテナだけ静的維持。他コンテナには影響させない。
         console.warn('[site-content] ギャラリーの描画に失敗しました。静的のまま維持します。', e);
@@ -476,9 +485,155 @@
     });
   }
 
+  // ── 契約 v4: ページ本文（regions）のプレビュー反映 ────────────────
+  //   GET /api/pages?path=<キー> の regions を、HTML 内の [data-region] ノードに
+  //   適用する（クライアントはプレビュー用。クローラ向けの確定値はビルド時ベイク）。
+  //
+  //   設計方針:
+  //     - 値の形からタイプを判定するので region_map.json をクライアントで取得しない
+  //       （404 → コンソールエラーを避け、不要なリクエストもしない）。
+  //         text   = { <field>: {ja,en} }（または単独の {ja,en}）
+  //         lines  = { lines: [ { text:{ja,en}, dim:bool } ] }
+  //         photos = { items: [ { src, caption:{ja,en} } ] }
+  //     - text の field→要素は region_map.json の fields 構造に合わせた別名表で解決
+  //       （data-field 明示 → 別名セレクタの順。例: eyebrow→.eyebrow, title→h1/h2, sub→.ph-jp）。
+  //     - lines/photos は「コンテナの既存子マークアップ」をテンプレートに再生成（クラス・構造を維持）。
+  //     - 空値・未存在リージョンは無視。fetch 失敗時は無変更。
+
+  // 現在パス → pages キー。'/'・'/index.html'→'index.html'、'/en/about.html'→'about.html'（locale は別途）。
+  function pageKey() {
+    var seg = location.pathname.replace(/\/+$/, ''); // 末尾スラッシュ除去
+    seg = seg.substring(seg.lastIndexOf('/') + 1);   // ファイル名のみ（/en/ も自然に除去）
+    return seg || 'index.html';
+  }
+
+  // 値の形から region タイプを判定（region_map に依存しない）
+  function detectRegionType(v) {
+    if (!v || typeof v !== 'object') return null;
+    if (Array.isArray(v.items)) return 'photos';
+    if (Array.isArray(v.lines)) return 'lines';
+    return 'text';
+  }
+
+  // {ja,en} 単独の多言語リーフか？（field マップと区別するため）
+  function isLocaleLeaf(v) {
+    return v && typeof v === 'object' && (typeof v.ja === 'string' || typeof v.en === 'string');
+  }
+
+  // region_map.json の fields に対応する field→セレクタ別名（コンテナ内で解決）
+  var FIELD_ALIAS = {
+    eyebrow: '.eyebrow',
+    title: 'h1, h2, .section-title, .ph-title',
+    sub: '.ph-jp',
+    subtitle: '.lede, .subtitle, .ph-jp',
+    lede: '.lede',
+    body: 'p',
+    desc: 'p',
+    period: '.period',
+  };
+
+  function resolveFieldEl(container, field) {
+    var sel = '[data-field="' + field + '"]';
+    var el = container.querySelector(sel);          // ① 明示マーカー優先
+    if (el) return el;
+    if (container.matches && container.matches(sel)) return container; // ② コンテナ自身
+    return FIELD_ALIAS[field] ? container.querySelector(FIELD_ALIAS[field]) : null; // ③ 別名
+  }
+
+  // text 형: フィールドごとに該当要素の textContent を差し替え（空フィールドは無視）
+  function renderTextRegion(node, value) {
+    if (isLocaleLeaf(value)) {
+      var s = t(value);
+      if (s) node.textContent = s;
+      return;
+    }
+    Object.keys(value).forEach(function (field) {
+      var s = t(value[field]);
+      if (!s) return; // 空値は触らない
+      var el = resolveFieldEl(node, field);
+      if (el) el.textContent = s;
+    });
+  }
+
+  // lines 형: 既存 span のクラスパターン（word / dim 等）を雛形に再生成
+  function renderLinesRegion(node, lines) {
+    var spans = node.getElementsByTagName('span');
+    // 先頭 span のクラスから dim を除いたものをベースクラスとして踏襲
+    var baseClass = spans.length
+      ? (spans[0].className || '')
+          .split(/\s+/)
+          .filter(function (c) { return c && c !== 'dim'; })
+          .join(' ')
+      : '';
+
+    var frag = document.createDocumentFragment();
+    lines.forEach(function (ln, i) {
+      var text = t(ln && ln.text);
+      if (!text) return;
+      if (frag.childNodes.length) frag.appendChild(document.createTextNode(' ')); // 単語間の空白を維持
+      var span = document.createElement('span');
+      var cls = baseClass;
+      if (ln.dim) cls = (cls ? cls + ' ' : '') + 'dim';
+      if (cls) span.className = cls;
+      span.textContent = text;
+      frag.appendChild(span);
+    });
+    if (!frag.childNodes.length) return; // 有効行なし → 静的維持
+    node.innerHTML = '';
+    node.appendChild(frag);
+  }
+
+  // regions を [data-region] ノードへ適用
+  function applyRegions(data) {
+    var regions = data && data.regions;
+    if (!regions) return;
+    var nodes = document.querySelectorAll('[data-region]');
+    Array.prototype.forEach.call(nodes, function (node) {
+      try {
+        var id = node.getAttribute('data-region');
+        if (!id || !Object.prototype.hasOwnProperty.call(regions, id)) return;
+        var value = regions[id];
+        var type = detectRegionType(value);
+        if (!type) return; // 空・未存在 → 無視
+
+        if (type === 'text') {
+          renderTextRegion(node, value);
+        } else if (type === 'lines') {
+          var lines = value.lines.filter(function (l) { return l && t(l.text); });
+          if (lines.length) renderLinesRegion(node, lines);
+        } else if (type === 'photos') {
+          var items = value.items.filter(function (it) { return it && it.src; });
+          if (items.length) renderPhotoItems(node, items); // 既存マークアップを再利用
+        }
+      } catch (e) {
+        // このリージョンだけ静的維持。他には影響させない。
+        console.warn('[site-content] リージョンの描画に失敗しました。静的のまま維持します。', e);
+      }
+    });
+  }
+
+  // pages の単一フェッチ（Promise キャッシュ）。[data-region] がある時だけ呼ぶ。
+  var pagesPromise = null;
+  function loadPages() {
+    if (pagesPromise) return pagesPromise;
+    var url = '/api/pages?path=' + encodeURIComponent(pageKey());
+    pagesPromise = fetch(url, { headers: { Accept: 'application/json' } })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .catch(function (err) {
+        console.warn('[site-content] /api/pages の取得に失敗しました。静的コンテンツを維持します。', err);
+        return null;
+      });
+    return pagesPromise;
+  }
+
   // ── 公開 API（reserve.js 等から再利用）────────────────────────────
   window.UIMContent = {
     load: loadContent,
+    loadPages: loadPages,
+    pageKey: pageKey,
     locale: LOCALE,
     t: t,
     normalizeNotice: normalizeNotice,
@@ -523,6 +678,19 @@
         console.warn('[site-content] イベントの反映に失敗しました。', e);
       }
     });
+
+    // 契約 v4: ページ本文（regions）のプレビュー。
+    //   /api/content とは独立。[data-region] が 1 つも無ければ fetch 自体を省略。
+    if (document.querySelector('[data-region]')) {
+      loadPages().then(function (data) {
+        if (!data) return; // 取得失敗 → 静的維持
+        try {
+          applyRegions(data);
+        } catch (e) {
+          console.warn('[site-content] ページ本文の反映に失敗しました。', e);
+        }
+      });
+    }
   }
 
   if (document.readyState === 'loading') {
