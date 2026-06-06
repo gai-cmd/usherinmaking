@@ -241,11 +241,127 @@
     });
   }
 
+  // ── スタジオ情報（SNS / メール）の差し替え ───────────────────────
+  //   契約 v2: 値が空でない項目だけ、対応するリンクの href を置換する。
+  //   空値なら静的 HTML をそのまま維持（絶対に空で上書きしない）。
+  function normalizeStudio(content) {
+    var s = (content && content.studio) || {};
+    return {
+      line: (s.line || '').toString().trim(),
+      instagram: (s.instagram || '').toString().trim(),
+      kakao: (s.kakao || '').toString().trim(),
+      blog: (s.blog || '').toString().trim(),
+      email: (s.email || '').toString().trim(),
+    };
+  }
+
+  function applyStudio(studio) {
+    // SNS リンク: セレクタ → 置換値（空値はスキップ）
+    var links = [
+      ['a[href*="line.me"]', studio.line],
+      ['a[href*="instagram.com"]', studio.instagram],
+      ['a[href*="qr.kakao.com"]', studio.kakao],
+      ['a[href*="blog.naver.com"]', studio.blog],
+    ];
+    links.forEach(function (pair) {
+      var sel = pair[0];
+      var val = pair[1];
+      if (!val) return; // 空値 = 静的リンクを維持
+      Array.prototype.forEach.call(document.querySelectorAll(sel), function (a) {
+        a.setAttribute('href', val);
+      });
+    });
+
+    // メール: mailto: リンクがあり、かつ値が空でなければ置換
+    if (studio.email) {
+      Array.prototype.forEach.call(
+        document.querySelectorAll('a[href^="mailto:"]'),
+        function (a) {
+          a.setAttribute('href', 'mailto:' + studio.email);
+        }
+      );
+    }
+  }
+
+  // ── ヒーロー（トップの見出し）の差し替え ──────────────────────────
+  //   [data-content="hero"] 内の eyebrow / title / subtitle を、
+  //   値が空でないフィールドだけ置換する。
+  function normalizeHero(content) {
+    var h = (content && content.hero) || {};
+    return {
+      eyebrow: (h.eyebrow || '').toString().trim(),
+      title: (h.title || '').toString().trim(),
+      subtitle: (h.subtitle || '').toString().trim(),
+    };
+  }
+
+  function setTextIfPresent(el, value) {
+    if (el && value) el.textContent = value;
+  }
+
+  function applyHero(hero) {
+    if (!hero.eyebrow && !hero.title && !hero.subtitle) return; // 全空 = 何もしない
+    var containers = document.querySelectorAll('[data-content="hero"]');
+    if (!containers.length) return;
+    Array.prototype.forEach.call(containers, function (c) {
+      setTextIfPresent(c.querySelector('.eyebrow'), hero.eyebrow);
+      setTextIfPresent(c.querySelector('h1'), hero.title);
+      // subtitle は data-field を最優先、無ければ既存の .lede / .subtitle / .ph-jp
+      var subEl =
+        c.querySelector('[data-field="subtitle"]') ||
+        c.querySelector('.lede') ||
+        c.querySelector('.subtitle') ||
+        c.querySelector('.ph-jp');
+      setTextIfPresent(subEl, hero.subtitle);
+    });
+  }
+
+  // ── イベント（モニター募集など）の差し替え ────────────────────────
+  //   [data-content="event"] に enabled && title のときだけ反映。
+  //   既存マークアップを尊重し、空のフィールドは触らない。
+  function normalizeEvent(content) {
+    var e = (content && content.event) || {};
+    return {
+      enabled: !!e.enabled,
+      title: (e.title || '').toString().trim(),
+      body: (e.body || '').toString().trim(),
+      period: (e.period || '').toString().trim(),
+    };
+  }
+
+  function applyEvent(ev) {
+    if (!ev.enabled || !ev.title) return; // disabled or タイトル無し → 静的維持
+    var containers = document.querySelectorAll('[data-content="event"]');
+    if (!containers.length) return;
+    Array.prototype.forEach.call(containers, function (c) {
+      // title: data-field を優先、無ければ .section-title / 最初の h2
+      var titleEl =
+        c.querySelector('[data-field="title"]') ||
+        c.querySelector('.section-title') ||
+        c.querySelector('h2');
+      setTextIfPresent(titleEl, ev.title);
+
+      // body / period: 既存の data-field 要素があれば反映（hidden を解除）。
+      [['body', ev.body], ['period', ev.period]].forEach(function (pair) {
+        var key = pair[0];
+        var val = pair[1];
+        if (!val) return; // 空値は触らない
+        var el = c.querySelector('[data-field="' + key + '"]');
+        if (!el) return; // 専用要素が無ければ既存マークアップを尊重して何もしない
+        el.textContent = val;
+        el.removeAttribute('hidden');
+      });
+    });
+  }
+
   // ── 公開 API（reserve.js 等から再利用）────────────────────────────
   window.UIMContent = {
     load: loadContent,
     normalizeNotice: normalizeNotice,
     normalizePlans: normalizePlans,
+    normalizeStudio: normalizeStudio,
+    normalizeHero: normalizeHero,
+    normalizeEvent: normalizeEvent,
   };
 
   // ── 起動 ──────────────────────────────────────────────────────────
@@ -261,6 +377,21 @@
         renderPlans(normalizePlans(content));
       } catch (e) {
         console.warn('[site-content] プランの描画に失敗しました。', e);
+      }
+      try {
+        applyStudio(normalizeStudio(content));
+      } catch (e) {
+        console.warn('[site-content] スタジオ情報の反映に失敗しました。', e);
+      }
+      try {
+        applyHero(normalizeHero(content));
+      } catch (e) {
+        console.warn('[site-content] ヒーローの反映に失敗しました。', e);
+      }
+      try {
+        applyEvent(normalizeEvent(content));
+      } catch (e) {
+        console.warn('[site-content] イベントの反映に失敗しました。', e);
       }
     });
   }

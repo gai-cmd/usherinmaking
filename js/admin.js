@@ -504,16 +504,22 @@
   async function renderContent(root) {
     root.innerHTML = `
       <div class="section-head"><div><h2>コンテンツ管理</h2>
-        <p class="sub">公開サイトのお知らせ・プラン・休業日を編集</p></div>
+        <p class="sub">公開サイトのお知らせ・プラン・休業日・各種情報を編集</p></div>
         <span class="sub" id="content-updated"></span></div>
       <div class="tabbar" id="content-tabs">
         <button class="tab-btn is-active" data-ctab="notice">お知らせ</button>
         <button class="tab-btn" data-ctab="plans">プラン管理</button>
         <button class="tab-btn" data-ctab="blocked">休業日</button>
+        <button class="tab-btn" data-ctab="studio">スタジオ情報</button>
+        <button class="tab-btn" data-ctab="hero">トップ</button>
+        <button class="tab-btn" data-ctab="event">イベント</button>
       </div>
       <div class="tab-pane is-active" data-cpane="notice"></div>
       <div class="tab-pane" data-cpane="plans"></div>
-      <div class="tab-pane" data-cpane="blocked"></div>`;
+      <div class="tab-pane" data-cpane="blocked"></div>
+      <div class="tab-pane" data-cpane="studio"></div>
+      <div class="tab-pane" data-cpane="hero"></div>
+      <div class="tab-pane" data-cpane="event"></div>`;
 
     $('#content-tabs').addEventListener('click', (e) => {
       const b = e.target.closest('.tab-btn');
@@ -534,7 +540,13 @@
     renderNoticePane();
     renderPlansPane();
     renderBlockedPane();
+    renderStudioPane();
+    renderHeroPane();
+    renderEventPane();
   }
+
+  // 空欄維持の共通案内文（hero / event）
+  const KEEP_HINT = '空欄の場合は現在のサイト表示を維持します。';
 
   // 部分オブジェクトを POST してマージ保存（契約: POST /api/content）
   async function saveContent(partial, btn, okMsg) {
@@ -740,6 +752,102 @@
     ).join('');
     $$('#blocked-chips [data-rm]').forEach((b) =>
       b.addEventListener('click', () => toggleBlocked(b.dataset.rm)));
+  }
+
+  // ─ スタジオ情報（SNS・メール）─
+  function renderStudioPane() {
+    const s = content.studio || {};
+    const pane = $('[data-cpane="studio"]');
+    pane.innerHTML = `
+      <div class="card card-pad editor-card">
+        <div class="editor-grid">
+          <label class="field"><span>LINE URL</span>
+            <input type="text" id="studio-line" placeholder="https://line.me/ti/p/…" value="${esc(s.line || '')}" /></label>
+          <label class="field"><span>Instagram URL</span>
+            <input type="text" id="studio-instagram" placeholder="https://www.instagram.com/…" value="${esc(s.instagram || '')}" /></label>
+          <label class="field"><span>KakaoTalk URL</span>
+            <input type="text" id="studio-kakao" placeholder="http://qr.kakao.com/talk/…" value="${esc(s.kakao || '')}" /></label>
+          <label class="field"><span>Blog URL</span>
+            <input type="text" id="studio-blog" placeholder="https://blog.naver.com/…" value="${esc(s.blog || '')}" /></label>
+          <label class="field"><span>メール</span>
+            <input type="text" id="studio-email" placeholder="info@example.com" value="${esc(s.email || '')}" /></label>
+          <p class="help-text">公開サイト全ページの SNS リンク・連絡先に反映されます。</p>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="save-studio">保存する</button>
+        </div>
+      </div>`;
+    $('#save-studio').addEventListener('click', (e) => {
+      saveContent({ studio: {
+        line: $('#studio-line').value.trim(),
+        instagram: $('#studio-instagram').value.trim(),
+        kakao: $('#studio-kakao').value.trim(),
+        blog: $('#studio-blog').value.trim(),
+        email: $('#studio-email').value.trim(),
+      } }, e.currentTarget, 'スタジオ情報を保存しました。');
+    });
+  }
+
+  // ─ トップ（メインヒーロー）─
+  function renderHeroPane() {
+    const h = content.hero || {};
+    const pane = $('[data-cpane="hero"]');
+    pane.innerHTML = `
+      <div class="card card-pad editor-card">
+        <div class="editor-grid">
+          <label class="field"><span>アイブロウ（小見出し）</span>
+            <input type="text" id="hero-eyebrow" placeholder="例）OKINAWA WEDDING PHOTO" value="${esc(h.eyebrow || '')}" /></label>
+          <label class="field"><span>タイトル</span>
+            <input type="text" id="hero-title" placeholder="メインのキャッチコピー" value="${esc(h.title || '')}" /></label>
+          <label class="field"><span>サブタイトル</span>
+            <textarea id="hero-subtitle" rows="2" placeholder="補足のリード文">${esc(h.subtitle || '')}</textarea></label>
+          <p class="help-text">${esc(KEEP_HINT)}</p>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="save-hero">保存する</button>
+        </div>
+      </div>`;
+    $('#save-hero').addEventListener('click', (e) => {
+      saveContent({ hero: {
+        eyebrow: $('#hero-eyebrow').value.trim(),
+        title: $('#hero-title').value.trim(),
+        subtitle: $('#hero-subtitle').value.trim(),
+      } }, e.currentTarget, 'トップの内容を保存しました。');
+    });
+  }
+
+  // ─ イベント ─
+  function renderEventPane() {
+    const ev = content.event || {};
+    const pane = $('[data-cpane="event"]');
+    pane.innerHTML = `
+      <div class="card card-pad editor-card">
+        <div class="editor-grid">
+          <label class="switch">
+            <input type="checkbox" id="event-enabled" ${ev.enabled ? 'checked' : ''} />
+            <span class="track"></span>
+            <span>イベント情報を公開サイトに表示する</span>
+          </label>
+          <label class="field"><span>タイトル</span>
+            <input type="text" id="event-title" placeholder="例）夏季キャンペーン" value="${esc(ev.title || '')}" /></label>
+          <label class="field"><span>本文</span>
+            <textarea id="event-body" rows="4" placeholder="イベントの内容">${esc(ev.body || '')}</textarea></label>
+          <label class="field"><span>期間</span>
+            <input type="text" id="event-period" placeholder="例）2026/07/01〜2026/08/31" value="${esc(ev.period || '')}" /></label>
+          <p class="help-text">${esc(KEEP_HINT)}</p>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="save-event">保存する</button>
+        </div>
+      </div>`;
+    $('#save-event').addEventListener('click', (e) => {
+      saveContent({ event: {
+        enabled: $('#event-enabled').checked,
+        title: $('#event-title').value.trim(),
+        body: $('#event-body').value.trim(),
+        period: $('#event-period').value.trim(),
+      } }, e.currentTarget, 'イベント情報を保存しました。');
+    });
   }
 
   // ════════════════ ⑤ 設定 ════════════════
