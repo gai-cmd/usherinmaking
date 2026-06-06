@@ -115,6 +115,25 @@
   <div class="drawer-body" id="drawer-body"></div>
 </aside>
 
+<!-- ════════════════ 画像ピッカー（ギャラリー）════════════════ -->
+<div class="picker-scrim" id="picker-scrim" hidden></div>
+<aside class="picker" id="picker" hidden aria-label="画像を選択">
+  <header class="picker-head">
+    <h2>画像を選択</h2>
+    <label class="picker-search field">
+      <input type="search" id="picker-search" placeholder="ファイル名で絞り込み" autocomplete="off" />
+    </label>
+    <button class="icon-btn" id="picker-close" aria-label="閉じる">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </header>
+  <div class="picker-grid" id="picker-grid"></div>
+  <footer class="picker-foot">
+    <span class="sub" id="picker-count">0 件選択中</span>
+    <button class="btn btn-primary" id="picker-add" disabled>選択した画像を追加</button>
+  </footer>
+</aside>
+
 <!-- ════════════════ トースト ════════════════ -->
 <div class="toast-stack" id="toasts" aria-live="polite"></div>
 

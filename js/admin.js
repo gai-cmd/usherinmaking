@@ -41,6 +41,43 @@
     String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+  // ─── 多言語（JA/EN）ヘルパー（契約 v3）──────────────────
+  //   保存値は { ja, en } オブジェクト。後方互換として文字列も {ja:値, en:''} に正規化。
+  function ml(v) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      return { ja: v.ja == null ? '' : String(v.ja), en: v.en == null ? '' : String(v.en) };
+    }
+    return { ja: v == null ? '' : String(v), en: '' };
+  }
+  // JA/EN 2入力の HTML を生成。attrName は 'id'（単一フォーム）か 'data-k'（プラン行内）。
+  function mlInputs(attrName, base, val, opts = {}) {
+    const m = ml(val);
+    const ph = opts.ph || '';
+    const ctrl = (lang) => {
+      const a = `${attrName}="${base}-${lang}"`;
+      return opts.textarea
+        ? `<textarea ${a} rows="${opts.rows || 2}" placeholder="${esc(ph)}">${esc(m[lang])}</textarea>`
+        : `<input type="text" ${a} placeholder="${esc(ph)}" value="${esc(m[lang])}" />`;
+    };
+    return `<div class="ml-pair">
+      <div class="ml-cell"><em class="ml-tag">日本語</em>${ctrl('ja')}</div>
+      <div class="ml-cell"><em class="ml-tag en">English</em>${ctrl('en')}</div>
+    </div>`;
+  }
+  // ラベル付きの JA/EN フィールド（単一フォーム用、id 参照）。
+  function mlField(base, label, val, opts) {
+    return `<div class="field"><span>${esc(label)}</span>${mlInputs('id', base, val, opts)}</div>`;
+  }
+  // 読み出し: id ベース / 行（data-k）ベース。
+  function mlReadId(base) {
+    const g = (lang) => { const el = $(`#${base}-${lang}`); return el ? el.value.trim() : ''; };
+    return { ja: g('ja'), en: g('en') };
+  }
+  function mlReadRow(row, k) {
+    const g = (lang) => { const el = row.querySelector(`[data-k="${k}-${lang}"]`); return el ? el.value.trim() : ''; };
+    return { ja: g('ja'), en: g('en') };
+  }
+
   function fmtDateTime(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
@@ -513,13 +550,15 @@
         <button class="tab-btn" data-ctab="studio">スタジオ情報</button>
         <button class="tab-btn" data-ctab="hero">トップ</button>
         <button class="tab-btn" data-ctab="event">イベント</button>
+        <button class="tab-btn" data-ctab="gallery">ギャラリー</button>
       </div>
       <div class="tab-pane is-active" data-cpane="notice"></div>
       <div class="tab-pane" data-cpane="plans"></div>
       <div class="tab-pane" data-cpane="blocked"></div>
       <div class="tab-pane" data-cpane="studio"></div>
       <div class="tab-pane" data-cpane="hero"></div>
-      <div class="tab-pane" data-cpane="event"></div>`;
+      <div class="tab-pane" data-cpane="event"></div>
+      <div class="tab-pane" data-cpane="gallery"></div>`;
 
     $('#content-tabs').addEventListener('click', (e) => {
       const b = e.target.closest('.tab-btn');
@@ -543,6 +582,7 @@
     renderStudioPane();
     renderHeroPane();
     renderEventPane();
+    renderGalleryPane();
   }
 
   // 空欄維持の共通案内文（hero / event）
@@ -578,8 +618,7 @@
             <span class="track"></span>
             <span>トップにお知らせバナーを表示する</span>
           </label>
-          <label class="field"><span>お知らせ文</span>
-            <textarea id="notice-text" rows="2" placeholder="例）年末年始は休業いたします。">${esc(n.text || '')}</textarea></label>
+          ${mlField('notice-text', 'お知らせ文', n.text, { textarea: true, rows: 2, ph: '例）年末年始は休業いたします。' })}
           <label class="field"><span>リンク URL（任意）</span>
             <input type="text" id="notice-link" placeholder="https://… または /plan.html" value="${esc(n.link || '')}" />
             <p class="help-text">バナーをクリックした際の遷移先。空欄ならリンクなし。</p></label>
@@ -591,7 +630,7 @@
     $('#save-notice').addEventListener('click', (e) => {
       saveContent({ notice: {
         enabled: $('#notice-enabled').checked,
-        text: $('#notice-text').value.trim(),
+        text: mlReadId('notice-text'),
         link: $('#notice-link').value.trim(),
       } }, e.currentTarget, 'お知らせを保存しました。');
     });
@@ -615,11 +654,11 @@
         <button type="button" class="btn btn-danger btn-xs" data-remove>削除</button>
       </div>
       <div class="plan-grid">
-        <label class="field"><span>プラン名</span><input type="text" data-k="name" value="${esc(p.name || '')}" placeholder="ウェディングフォト" /></label>
+        <div class="field wide"><span>プラン名</span>${mlInputs('data-k', 'name', p.name, { ph: 'ウェディングフォト' })}</div>
         <label class="field"><span>料金</span><input type="text" data-k="price" value="${esc(p.price || '')}" placeholder="¥100,000(税込)" /></label>
         <label class="field"><span>撮影時間など</span><input type="text" data-k="duration" value="${esc(p.duration || '')}" placeholder="撮影2時間ほど" /></label>
         <label class="field"><span>並び順 / ID</span><input type="text" data-k="id" value="${esc(p.id || '')}" placeholder="wedding" /></label>
-        <label class="field wide"><span>説明</span><textarea data-k="description" rows="2" placeholder="プランの紹介文">${esc(p.description || '')}</textarea></label>
+        <div class="field wide"><span>説明</span>${mlInputs('data-k', 'description', p.description, { textarea: true, rows: 2, ph: 'プランの紹介文' })}</div>
         <label class="field wide"><span>含まれるもの（1行に1項目）</span><textarea data-k="includes" rows="3" placeholder="データ全カット\nアルバム1冊">${esc(includes)}</textarea></label>
       </div>`;
     row.querySelector('[data-remove]').addEventListener('click', () => { row.remove(); renumberPlans(); });
@@ -660,10 +699,10 @@
       const includes = v('includes').split('\n').map((s) => s.trim()).filter(Boolean);
       return {
         id: v('id') || `plan-${i + 1}`,
-        name: v('name'),
+        name: mlReadRow(row, 'name'),
         price: v('price'),
         duration: v('duration'),
-        description: v('description'),
+        description: mlReadRow(row, 'description'),
         includes,
         featured: row.querySelector('[data-k="featured"]').checked,
       };
@@ -795,12 +834,9 @@
     pane.innerHTML = `
       <div class="card card-pad editor-card">
         <div class="editor-grid">
-          <label class="field"><span>アイブロウ（小見出し）</span>
-            <input type="text" id="hero-eyebrow" placeholder="例）OKINAWA WEDDING PHOTO" value="${esc(h.eyebrow || '')}" /></label>
-          <label class="field"><span>タイトル</span>
-            <input type="text" id="hero-title" placeholder="メインのキャッチコピー" value="${esc(h.title || '')}" /></label>
-          <label class="field"><span>サブタイトル</span>
-            <textarea id="hero-subtitle" rows="2" placeholder="補足のリード文">${esc(h.subtitle || '')}</textarea></label>
+          ${mlField('hero-eyebrow', 'アイブロウ（小見出し）', h.eyebrow, { ph: '例）OKINAWA WEDDING PHOTO' })}
+          ${mlField('hero-title', 'タイトル', h.title, { ph: 'メインのキャッチコピー' })}
+          ${mlField('hero-subtitle', 'サブタイトル', h.subtitle, { textarea: true, rows: 2, ph: '補足のリード文' })}
           <p class="help-text">${esc(KEEP_HINT)}</p>
         </div>
         <div class="save-bar">
@@ -809,9 +845,9 @@
       </div>`;
     $('#save-hero').addEventListener('click', (e) => {
       saveContent({ hero: {
-        eyebrow: $('#hero-eyebrow').value.trim(),
-        title: $('#hero-title').value.trim(),
-        subtitle: $('#hero-subtitle').value.trim(),
+        eyebrow: mlReadId('hero-eyebrow'),
+        title: mlReadId('hero-title'),
+        subtitle: mlReadId('hero-subtitle'),
       } }, e.currentTarget, 'トップの内容を保存しました。');
     });
   }
@@ -828,12 +864,9 @@
             <span class="track"></span>
             <span>イベント情報を公開サイトに表示する</span>
           </label>
-          <label class="field"><span>タイトル</span>
-            <input type="text" id="event-title" placeholder="例）夏季キャンペーン" value="${esc(ev.title || '')}" /></label>
-          <label class="field"><span>本文</span>
-            <textarea id="event-body" rows="4" placeholder="イベントの内容">${esc(ev.body || '')}</textarea></label>
-          <label class="field"><span>期間</span>
-            <input type="text" id="event-period" placeholder="例）2026/07/01〜2026/08/31" value="${esc(ev.period || '')}" /></label>
+          ${mlField('event-title', 'タイトル', ev.title, { ph: '例）夏季キャンペーン' })}
+          ${mlField('event-body', '本文', ev.body, { textarea: true, rows: 4, ph: 'イベントの内容' })}
+          ${mlField('event-period', '期間', ev.period, { ph: '例）2026/07/01〜2026/08/31' })}
           <p class="help-text">${esc(KEEP_HINT)}</p>
         </div>
         <div class="save-bar">
@@ -843,11 +876,237 @@
     $('#save-event').addEventListener('click', (e) => {
       saveContent({ event: {
         enabled: $('#event-enabled').checked,
-        title: $('#event-title').value.trim(),
-        body: $('#event-body').value.trim(),
-        period: $('#event-period').value.trim(),
+        title: mlReadId('event-title'),
+        body: mlReadId('event-body'),
+        period: mlReadId('event-period'),
       } }, e.currentTarget, 'イベント情報を保存しました。');
     });
+  }
+
+  // ─ ギャラリー（契約 v3）─
+  const GAL_SLOTS = [
+    ['top', 'トップ'],
+    ['top-dress', 'トップ・ドレス'],
+    ['wedding', 'ウェディング'],
+    ['anniversary', 'アニバーサリー'],
+  ];
+  let galWorking = {};        // 編集中の全スロット { slot: { items:[...] } }
+  let galSlot = 'top';        // 表示中スロット
+  let manifestImages = null;  // images/manifest.json のキャッシュ
+  let pickerSelected = [];    // ピッカーで選択中の src
+
+  function normGalItem(it) {
+    it = it || {};
+    return {
+      src: it.src ? String(it.src) : '',
+      href: it.href ? String(it.href) : '',
+      caption: ml(it.caption),
+      visible: it.visible !== false,
+    };
+  }
+  function normGalleries(g) {
+    const out = {};
+    GAL_SLOTS.forEach(([k]) => {
+      const slot = g && g[k];
+      const items = slot && Array.isArray(slot.items) ? slot.items : [];
+      out[k] = { items: items.map(normGalItem).filter((it) => it.src) };
+    });
+    return out;
+  }
+
+  function renderGalleryPane() {
+    galWorking = normGalleries(content.galleries);
+    if (!galWorking[galSlot]) galSlot = 'top';
+    const pane = $('[data-cpane="gallery"]');
+    pane.innerHTML = `
+      <div class="gal-toolbar">
+        <label class="field" style="max-width:300px"><span>スロット（表示位置）</span>
+          <select id="gal-slot">
+            ${GAL_SLOTS.map(([k, label]) => `<option value="${k}"${k === galSlot ? ' selected' : ''}>${esc(label)}</option>`).join('')}
+          </select></label>
+        <div class="gal-add-bar">
+          <button type="button" class="btn btn-ghost btn-sm" id="gal-pick">＋ 画像を選ぶ</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="gal-upload">⤴ アップロード</button>
+          <input type="file" id="gal-file" accept="image/*" multiple hidden />
+        </div>
+      </div>
+      <p class="help-text" style="margin:.2rem 0 1rem">サムネイルの「画像を選ぶ」で既存画像から追加、または端末から「アップロード」します。表示順は ▲▼ で変更、表示トグルで公開/非公開を切替。</p>
+      <div class="gal-items" id="gal-items"></div>
+      <div class="save-bar"><button class="btn btn-primary" id="save-gallery">ギャラリーを保存する</button>
+        <p class="help-text" style="margin:0">変更は「保存」を押すまで公開されません。</p></div>`;
+
+    $('#gal-slot').addEventListener('change', (e) => { galSlot = e.target.value; paintGalItems(); });
+    $('#gal-pick').addEventListener('click', openPicker);
+    $('#gal-upload').addEventListener('click', () => $('#gal-file').click());
+    $('#gal-file').addEventListener('change', (e) => { uploadFiles(Array.from(e.target.files || [])); e.target.value = ''; });
+    $('#save-gallery').addEventListener('click', (e) => saveGalleries(e.currentTarget));
+    paintGalItems();
+  }
+
+  function galItemCard(it, i) {
+    const fname = (it.src || '').split('/').pop();
+    return `<div class="gal-item${it.visible ? '' : ' is-hidden'}" data-idx="${i}">
+      <div class="gal-thumb"><img src="${esc(it.src)}" alt="" loading="lazy" /></div>
+      <div class="gal-body">
+        <div class="gal-item-head">
+          <span class="gal-fname" title="${esc(it.src)}">${esc(fname)}</span>
+          <div class="gal-ctrls">
+            <button type="button" class="icon-btn gal-mini" data-act="up" aria-label="上へ" title="上へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+            <button type="button" class="icon-btn gal-mini" data-act="down" aria-label="下へ" title="下へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+            <label class="switch" title="公開/非公開"><input type="checkbox" data-vis ${it.visible ? 'checked' : ''} /><span class="track"></span><span style="font-size:.78rem">表示</span></label>
+            <button type="button" class="btn btn-danger btn-xs" data-act="del">削除</button>
+          </div>
+        </div>
+        ${mlInputs('data-cap', i, it.caption, { ph: 'キャプション' })}
+        <label class="field"><span>リンク先（href・任意）</span><input type="text" data-href value="${esc(it.href || '')}" placeholder="例）gallery-hare-8.html" /></label>
+      </div>
+    </div>`;
+  }
+
+  function paintGalItems() {
+    const sel = $('#gal-slot'); if (sel) sel.value = galSlot;
+    const slot = galWorking[galSlot] || { items: [] };
+    const wrap = $('#gal-items');
+    if (!slot.items.length) {
+      wrap.innerHTML = emptyState('画像がありません', '「＋ 画像を選ぶ」または「アップロード」から追加してください。');
+      return;
+    }
+    wrap.innerHTML = slot.items.map((it, i) => galItemCard(it, i)).join('');
+    $$('#gal-items .gal-item').forEach((card) => {
+      const i = Number(card.dataset.idx);
+      const item = slot.items[i];
+      if (!item) return;
+      // キャプションは mlInputs('data-cap', i, …) が data-cap="<i>-ja|en" で出力。
+      card.querySelectorAll('[data-cap]').forEach((inp) => {
+        const lang = inp.getAttribute('data-cap').endsWith('-en') ? 'en' : 'ja';
+        inp.addEventListener('input', () => { item.caption[lang] = inp.value; });
+      });
+      const hrefEl = card.querySelector('[data-href]');
+      if (hrefEl) hrefEl.addEventListener('input', () => { item.href = hrefEl.value.trim(); });
+      const vis = card.querySelector('[data-vis]');
+      if (vis) vis.addEventListener('change', () => { item.visible = vis.checked; card.classList.toggle('is-hidden', !vis.checked); });
+      card.querySelector('[data-act="up"]').addEventListener('click', () => moveGalItem(i, -1));
+      card.querySelector('[data-act="down"]').addEventListener('click', () => moveGalItem(i, 1));
+      card.querySelector('[data-act="del"]').addEventListener('click', () => { slot.items.splice(i, 1); paintGalItems(); });
+    });
+  }
+
+  function moveGalItem(i, dir) {
+    const items = galWorking[galSlot].items;
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    [items[i], items[j]] = [items[j], items[i]];
+    paintGalItems();
+  }
+
+  function saveGalleries(btn) {
+    const galleries = {};
+    GAL_SLOTS.forEach(([k]) => {
+      const items = (galWorking[k] ? galWorking[k].items : []).map((it) => ({
+        src: it.src,
+        href: it.href || '',
+        caption: { ja: it.caption.ja || '', en: it.caption.en || '' },
+        visible: it.visible !== false,
+      }));
+      galleries[k] = { items };
+    });
+    saveContent({ galleries }, btn, 'ギャラリーを保存しました。');
+  }
+
+  // ─ 画像ピッカー（manifest.json）─
+  async function openPicker() {
+    pickerSelected = [];
+    $('#picker').hidden = false;
+    $('#picker-scrim').hidden = false;
+    const grid = $('#picker-grid');
+    $('#picker-search').value = '';
+    if (!manifestImages) {
+      grid.innerHTML = loadingRow;
+      try {
+        const res = await fetch('/images/manifest.json', { cache: 'no-cache' });
+        const data = await res.json();
+        manifestImages = Array.isArray(data.images) ? data.images : [];
+      } catch {
+        manifestImages = [];
+      }
+    }
+    paintPicker('');
+    updatePickerCount();
+  }
+  function closePicker() {
+    $('#picker').hidden = true;
+    $('#picker-scrim').hidden = true;
+  }
+  function paintPicker(q) {
+    const grid = $('#picker-grid');
+    const list = !q ? manifestImages : manifestImages.filter((s) => s.toLowerCase().includes(q.toLowerCase()));
+    if (!manifestImages.length) {
+      grid.innerHTML = emptyState('画像が見つかりません', 'scripts/build_image_manifest.py を実行して manifest.json を生成してください。');
+      return;
+    }
+    if (!list.length) {
+      grid.innerHTML = emptyState('該当する画像がありません', '検索条件を変更してください。');
+      return;
+    }
+    grid.innerHTML = list.map((src) =>
+      `<button type="button" class="pick-cell${pickerSelected.includes(src) ? ' is-sel' : ''}" data-src="${esc(src)}">
+        <img src="${esc(src)}" alt="" loading="lazy" />
+        <span class="pick-check" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      </button>`).join('');
+    $$('#picker-grid .pick-cell').forEach((cell) =>
+      cell.addEventListener('click', () => {
+        const src = cell.dataset.src;
+        const idx = pickerSelected.indexOf(src);
+        if (idx >= 0) pickerSelected.splice(idx, 1); else pickerSelected.push(src);
+        cell.classList.toggle('is-sel', pickerSelected.includes(src));
+        updatePickerCount();
+      }));
+  }
+  function updatePickerCount() {
+    $('#picker-count').textContent = `${pickerSelected.length} 件選択中`;
+    $('#picker-add').disabled = pickerSelected.length === 0;
+  }
+  function addPickedToSlot() {
+    if (!pickerSelected.length) return;
+    const items = galWorking[galSlot].items;
+    pickerSelected.forEach((src) => items.push(normGalItem({ src, visible: true })));
+    closePicker();
+    paintGalItems();
+    toast(`${pickerSelected.length} 件の画像を追加しました。保存を忘れずに。`, 'ok');
+  }
+
+  // ─ アップロード（/api/upload・base64 JSON）─
+  function readAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(new Error('ファイルの読み込みに失敗しました。'));
+      r.readAsDataURL(file);
+    });
+  }
+  async function uploadFiles(files) {
+    if (!files.length) return;
+    let added = 0;
+    for (const file of files) {
+      try {
+        const dataUrl = await readAsDataURL(file);
+        const base64 = String(dataUrl).split(',')[1] || '';
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+          body: JSON.stringify({ filename: file.name, contentType: file.type, data: base64 }),
+        });
+        if (res.status === 501) { toast('画像アップロードは Blob 未接続のため利用できません', 'error'); break; }
+        if (res.status === 401) { clearToken(); showLogin('セッションの有効期限が切れました。再度ログインしてください。'); return; }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { toast(data.error || `アップロードに失敗しました (${res.status})`, 'error'); break; }
+        if (data.url) { galWorking[galSlot].items.push(normGalItem({ src: data.url, visible: true })); added++; }
+      } catch (err) {
+        toast(err.message || 'アップロードに失敗しました。', 'error');
+        break;
+      }
+    }
+    if (added) { paintGalItems(); toast(`${added} 件の画像を追加しました。保存を忘れずに。`, 'ok'); }
   }
 
   // ════════════════ ⑤ 設定 ════════════════
@@ -901,7 +1160,13 @@
   }
   $('#drawer-close').addEventListener('click', closeDrawer);
   $('#drawer-scrim').addEventListener('click', closeDrawer);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDrawer(); closePicker(); } });
+
+  // 画像ピッカー（静的要素）の制御
+  $('#picker-close').addEventListener('click', closePicker);
+  $('#picker-scrim').addEventListener('click', closePicker);
+  $('#picker-add').addEventListener('click', addPickedToSlot);
+  $('#picker-search').addEventListener('input', (e) => paintPicker(e.target.value.trim()));
 
   // ════════════════ 起動 ════════════════
   console.info(

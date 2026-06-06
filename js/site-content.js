@@ -25,6 +25,22 @@
   var ENDPOINT = '/api/content';
   var NOTICE_DISMISS_KEY = 'uim:notice:dismissed'; // 値 = 閉じた本文のハッシュ
 
+  // ── 多言語（JA / EN）────────────────────────────────────────────────
+  //   契約 v3: URL 경로が /en/ で시작하면 en、그 외는 ja。
+  //   다국어 필드는 文字列 / {ja,en} 객체 모두 수용。en 비면 ja로 fallback。
+  var LOCALE = /^\/en(\/|$)/.test(location.pathname) ? 'en' : 'ja';
+
+  function t(v) {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'object') {
+      var en = (v.en == null ? '' : '' + v.en).trim();
+      var ja = (v.ja == null ? '' : '' + v.ja).trim();
+      return LOCALE === 'en' ? en || ja : ja || en;
+    }
+    return '' + v;
+  }
+
   // ── 単一フェッチ（Promise キャッシュ）─────────────────────────────
   var contentPromise = null;
   function loadContent() {
@@ -47,12 +63,13 @@
     var n = content && content.notice;
     if (!n) return { enabled: false, text: '', link: '' };
     if (typeof n === 'string') {
-      var t = n.trim();
-      return { enabled: !!t, text: t, link: '' };
+      var s = n.trim();
+      return { enabled: !!s, text: s, link: '' };
     }
+    var text = t(n.text).trim();
     return {
       enabled: !!n.enabled,
-      text: (n.text || '').toString().trim(),
+      text: text,
       link: (n.link || '').toString().trim(),
     };
   }
@@ -64,11 +81,12 @@
         p = p || {};
         return {
           id: (p.id || '').toString(),
-          name: (p.name || p.title || '').toString(),
+          // name / description は多言語（文字列 or {ja,en}）→ locale で解決
+          name: t(p.name || p.title || '').trim(),
           price: (p.price || '').toString(),
           duration: (p.duration || '').toString(),
           includes: Array.isArray(p.includes) ? p.includes.map(String) : [],
-          description: (p.description || p.desc || '').toString(),
+          description: t(p.description || p.desc || '').trim(),
           featured: !!p.featured,
         };
       })
@@ -241,6 +259,110 @@
     });
   }
 
+  // ── ギャラリー写真の差し替え ──────────────────────────────────────
+  //   契約 v3: [data-content^="gallery:"] の各コンテナごとに、
+  //   content.galleries[スロット].items の表示項目を、
+  //   「そのコンテナの既存子マークアップ」をテンプレートとして再描画する。
+  //
+  //   既存子要素を順番にテンプレート（リング）として使い回すため、
+  //   既存と同数のときはレイアウト変種（例: .tile.wide）も位置ごとに保たれる。
+  //   データが無い / 失敗 / 表示項目ゼロ のときは静的 HTML を一切変えない。
+
+  // 新たに差し込んだ .reveal 要素にアニメーション（visible 付与）を効かせる。
+  function revealNew(scope) {
+    var nodes = scope.querySelectorAll('.reveal:not(.visible)');
+    if (!nodes.length) return;
+    if (typeof IntersectionObserver !== 'function') {
+      Array.prototype.forEach.call(nodes, function (n) {
+        n.classList.add('visible');
+      });
+      return;
+    }
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+    Array.prototype.forEach.call(nodes, function (n) {
+      io.observe(n);
+    });
+  }
+
+  function normalizeGalleryItems(slotData) {
+    var items = slotData && Array.isArray(slotData.items) ? slotData.items : null;
+    if (!items) return null; // データ無し → 呼び出し側で静的維持
+    return items.filter(function (it) {
+      // visible が明示的に false の項目だけ除外（既定は表示）
+      return it && it.visible !== false && (it.src || it.href);
+    });
+  }
+
+  // テンプレート要素（既存子のクローン）に 1 項目分の値を流し込む。
+  function fillGalleryNode(node, item) {
+    var matches = node.matches ? node.matches.bind(node) : function () { return false; };
+    var link = matches('a') ? node : node.querySelector('a');
+    var img = matches('img') ? node : node.querySelector('img');
+    var caption = t(item.caption);
+
+    if (link && item.href) link.setAttribute('href', item.href);
+    if (img) {
+      if (item.src) img.setAttribute('src', item.src);
+      if (caption) img.setAttribute('alt', caption); // caption は表示テキスト＝alt に反映
+    }
+    if (caption) {
+      var fc = node.querySelector('figcaption');
+      if (fc) fc.textContent = caption;
+      if (link) {
+        // 既存マークアップに title / aria-label があれば caption に合わせる
+        if (link.hasAttribute('title')) link.setAttribute('title', caption);
+        if (link.hasAttribute('aria-label')) link.setAttribute('aria-label', caption);
+      }
+    }
+  }
+
+  function renderGalleries(content) {
+    var containers = document.querySelectorAll('[data-content^="gallery:"]');
+    if (!containers.length) return;
+    var galleries = (content && content.galleries) || {};
+
+    Array.prototype.forEach.call(containers, function (container) {
+      try {
+        var attr = container.getAttribute('data-content') || '';
+        var slot = attr.slice('gallery:'.length).trim();
+        if (!slot) return;
+
+        var items = normalizeGalleryItems(galleries[slot]);
+        if (!items || !items.length) return; // データ無し / 表示項目ゼロ → 静的維持
+
+        // 既存子要素をテンプレートのリングとして確保（パターン保持）
+        var templates = Array.prototype.slice.call(container.children);
+        if (!templates.length) return; // 雛形が無い → 安全側で何もしない
+
+        // フラグメントを完成させてから一括差し替え（途中失敗で空にしない）
+        var frag = document.createDocumentFragment();
+        items.forEach(function (item, i) {
+          var tpl = templates[i % templates.length];
+          var node = tpl.cloneNode(true);
+          fillGalleryNode(node, item);
+          frag.appendChild(node);
+        });
+
+        container.innerHTML = '';
+        container.appendChild(frag);
+        revealNew(container);
+      } catch (e) {
+        // このコンテナだけ静的維持。他コンテナには影響させない。
+        console.warn('[site-content] ギャラリーの描画に失敗しました。静的のまま維持します。', e);
+      }
+    });
+  }
+
   // ── スタジオ情報（SNS / メール）の差し替え ───────────────────────
   //   契約 v2: 値が空でない項目だけ、対応するリンクの href を置換する。
   //   空値なら静的 HTML をそのまま維持（絶対に空で上書きしない）。
@@ -289,9 +411,9 @@
   function normalizeHero(content) {
     var h = (content && content.hero) || {};
     return {
-      eyebrow: (h.eyebrow || '').toString().trim(),
-      title: (h.title || '').toString().trim(),
-      subtitle: (h.subtitle || '').toString().trim(),
+      eyebrow: t(h.eyebrow).trim(),
+      title: t(h.title).trim(),
+      subtitle: t(h.subtitle).trim(),
     };
   }
 
@@ -323,9 +445,9 @@
     var e = (content && content.event) || {};
     return {
       enabled: !!e.enabled,
-      title: (e.title || '').toString().trim(),
-      body: (e.body || '').toString().trim(),
-      period: (e.period || '').toString().trim(),
+      title: t(e.title).trim(),
+      body: t(e.body).trim(),
+      period: t(e.period).trim(),
     };
   }
 
@@ -357,6 +479,8 @@
   // ── 公開 API（reserve.js 等から再利用）────────────────────────────
   window.UIMContent = {
     load: loadContent,
+    locale: LOCALE,
+    t: t,
     normalizeNotice: normalizeNotice,
     normalizePlans: normalizePlans,
     normalizeStudio: normalizeStudio,
@@ -377,6 +501,11 @@
         renderPlans(normalizePlans(content));
       } catch (e) {
         console.warn('[site-content] プランの描画に失敗しました。', e);
+      }
+      try {
+        renderGalleries(content);
+      } catch (e) {
+        console.warn('[site-content] ギャラリーの描画に失敗しました。', e);
       }
       try {
         applyStudio(normalizeStudio(content));
