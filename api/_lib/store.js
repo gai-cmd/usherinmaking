@@ -32,6 +32,131 @@ export const KEYS = {
   content: 'uim:content',
 };
 
+// ─── ステータスの正規化（後方互換） ─────────────────────────────────────────
+//   古いレコード（status 無し）を読むときに既定値を補う。
+//   契約: お問い合わせ new|read|replied / ご予約 pending|confirmed|cancelled
+export const CONTACT_STATUSES = ['new', 'read', 'replied'];
+export const RESERVATION_STATUSES = ['pending', 'confirmed', 'cancelled'];
+
+export function normalizeContact(c) {
+  if (!c || typeof c !== 'object') return c;
+  const status = CONTACT_STATUSES.includes(c.status) ? c.status : 'new';
+  return { ...c, status, updatedAt: c.updatedAt || c.createdAt || '' };
+}
+export function normalizeReservation(r) {
+  if (!r || typeof r !== 'object') return r;
+  const status = RESERVATION_STATUSES.includes(r.status) ? r.status : 'pending';
+  return { ...r, status, updatedAt: r.updatedAt || r.createdAt || '' };
+}
+
+// ─── コンテンツ既定値（plan.html の実プランから抽出。ダミー／SEED 無し） ─────
+//   store にコンテンツが無いとき GET /api/content が返す土台。
+const isYmdStr = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+export const DEFAULT_CONTENT = {
+  notice: { enabled: false, text: '', link: '' },
+  plans: [
+    {
+      id: 'wedding-simple',
+      name: 'ウェディングフォト Simple',
+      price: '¥76,000(税込)',
+      duration: '撮影時間 1時間 / 1ヶ所',
+      includes: ['お渡し写真原本全データ200カット以上', '詳細編集30カット'],
+      description: '1か所で撮影、日中のみ',
+      featured: false,
+    },
+    {
+      id: 'wedding-basic',
+      name: 'ウェディングフォト Basic',
+      price: '¥100,000(税込)',
+      duration: '撮影時間 2時間ほど',
+      includes: ['お渡し写真原本全データ400カット以上', '詳細編集40カット'],
+      description: '2か所で撮影 日中又は遅い午後からサンセット時間まで可能',
+      featured: true,
+    },
+    {
+      id: 'wedding-afterfull',
+      name: 'ウェディングフォト Afterfull',
+      price: '¥128,000(税込)',
+      duration: '撮影時間 3時間半ほど',
+      includes: ['お渡し写真原本全データ600カット以上', '詳細編集50カット'],
+      description: '3か所で撮影 日中、サンセット、夜景まで可能',
+      featured: false,
+    },
+    {
+      id: 'memorial-standard',
+      name: '記念写真 Standard',
+      price: '¥38,000(税込)',
+      duration: '撮影時間 1時間',
+      includes: ['お渡し写真原本全データ200カット以上', '色補正20カット'],
+      description: '1か所で撮影 日中のみ',
+      featured: false,
+    },
+    {
+      id: 'memorial-half',
+      name: '記念写真 Half',
+      price: '¥60,000(税込)',
+      duration: '撮影時間 2時間',
+      includes: ['お渡し写真原本全データ400カット以上', '色補正30カット'],
+      description: '2か所で撮影 日中又は遅い午後からサンセット時間まで可能',
+      featured: false,
+    },
+  ],
+  blockedDates: [],
+  capacityPerDay: 1,
+  updatedAt: '',
+};
+
+// プラン1件を安全な形に整える（読み出し・保存の両方で利用）。
+export function normalizePlan(p, i = 0) {
+  const o = p && typeof p === 'object' ? p : {};
+  return {
+    id: String(o.id || `plan-${i + 1}`).slice(0, 60),
+    name: String(o.name || '').slice(0, 120),
+    price: String(o.price || '').slice(0, 60),
+    duration: String(o.duration || '').slice(0, 120),
+    includes: Array.isArray(o.includes)
+      ? o.includes.map((x) => String(x).slice(0, 200)).slice(0, 30)
+      : [],
+    description: String(o.description || '').slice(0, 600),
+    featured: o.featured === true,
+  };
+}
+
+// 保存済みコンテンツを契約どおりの構造に正規化（欠損キーを補完）。
+export function normalizeContent(obj) {
+  const src = obj && typeof obj === 'object' ? obj : {};
+  const n = src.notice && typeof src.notice === 'object' ? src.notice : {};
+  const cap = Number(src.capacityPerDay);
+  return {
+    notice: {
+      enabled: n.enabled === true,
+      text: typeof n.text === 'string' ? n.text : '',
+      link: typeof n.link === 'string' ? n.link : '',
+    },
+    plans: Array.isArray(src.plans) ? src.plans.map((p, i) => normalizePlan(p, i)) : [],
+    blockedDates: Array.isArray(src.blockedDates)
+      ? Array.from(new Set(src.blockedDates.filter(isYmdStr))).sort()
+      : [],
+    capacityPerDay: Number.isFinite(cap) && cap > 0 ? Math.floor(cap) : 1,
+    updatedAt: typeof src.updatedAt === 'string' ? src.updatedAt : '',
+  };
+}
+
+// コンテンツ取得（store が空なら既定コンテンツ＝実プランを返す）。
+export async function getContent() {
+  const raw = await get(KEYS.content, null);
+  if (raw == null) {
+    const envCap = Number(process.env.RESERVE_DAILY_CAPACITY);
+    return {
+      ...DEFAULT_CONTENT,
+      plans: DEFAULT_CONTENT.plans.map((p) => ({ ...p, includes: [...p.includes] })),
+      capacityPerDay: Number.isFinite(envCap) && envCap > 0 ? Math.floor(envCap) : 1,
+    };
+  }
+  return normalizeContent(raw);
+}
+
 // KV を使うかどうか（両方の env が揃っているときのみ）
 const useKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 
@@ -112,4 +237,20 @@ export function genId(prefix = 'id') {
   }
 }
 
-export default { KEYS, get, set, list, push, genId };
+export default {
+  KEYS,
+  get,
+  set,
+  list,
+  push,
+  genId,
+  // ステータス／コンテンツ補助
+  CONTACT_STATUSES,
+  RESERVATION_STATUSES,
+  normalizeContact,
+  normalizeReservation,
+  normalizePlan,
+  normalizeContent,
+  getContent,
+  DEFAULT_CONTENT,
+};

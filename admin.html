@@ -9,90 +9,114 @@
 </head>
 <body>
 
-<!-- ───────── ログイン ───────── -->
+<!-- ════════════════ ログイン ════════════════ -->
 <section id="login-view" class="login-view" hidden>
   <form id="login-form" class="login-card" autocomplete="off">
+    <div class="login-logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-6 9 6v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 21V12h6v9"/>
+      </svg>
+    </div>
     <h1 class="login-brand">usher in making</h1>
-    <p class="login-sub">管理画面</p>
+    <p class="login-sub">管理コンソール</p>
     <label class="field">
       <span>パスワード</span>
-      <input type="password" id="password" name="password" required autocomplete="current-password" />
+      <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••" />
     </label>
-    <button type="submit" class="btn btn-primary" id="login-btn">ログイン</button>
+    <button type="submit" class="btn btn-primary btn-block" id="login-btn">ログイン</button>
     <p class="form-msg" id="login-msg" role="alert"></p>
   </form>
 </section>
 
-<!-- ───────── ダッシュボード ───────── -->
-<div id="dashboard-view" class="dashboard" hidden>
-  <header class="topbar">
-    <div class="topbar-brand">usher in making <span>管理画面</span></div>
-    <nav class="tabs" id="tabs">
-      <button class="tab is-active" data-tab="contacts">お問い合わせ</button>
-      <button class="tab" data-tab="reservations">ご予約</button>
-      <button class="tab" data-tab="content">コンテンツ編集</button>
+<!-- ════════════════ アプリシェル ════════════════ -->
+<div id="app" class="app" hidden>
+
+  <!-- 左サイドバー -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-6 9 6v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 21V12h6v9"/>
+        </svg>
+      </span>
+      <span class="sidebar-name">usher in making<small>管理コンソール</small></span>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <a class="nav-link" href="#/dashboard" data-route="dashboard">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span>ダッシュボード</span>
+      </a>
+      <a class="nav-link" href="#/reservations" data-route="reservations">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+        <span>予約管理</span>
+        <em class="nav-badge" id="nav-badge-reservations" hidden></em>
+      </a>
+      <a class="nav-link" href="#/contacts" data-route="contacts">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M3 6l9 7 9-7"/></svg>
+        <span>お問い合わせ</span>
+        <em class="nav-badge" id="nav-badge-contacts" hidden></em>
+      </a>
+      <a class="nav-link" href="#/content" data-route="content">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+        <span>コンテンツ管理</span>
+      </a>
+      <a class="nav-link" href="#/settings" data-route="settings">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>設定</span>
+      </a>
     </nav>
-    <button class="btn btn-ghost" id="logout-btn">ログアウト</button>
-  </header>
 
-  <main class="content">
+    <div class="sidebar-foot">
+      <span class="dot dot-ok"></span> システム稼働中
+    </div>
+  </aside>
+  <div class="scrim" id="sidebar-scrim" hidden></div>
 
-    <!-- お問い合わせ -->
-    <section class="panel" data-panel="contacts">
-      <div class="panel-head">
-        <h2>お問い合わせ一覧</h2>
-        <button class="btn btn-ghost btn-sm" data-reload="contacts">再読み込み</button>
-      </div>
-      <div id="contacts-list" class="cards"></div>
-    </section>
-
-    <!-- ご予約 -->
-    <section class="panel" data-panel="reservations" hidden>
-      <div class="panel-head">
-        <h2>ご予約一覧</h2>
-        <button class="btn btn-ghost btn-sm" data-reload="reservations">再読み込み</button>
-      </div>
-      <div id="reservations-list" class="cards"></div>
-    </section>
-
-    <!-- コンテンツ編集 -->
-    <section class="panel" data-panel="content" hidden>
-      <div class="panel-head">
-        <h2>サイトコンテンツ編集</h2>
-        <span class="updated" id="content-updated"></span>
-      </div>
-
-      <form id="content-form">
-        <label class="field">
-          <span>お知らせ（トップに表示）</span>
-          <textarea id="notice" rows="2"></textarea>
-        </label>
-
-        <h3 class="subhead">プラン・料金</h3>
-        <div id="plans" class="plans"></div>
-        <button type="button" class="btn btn-ghost btn-sm" id="add-plan">＋ プランを追加</button>
-
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary" id="save-btn">保存する</button>
-          <p class="form-msg" id="content-msg" role="status"></p>
+  <!-- メイン領域 -->
+  <div class="main-wrap">
+    <header class="topbar">
+      <button class="icon-btn hamburger" id="menu-toggle" aria-label="メニュー">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <h1 class="page-title" id="page-title">ダッシュボード</h1>
+      <div class="topbar-right">
+        <button class="icon-btn" id="refresh-btn" aria-label="再読み込み" title="再読み込み">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
+        </button>
+        <div class="user-chip">
+          <span class="user-avatar" aria-hidden="true">A</span>
+          <span class="user-name">管理者</span>
         </div>
-      </form>
-    </section>
+        <button class="btn btn-ghost btn-sm" id="logout-btn">ログアウト</button>
+      </div>
+    </header>
 
-  </main>
+    <main class="view-root" id="view-root">
+      <!-- 各ビューは JS が描画。雛形コンテナのみ用意 -->
+      <section class="view" data-view="dashboard" hidden></section>
+      <section class="view" data-view="reservations" hidden></section>
+      <section class="view" data-view="contacts" hidden></section>
+      <section class="view" data-view="content" hidden></section>
+      <section class="view" data-view="settings" hidden></section>
+    </main>
+  </div>
 </div>
 
-<!-- プラン行テンプレート -->
-<template id="plan-row-tpl">
-  <div class="plan-row">
-    <div class="plan-grid">
-      <label class="field"><span>タイトル</span><input type="text" data-k="title" /></label>
-      <label class="field"><span>料金</span><input type="text" data-k="price" placeholder="¥120,000〜" /></label>
-      <label class="field field-wide"><span>説明</span><textarea data-k="desc" rows="2"></textarea></label>
-    </div>
-    <button type="button" class="btn btn-danger btn-sm" data-remove>削除</button>
-  </div>
-</template>
+<!-- ════════════════ 詳細ドロワー ════════════════ -->
+<div class="drawer-scrim" id="drawer-scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="詳細">
+  <header class="drawer-head">
+    <h2 id="drawer-title">詳細</h2>
+    <button class="icon-btn" id="drawer-close" aria-label="閉じる">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </header>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+
+<!-- ════════════════ トースト ════════════════ -->
+<div class="toast-stack" id="toasts" aria-live="polite"></div>
 
 <script src="js/admin.js" defer></script>
 </body>

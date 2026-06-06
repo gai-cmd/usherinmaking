@@ -44,12 +44,15 @@ export default async function handler(req, res) {
     if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date))
       return res.status(400).json({ error: 'ご希望日の形式が正しくありません。' });
 
-    // 統一スキーマ（{ id, name, email, date, message, createdAt }）。
+    // 統一スキーマ（{ id, name, email, date, message, status, createdAt, updatedAt }）。
     // ua は管理画面では使わないが参考情報として保持。
+    const now = new Date().toISOString();
     const entry = {
       id: store.genId('c'),
       name, email, date, message,
-      createdAt: new Date().toISOString(),
+      status: 'new',
+      createdAt: now,
+      updatedAt: now,
       ua: (req.headers && req.headers['user-agent']) || '',
     };
 

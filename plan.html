@@ -172,7 +172,8 @@
         <h2 class="section-title jp">ウェディングフォト</h2>
         <p class="section-desc" style="margin-left:auto;margin-right:auto">ロケーション、前撮り、後撮り。撮影時間・撮影箇所・お渡しカット数に応じて3つのプランからお選びいただけます。</p>
       </div>
-      <div class="plan-grid">
+      <!-- 管理コンテンツ連携先。下記の静的カードは API 失敗時の fallback として維持。 -->
+      <div class="plan-grid" data-content="plans">
         <div class="plan-card">
           <h3>Simple</h3>
           <p class="plan-price">¥76,000(税込)</p>
@@ -360,4 +361,5 @@ afferfull plan アテンド 22,000円(税込み) : ヘアチェンジ付き</p>
   <div class="copyright">© 2026 usher in making. All rights reserved.</div>
 </footer>
 <script src="js/site.js"></script>
+<script src="js/site-content.js"></script>
 </body></html>

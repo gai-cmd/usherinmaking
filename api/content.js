@@ -9,7 +9,7 @@
 // キーは KEYS.content（"uim:content"）。
 
 import crypto from 'node:crypto';
-import store, { KEYS } from './_lib/store.js';
+import store, { KEYS, normalizePlan } from './_lib/store.js';
 
 // ─── トークン検証（admin.js と同方式・自己完結） ───────────────────────
 function secret() {
@@ -36,59 +36,60 @@ function bearer(req) {
   return m ? m[1].trim() : '';
 }
 
-// ─── 既定コンテンツ ──────────────────────────────────────────────────────
-const DEFAULT_CONTENT = {
-  notice: '梅雨明けの7月は予約が混み合います。お早めにお問い合わせください。',
-  plans: [
-    {
-      id: 'wedding',
-      title: 'ウェディングフォト',
-      desc: '沖縄の海と空を背景に、おふたりだけの一日を残します。',
-      price: '¥120,000〜',
-    },
-    {
-      id: 'family',
-      title: 'ファミリーフォト',
-      desc: '七五三・お宮参り・記念日に。ご家族の自然な表情を撮影します。',
-      price: '¥60,000〜',
-    },
-    {
-      id: 'anniversary',
-      title: 'アニバーサリー',
-      desc: '結婚記念日や誕生日など、節目の瞬間をかたちに。',
-      price: '¥80,000〜',
-    },
-  ],
-  updatedAt: '',
-};
+const isYmd = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
-async function readContent() {
-  const obj = await store.get(KEYS.content, DEFAULT_CONTENT);
-  return obj && typeof obj === 'object' ? obj : DEFAULT_CONTENT;
-}
-async function writeContent(obj) {
-  await store.set(KEYS.content, obj);
+// ─── POST の部分マージ用バリデーション ─────────────────────────────────────
+// 各検証関数は { value } か { error } を返す（error があれば 400 で返却）。
+function validateNotice(v) {
+  if (v == null || typeof v !== 'object' || Array.isArray(v))
+    return { error: 'notice はオブジェクト形式で指定してください。' };
+  return {
+    value: {
+      enabled: v.enabled === true,
+      text: (v.text == null ? '' : String(v.text)).slice(0, 2000),
+      link: (v.link == null ? '' : String(v.link)).slice(0, 500),
+    },
+  };
 }
 
-// 入力をサニタイズ（想定フィールドのみ通す）
-function sanitize(body) {
-  const out = { notice: '', plans: [], updatedAt: new Date().toISOString() };
-  out.notice = (body.notice || '').toString().slice(0, 2000);
-  const plans = Array.isArray(body.plans) ? body.plans.slice(0, 20) : [];
-  out.plans = plans.map((p, i) => ({
-    id: (p.id || `plan-${i + 1}`).toString().slice(0, 60),
-    title: (p.title || '').toString().slice(0, 120),
-    desc: (p.desc || '').toString().slice(0, 600),
-    price: (p.price || '').toString().slice(0, 60),
-  }));
-  return out;
+function validatePlans(v) {
+  if (!Array.isArray(v)) return { error: 'plans は配列で指定してください。' };
+  if (v.length > 50) return { error: 'plans は最大50件までです。' };
+  const out = [];
+  for (let i = 0; i < v.length; i++) {
+    const p = v[i];
+    if (!p || typeof p !== 'object')
+      return { error: `plans[${i}] はオブジェクト形式で指定してください。` };
+    if (!String(p.name || '').trim())
+      return { error: `plans[${i}] の name（プラン名）は必須です。` };
+    if (!String(p.price || '').trim())
+      return { error: `plans[${i}] の price（料金）は必須です。` };
+    out.push(normalizePlan(p, i));
+  }
+  return { value: out };
+}
+
+function validateBlockedDates(v) {
+  if (!Array.isArray(v)) return { error: 'blockedDates は配列で指定してください。' };
+  for (const d of v) {
+    if (!isYmd(d))
+      return { error: 'blockedDates は YYYY-MM-DD 形式の日付のみ指定できます。' };
+  }
+  return { value: Array.from(new Set(v)).sort() };
+}
+
+function validateCapacity(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 1)
+    return { error: 'capacityPerDay は1以上の整数で指定してください。' };
+  return { value: Math.floor(n) };
 }
 
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      // 公開: サイト表示用にも使えるよう認証不要
-      return res.status(200).json(await readContent());
+      // 公開: サイト表示用にも使えるよう認証不要。基本構造を必ず保証。
+      return res.status(200).json(await store.getContent());
     }
 
     if (req.method === 'POST') {
@@ -97,9 +98,35 @@ export default async function handler(req, res) {
       }
       const body =
         req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
-      const next = sanitize(body);
+
+      // 現在のコンテンツに対する「部分マージ」。指定されたキーのみ上書き。
+      const current = await store.getContent();
+      const next = { ...current };
+
+      if ('notice' in body) {
+        const r = validateNotice(body.notice);
+        if (r.error) return res.status(400).json({ error: r.error });
+        next.notice = r.value;
+      }
+      if ('plans' in body) {
+        const r = validatePlans(body.plans);
+        if (r.error) return res.status(400).json({ error: r.error });
+        next.plans = r.value;
+      }
+      if ('blockedDates' in body) {
+        const r = validateBlockedDates(body.blockedDates);
+        if (r.error) return res.status(400).json({ error: r.error });
+        next.blockedDates = r.value;
+      }
+      if ('capacityPerDay' in body) {
+        const r = validateCapacity(body.capacityPerDay);
+        if (r.error) return res.status(400).json({ error: r.error });
+        next.capacityPerDay = r.value;
+      }
+      next.updatedAt = new Date().toISOString();
+
       try {
-        await writeContent(next);
+        await store.set(KEYS.content, next);
       } catch (e) {
         console.error('[content] write failed (read-only fs?)', e);
         return res

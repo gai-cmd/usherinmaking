@@ -25,8 +25,8 @@
 //   RESERVE_TO          通知先（未設定時は CONTACT_TO にフォールバック）
 //   RESERVE_FROM        差出人（任意・検証済みドメイン推奨）
 //
-// 1日に受け付ける上限組数。1 にすると「1日1組（同日重複不可）」。
-const DAILY_CAPACITY = Number(process.env.RESERVE_DAILY_CAPACITY || 1);
+// 1日の受付上限（capacityPerDay）と休業日（blockedDates）は uim:content から読む。
+// store.getContent() が未保存時の既定値（RESERVE_DAILY_CAPACITY 反映）も面倒を見る。
 
 import store, { KEYS } from './_lib/store.js';
 
@@ -54,7 +54,8 @@ async function handleGet(req, res) {
   if (!isMonth(month))
     return res.status(400).json({ error: 'month は YYYY-MM 形式で指定してください。' });
 
-  const all = await loadAll();
+  const [all, content] = await Promise.all([loadAll(), store.getContent()]);
+  const capacity = content.capacityPerDay;
 
   // 当月かつ未キャンセルの予約を日付ごとに集計
   const counts = {};
@@ -63,13 +64,16 @@ async function handleGet(req, res) {
       counts[r.date] = (counts[r.date] || 0) + 1;
     }
   }
-  const full = Object.keys(counts).filter((d) => counts[d] >= DAILY_CAPACITY).sort();
+  // full = (予約数 ≥ capacity の日付) ∪ content.blockedDates（当月分）
+  const byCount = Object.keys(counts).filter((d) => counts[d] >= capacity);
+  const blocked = content.blockedDates.filter((d) => d.startsWith(month + '-'));
+  const full = Array.from(new Set([...byCount, ...blocked])).sort();
 
   // キャッシュさせない（状況が即時反映されるように）
   res.setHeader('Cache-Control', 'no-store');
   return res.status(200).json({
     month,
-    capacity: DAILY_CAPACITY,
+    capacity,
     reserved: full,   // 後方互換のため両キーで返す
     full,
   });
@@ -98,19 +102,25 @@ async function handlePost(req, res) {
   if (date < todayYmd)
     return res.status(400).json({ error: '過去の日付はご予約いただけません。' });
 
-  const all = await loadAll();
+  const [all, content] = await Promise.all([loadAll(), store.getContent()]);
+  const capacity = content.capacityPerDay;
 
-  // 同日重複検証
+  // 休業日（blockedDates）は受付不可
+  if (content.blockedDates.includes(date))
+    return res.status(409).json({ error: 'その日は撮影の受付を行っておりません。別の日をお選びください。' });
+
+  // 同日重複検証（満席判定）
   const sameDay = all.filter(
     (r) => r && r.status !== 'cancelled' && r.date === date
   ).length;
-  if (sameDay >= DAILY_CAPACITY)
+  if (sameDay >= capacity)
     return res.status(409).json({ error: 'その日は既に受付終了（満席）です。別の日をお選びください。' });
 
   // email は専用入力が無いため、連絡先がメール形式なら自動で採用（無ければ空）。
   const email = isEmail(contact) ? contact : (isEmail(body.email) ? body.email.trim() : '');
 
-  // 統一スキーマ（{ id, name, email, contact, plan, date, message, createdAt } + status）
+  // 統一スキーマ（{ id, name, email, contact, plan, date, message, status, createdAt, updatedAt }）
+  const now = new Date().toISOString();
   const record = {
     id: store.genId('r'),
     name,
@@ -120,7 +130,8 @@ async function handlePost(req, res) {
     date,
     message,
     status: 'pending',
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   };
   await store.push(KEYS.reservations, record);
 

@@ -14,13 +14,22 @@
 //   ADMIN_PASSWORD   管理画面のログインパスワード（未設定時は安全のためログイン不可）
 //
 // エンドポイント（?action= で分岐）:
-//   POST /api/admin?action=login   { password }            → { token }
-//   GET  /api/admin?action=verify  (Authorization: Bearer) → { ok }
-//   GET  /api/admin?action=contacts                        → { items: [...] }
-//   GET  /api/admin?action=reservations                    → { items: [...] }
+//   POST /api/admin?action=login              { password }      → { token, expiresIn }
+//   GET  /api/admin?action=verify             (Bearer)          → { ok }
+//   GET  /api/admin?action=stats              (Bearer)          → { inquiries, reservations, recent }
+//   GET  /api/admin?action=contacts                             → { items: [...] }
+//   GET  /api/admin?action=reservations                         → { items: [...] }
+//   POST /api/admin?action=update-contact     (Bearer) {id,status} → { ok, item }
+//   POST /api/admin?action=update-reservation (Bearer) {id,status} → { ok, item }
 
 import crypto from 'node:crypto';
-import store, { KEYS } from './_lib/store.js';
+import store, {
+  KEYS,
+  CONTACT_STATUSES,
+  RESERVATION_STATUSES,
+  normalizeContact,
+  normalizeReservation,
+} from './_lib/store.js';
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 8; // 8 時間有効
 
@@ -66,45 +75,29 @@ const KEY_FOR = {
   reservations: KEYS.reservations,
 };
 
-// まだ1件も受信が無いときだけ表示するデモ用サンプル（統一スキーマに準拠）。
-// ストアには書き込まず、表示のみ（実データが入れば自動でそちらが優先される）。
-const SEED = {
-  contacts: [
-    {
-      id: 'c-demo-1',
-      name: '山田 花子',
-      email: 'hanako@example.com',
-      date: '2026-06-20',
-      message: '6月の挙式に合わせてフォトプランを検討しています。空き状況を教えてください。',
-      createdAt: '2026-05-28T02:14:00.000Z',
-    },
-    {
-      id: 'c-demo-2',
-      name: '佐藤 健',
-      email: 'ken.sato@example.com',
-      date: '',
-      message: '家族写真（七五三）の料金について詳しく知りたいです。',
-      createdAt: '2026-06-01T07:42:00.000Z',
-    },
-  ],
-  reservations: [
-    {
-      id: 'r-demo-1',
-      name: '鈴木 美咲',
-      email: 'misaki@example.com',
-      contact: 'misaki@example.com',
-      plan: 'ウェディングフォト / ビーチ',
-      date: '2026-07-12',
-      message: '午前中の柔らかい光で撮影希望。ドレスは2着。',
-      createdAt: '2026-05-30T10:05:00.000Z',
-    },
-  ],
-};
-
-// 共通ストアから読み出す。空（未受信）のときだけデモ用シードを返す。
+// 共通ストアから読み出す（SEED／ダミー無し。未受信なら空配列）。
+// 後方互換: 古いレコードに status が無ければ読み出し時に既定値を補う。
 async function readStore(kind) {
   const arr = await store.list(KEY_FOR[kind]);
-  return arr.length ? arr : SEED[kind];
+  const norm = kind === 'contacts' ? normalizeContact : normalizeReservation;
+  return arr.map(norm);
+}
+
+// createdAt 降順
+function byCreatedAtDesc(x, y) {
+  return String(y.createdAt || '').localeCompare(String(x.createdAt || ''));
+}
+
+// id の該当レコードの status を更新して保存（後勝ち回避のため配列ごと読み書き）。
+async function updateStatus(kind, id, status) {
+  const key = KEY_FOR[kind];
+  const arr = await store.list(key);
+  const idx = arr.findIndex((x) => x && x.id === id);
+  if (idx === -1) return null;
+  const updated = { ...arr[idx], status, updatedAt: new Date().toISOString() };
+  arr[idx] = updated;
+  await store.set(key, arr);
+  return kind === 'contacts' ? normalizeContact(updated) : normalizeReservation(updated);
 }
 
 // ─── ハンドラ ────────────────────────────────────────────────────────────
@@ -152,10 +145,78 @@ export default async function handler(req, res) {
         res.setHeader('Allow', 'GET');
         return res.status(405).json({ error: 'Method Not Allowed' });
       }
-      const items = (await readStore(action)).slice().sort((x, y) =>
-        String(y.createdAt || '').localeCompare(String(x.createdAt || ''))
-      );
+      const items = (await readStore(action)).slice().sort(byCreatedAtDesc);
       return res.status(200).json({ items });
+    }
+
+    // --- ダッシュボード統計 ---
+    if (action === 'stats') {
+      if (req.method !== 'GET') {
+        res.setHeader('Allow', 'GET');
+        return res.status(405).json({ error: 'Method Not Allowed' });
+      }
+      const contacts = await readStore('contacts');
+      const reservations = await readStore('reservations');
+      const today = new Date().toISOString().slice(0, 10);
+
+      const inquiries = {
+        total: contacts.length,
+        new: contacts.filter((c) => c.status === 'new').length,
+      };
+      const resStats = {
+        total: reservations.length,
+        pending: reservations.filter((r) => r.status === 'pending').length,
+        // 予定: 未キャンセルで撮影日が今日以降
+        upcoming: reservations.filter(
+          (r) => r.status !== 'cancelled' && r.date && r.date >= today
+        ).length,
+      };
+
+      const recent = [
+        ...contacts.map((c) => ({
+          type: 'contact',
+          id: c.id,
+          name: c.name || '',
+          summary: (c.message || '').toString().slice(0, 80),
+          createdAt: c.createdAt || '',
+        })),
+        ...reservations.map((r) => ({
+          type: 'reservation',
+          id: r.id,
+          name: r.name || '',
+          summary: [r.plan, r.date].filter(Boolean).join(' / ').slice(0, 80),
+          createdAt: r.createdAt || '',
+        })),
+      ]
+        .sort(byCreatedAtDesc)
+        .slice(0, 10);
+
+      return res.status(200).json({ inquiries, reservations: resStats, recent });
+    }
+
+    // --- ステータス更新 ---
+    if (action === 'update-contact' || action === 'update-reservation') {
+      if (req.method !== 'POST') {
+        res.setHeader('Allow', 'POST');
+        return res.status(405).json({ error: 'Method Not Allowed' });
+      }
+      const body =
+        req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
+      const id = (body.id || '').toString().trim();
+      const status = (body.status || '').toString().trim();
+      const kind = action === 'update-contact' ? 'contacts' : 'reservations';
+      const valid = kind === 'contacts' ? CONTACT_STATUSES : RESERVATION_STATUSES;
+
+      if (!id) return res.status(400).json({ error: 'id は必須です。' });
+      if (!valid.includes(status))
+        return res
+          .status(400)
+          .json({ error: `status は ${valid.join(' / ')} のいずれかを指定してください。` });
+
+      const item = await updateStatus(kind, id, status);
+      if (!item)
+        return res.status(404).json({ error: '対象のレコードが見つかりません。' });
+      return res.status(200).json({ ok: true, item });
     }
 
     return res.status(400).json({ error: '不明な action です。' });

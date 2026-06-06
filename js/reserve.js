@@ -27,7 +27,10 @@
   var submitBtn = document.getElementById('reserve-submit');
   var msgEl = document.getElementById('form-msg');
   var summaryEl = document.getElementById('sel-summary');
-  var planOpts = Array.prototype.slice.call(document.querySelectorAll('.plan-opt'));
+  var planPick = document.getElementById('plan-pick');
+  // プラン選択肢は静的 HTML を初期値とし、/api/content の plans があれば差し替える。
+  // bindPlanOpts() で都度クリックハンドラを張り直すため可変。
+  var planOpts = [];
 
   if (!grid) return; // reserve.html 以外では何もしない
 
@@ -188,17 +191,105 @@
     render();
   });
 
-  // プラン選択
-  planOpts.forEach(function (opt) {
-    var radio = opt.querySelector('input[type="radio"]');
-    opt.addEventListener('click', function () {
-      if (radio) radio.checked = true;
-      planOpts.forEach(function (o) { o.classList.remove('is-checked'); });
-      opt.classList.add('is-checked');
-      if (planInput) planInput.value = radio ? radio.value : '';
-      updateSummary();
+  // プラン選択 — 現在 DOM 上の .plan-opt にクリックハンドラを張る（差し替え後も再利用）
+  function bindPlanOpts() {
+    planOpts = Array.prototype.slice.call(document.querySelectorAll('.plan-opt'));
+    planOpts.forEach(function (opt) {
+      var radio = opt.querySelector('input[type="radio"]');
+      opt.addEventListener('click', function () {
+        if (radio) radio.checked = true;
+        planOpts.forEach(function (o) { o.classList.remove('is-checked'); });
+        opt.classList.add('is-checked');
+        if (planInput) planInput.value = radio ? radio.value : '';
+        updateSummary();
+      });
     });
-  });
+  }
+
+  // /api/content の plans から選択肢を組み立て（既存マークアップ・クラスを再利用）
+  function planDescText(p) {
+    if (p.duration || (p.includes && p.includes.length)) {
+      var parts = [];
+      if (p.duration) parts.push(p.duration);
+      if (p.includes && p.includes.length) parts.push(p.includes.join('・'));
+      return parts.join('／');
+    }
+    return p.description || '';
+  }
+
+  function buildPlanOptions(plans) {
+    if (!planPick || !plans || !plans.length) return false;
+
+    var frag = document.createDocumentFragment();
+    plans.forEach(function (p) {
+      var name = p.name || '';
+      var price = p.price || '';
+      if (!name && !price) return;
+      // API へ送る値（plan）は静的版と同じく「名前 料金」の形に揃える
+      var value = (name + (price ? ' ' + price : '')).trim();
+
+      var label = document.createElement('label');
+      label.className = 'plan-opt';
+
+      var radioSpan = document.createElement('span');
+      radioSpan.className = 'po-radio';
+
+      var main = document.createElement('span');
+      main.className = 'po-main';
+      var nameEl = document.createElement('span');
+      nameEl.className = 'po-name';
+      nameEl.textContent = name;
+      var descEl = document.createElement('span');
+      descEl.className = 'po-desc';
+      descEl.textContent = planDescText(p);
+      main.appendChild(nameEl);
+      main.appendChild(descEl);
+
+      var priceEl = document.createElement('span');
+      priceEl.className = 'po-price';
+      priceEl.textContent = price;
+
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'plan';
+      input.value = value; // value 経由のみ。textContent と合わせ XSS 安全
+
+      label.appendChild(radioSpan);
+      label.appendChild(main);
+      label.appendChild(priceEl);
+      label.appendChild(input);
+      frag.appendChild(label);
+    });
+
+    if (!frag.childNodes.length) return false;
+    planPick.innerHTML = '';
+    planPick.appendChild(frag);
+    bindPlanOpts();
+    return true;
+  }
+
+  // 管理コンテンツの plans を取得して選択肢を差し替え（失敗・空なら静的版を維持）
+  function loadPlansFromContent() {
+    var loader =
+      window.UIMContent && typeof window.UIMContent.load === 'function'
+        ? window.UIMContent.load()
+        : fetch('/api/content', { headers: { Accept: 'application/json' } })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .catch(function () { return null; });
+
+    Promise.resolve(loader)
+      .then(function (content) {
+        if (!content) return; // 取得失敗 → 静的 fallback 維持
+        var plans =
+          window.UIMContent && typeof window.UIMContent.normalizePlans === 'function'
+            ? window.UIMContent.normalizePlans(content)
+            : (Array.isArray(content.plans) ? content.plans : []);
+        buildPlanOptions(plans);
+      })
+      .catch(function (err) {
+        console.warn('[reserve] プラン取得に失敗。静的プランを維持します。', err);
+      });
+  }
 
   function selectedPlanLabel() {
     var checked = document.querySelector('.plan-opt input[type="radio"]:checked');
@@ -313,6 +404,8 @@
   });
 
   // 初期化
+  bindPlanOpts();        // まず静的選択肢をバインド（fallback）
+  loadPlansFromContent(); // /api/content があれば差し替え
   updateSummary();
   render();
 })();
