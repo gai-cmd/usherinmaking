@@ -196,13 +196,33 @@ function fillEvent(raw) {
     period: toI18n(e.period),
   };
 }
+// 과거 시드 데이터의 알려진 오류를 읽기 시점에 자동 교정한다(레거시 마이그레이션).
+// KV에 옛 값이 저장돼 있어도 GET은 항상 교정본을 반환하고, 다음 저장 때 영구 반영된다.
+//   - anniversary의 デート雨天(date-rain) 카드가 家族 카드와 같은 썸네일을 쓰던 중복 (2026-06-07 수정)
+const LEGACY_GALLERY_FIXES = [
+  {
+    slot: 'anniversary',
+    href: 'gallery-date-rain.html',
+    oldSrc: '/images/up/c0aa505600aa3595.jpg',
+    newSrc: '/images/up/b9aef876a3ebddb5.jpg',
+  },
+];
+function applyLegacyGalleryFixes(slot, items) {
+  for (const f of LEGACY_GALLERY_FIXES) {
+    if (f.slot !== slot) continue;
+    for (const it of items) {
+      if (it.href === f.href && it.src === f.oldSrc) it.src = f.newSrc;
+    }
+  }
+  return items;
+}
 function fillGalleries(raw) {
   const g = isPlainObject(raw) ? raw : {};
   const out = {};
   for (const slot of GALLERY_SLOTS) {
     const sv = isPlainObject(g[slot]) ? g[slot] : null;
     const items = sv && Array.isArray(sv.items) ? sv.items : GALLERIES_DEFAULTS[slot].items;
-    out[slot] = { items: items.map(fillGalleryItem) };
+    out[slot] = { items: applyLegacyGalleryFixes(slot, items.map(fillGalleryItem)) };
   }
   return out;
 }
