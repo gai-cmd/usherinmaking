@@ -88,19 +88,19 @@ function toI18n(v) {
 }
 function validateI18n(v, label, maxlen) {
   if (typeof v === 'string') {
-    if (v.length > maxlen) return { error: `${label} は${maxlen}文字以内で指定してください。` };
+    if (v.length > maxlen) return { error: `${label}은(는) ${maxlen}자 이내로 입력해 주세요.` };
     return { value: { ja: v, en: '' } };
   }
   if (isPlainObject(v)) {
     const ja = v.ja == null ? '' : v.ja;
     const en = v.en == null ? '' : v.en;
     if (typeof ja !== 'string' || typeof en !== 'string')
-      return { error: `${label} の ja / en は文字列で指定してください。` };
+      return { error: `${label}의 ja / en은 문자열로 지정해 주세요.` };
     if (ja.length > maxlen || en.length > maxlen)
-      return { error: `${label} は${maxlen}文字以内で指定してください。` };
+      return { error: `${label}은(는) ${maxlen}자 이내로 입력해 주세요.` };
     return { value: { ja, en } };
   }
-  return { error: `${label} は文字列または { ja, en } で指定してください。` };
+  return { error: `${label}은(는) 문자열 또는 { ja, en }(으)로 지정해 주세요.` };
 }
 
 // ─── リージョン値の型検証（text / lines / photos を形から判定） ──────────────
@@ -111,17 +111,17 @@ const MAX_ITEMS = 200;
 const CAPTION_MAXLEN = 500;
 
 function validateRegion(rid, v) {
-  if (!isPlainObject(v)) return { error: `regions.${rid} はオブジェクトで指定してください。` };
+  if (!isPlainObject(v)) return { error: `regions.${rid}은(는) 객체로 지정해 주세요.` };
 
   // lines 型
   if (Array.isArray(v.lines)) {
     if (v.lines.length > MAX_LINES)
-      return { error: `regions.${rid}.lines は最大${MAX_LINES}行までです。` };
+      return { error: `regions.${rid}.lines는 최대 ${MAX_LINES}행까지입니다.` };
     const lines = [];
     for (let i = 0; i < v.lines.length; i++) {
       const ln = v.lines[i];
       if (!isPlainObject(ln))
-        return { error: `regions.${rid}.lines[${i}] はオブジェクトで指定してください。` };
+        return { error: `regions.${rid}.lines[${i}]은(는) 객체로 지정해 주세요.` };
       const r = validateI18n(ln.text == null ? '' : ln.text, `regions.${rid}.lines[${i}].text`, LINE_MAXLEN);
       if (r.error) return r;
       lines.push({ text: r.value, dim: ln.dim === true });
@@ -132,15 +132,15 @@ function validateRegion(rid, v) {
   // photos 型
   if (Array.isArray(v.items)) {
     if (v.items.length > MAX_ITEMS)
-      return { error: `regions.${rid}.items は最大${MAX_ITEMS}件までです。` };
+      return { error: `regions.${rid}.items는 최대 ${MAX_ITEMS}건까지입니다.` };
     const items = [];
     for (let i = 0; i < v.items.length; i++) {
       const it = v.items[i];
       if (!isPlainObject(it))
-        return { error: `regions.${rid}.items[${i}] はオブジェクトで指定してください。` };
+        return { error: `regions.${rid}.items[${i}]은(는) 객체로 지정해 주세요.` };
       const src = String(it.src == null ? '' : it.src).trim();
       if (!(src.startsWith('/images/') || /^https:\/\//i.test(src)))
-        return { error: `regions.${rid}.items[${i}].src は /images/ または https:// で始まる必要があります。` };
+        return { error: `regions.${rid}.items[${i}].src는 /images/ 또는 https://로 시작해야 합니다.` };
       const cr = validateI18n(it.caption == null ? '' : it.caption, `regions.${rid}.items[${i}].caption`, CAPTION_MAXLEN);
       if (cr.error) return cr;
       items.push({ src: src.slice(0, 500), caption: cr.value });
@@ -169,22 +169,22 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const path = normalizePath(req.query && req.query.path);
-      if (!path) return res.status(400).json({ error: 'path が不正です。' });
+      if (!path) return res.status(400).json({ error: 'path가 올바르지 않습니다.' });
       const storedAll = await store.get(PAGES_KEY, null);
       return res.status(200).json({ path, regions: mergedRegions(path, storedAll) });
     }
 
     if (req.method === 'POST') {
       if (!verifyToken(bearer(req))) {
-        return res.status(401).json({ error: '認証が必要です。再度ログインしてください。' });
+        return res.status(401).json({ error: '인증이 필요합니다. 다시 로그인해 주세요.' });
       }
       const body =
         req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
 
       const path = normalizePath(body.path);
-      if (!path) return res.status(400).json({ error: 'path が不正です。' });
+      if (!path) return res.status(400).json({ error: 'path가 올바르지 않습니다.' });
       if (!isPlainObject(body.regions))
-        return res.status(400).json({ error: 'regions はオブジェクトで指定してください。' });
+        return res.status(400).json({ error: 'regions는 객체로 지정해 주세요.' });
 
       // 入力リージョンを型検証
       const validated = {};
@@ -207,7 +207,7 @@ export default async function handler(req, res) {
         await store.set(PAGES_KEY, storedAll);
       } catch (e) {
         console.error('[pages] write failed (read-only fs?)', e);
-        return res.status(500).json({ error: '保存に失敗しました。本番では Vercel KV をご利用ください。' });
+        return res.status(500).json({ error: '저장에 실패했습니다. 운영 환경에서는 Vercel KV를 사용해 주세요.' });
       }
       // 返却は既定値マージ後の最新（プレビューと同じ見え方）
       return res.status(200).json({ ok: true, path, regions: mergedRegions(path, storedAll) });
@@ -217,6 +217,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (e) {
     console.error('[pages]', e);
-    return res.status(500).json({ error: 'サーバーエラーが発生しました。' });
+    return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 }

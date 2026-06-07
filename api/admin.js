@@ -113,7 +113,7 @@ export default async function handler(req, res) {
       }
       if (!secret()) {
         return res.status(500).json({
-          error: 'ADMIN_PASSWORD が設定されていません。Vercel の環境変数を設定してください。',
+          error: 'ADMIN_PASSWORD가 설정되지 않았습니다. Vercel 환경변수를 설정해 주세요.',
         });
       }
       const body =
@@ -124,7 +124,7 @@ export default async function handler(req, res) {
       const b = Buffer.from(secret());
       const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
       if (!ok) {
-        return res.status(401).json({ error: 'パスワードが正しくありません。' });
+        return res.status(401).json({ error: '비밀번호가 올바르지 않습니다.' });
       }
       return res.status(200).json({ token: createToken(), expiresIn: TOKEN_TTL_MS });
     }
@@ -137,7 +137,7 @@ export default async function handler(req, res) {
     }
 
     if (!authed) {
-      return res.status(401).json({ error: '認証が必要です。再度ログインしてください。' });
+      return res.status(401).json({ error: '인증이 필요합니다. 다시 로그인해 주세요.' });
     }
 
     if (action === 'contacts' || action === 'reservations') {
@@ -207,21 +207,21 @@ export default async function handler(req, res) {
       const kind = action === 'update-contact' ? 'contacts' : 'reservations';
       const valid = kind === 'contacts' ? CONTACT_STATUSES : RESERVATION_STATUSES;
 
-      if (!id) return res.status(400).json({ error: 'id は必須です。' });
+      if (!id) return res.status(400).json({ error: 'id는 필수입니다.' });
       if (!valid.includes(status))
         return res
           .status(400)
-          .json({ error: `status は ${valid.join(' / ')} のいずれかを指定してください。` });
+          .json({ error: `status는 ${valid.join(' / ')} 중 하나를 지정해 주세요.` });
 
       const item = await updateStatus(kind, id, status);
       if (!item)
-        return res.status(404).json({ error: '対象のレコードが見つかりません。' });
+        return res.status(404).json({ error: '대상 레코드를 찾을 수 없습니다.' });
       return res.status(200).json({ ok: true, item });
     }
 
-    return res.status(400).json({ error: '不明な action です。' });
+    return res.status(400).json({ error: '알 수 없는 action입니다.' });
   } catch (e) {
     console.error('[admin]', e);
-    return res.status(500).json({ error: 'サーバーエラーが発生しました。' });
+    return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 }

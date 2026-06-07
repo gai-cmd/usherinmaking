@@ -90,25 +90,25 @@ const STR_FIELDS = {
 
 function validateSeoPatch(patch) {
   if (!isPlainObject(patch))
-    return { error: 'seo はオブジェクトで指定してください。' };
+    return { error: 'seo는 객체로 지정해 주세요.' };
   const out = {};
 
   for (const [k, max] of Object.entries(STR_FIELDS)) {
     if (!(k in patch)) continue;
     const val = patch[k];
     if (typeof val !== 'string')
-      return { error: `seo.${k} は文字列で指定してください。` };
+      return { error: `seo.${k}은(는) 문자열로 지정해 주세요.` };
     out[k] = val.slice(0, max);
   }
 
   if ('breadcrumb' in patch) {
     const b = patch.breadcrumb;
-    if (!Array.isArray(b)) return { error: 'seo.breadcrumb は配列で指定してください。' };
+    if (!Array.isArray(b)) return { error: 'seo.breadcrumb는 배열로 지정해 주세요.' };
     const bc = [];
     for (let i = 0; i < b.length; i++) {
       const row = b[i];
       if (!Array.isArray(row) || row.length !== 2)
-        return { error: `seo.breadcrumb[${i}] は [名称, URL] の2要素配列で指定してください。` };
+        return { error: `seo.breadcrumb[${i}]은(는) [명칭, URL]의 2요소 배열로 지정해 주세요.` };
       bc.push([String(row[0] || '').slice(0, 200), String(row[1] || '').slice(0, 500)]);
     }
     out.breadcrumb = bc;
@@ -116,13 +116,13 @@ function validateSeoPatch(patch) {
 
   if ('gallery' in patch) {
     const g = patch.gallery;
-    if (!Array.isArray(g)) return { error: 'seo.gallery は配列で指定してください。' };
+    if (!Array.isArray(g)) return { error: 'seo.gallery는 배열로 지정해 주세요.' };
     out.gallery = g.map((s) => String(s || '').slice(0, 500)).slice(0, 200);
   }
 
   if ('product' in patch) {
     const p = patch.product;
-    if (!isPlainObject(p)) return { error: 'seo.product はオブジェクトで指定してください。' };
+    if (!isPlainObject(p)) return { error: 'seo.product는 객체로 지정해 주세요.' };
     out.product = {
       name: String(p.name || '').slice(0, 200),
       image: String(p.image || '').slice(0, 500),
@@ -132,13 +132,13 @@ function validateSeoPatch(patch) {
 
   if ('faq' in patch) {
     const f = patch.faq;
-    if (!Array.isArray(f)) return { error: 'seo.faq は配列で指定してください。' };
-    if (f.length > 50) return { error: 'seo.faq は最大50件までです。' };
+    if (!Array.isArray(f)) return { error: 'seo.faq는 배열로 지정해 주세요.' };
+    if (f.length > 50) return { error: 'seo.faq는 최대 50건까지입니다.' };
     const faq = [];
     for (let i = 0; i < f.length; i++) {
       const qa = f[i];
       if (!isPlainObject(qa))
-        return { error: `seo.faq[${i}] は { q, a } で指定してください。` };
+        return { error: `seo.faq[${i}]은(는) { q, a }(으)로 지정해 주세요.` };
       faq.push({ q: toI18n(qa.q), a: toI18n(qa.a) });
     }
     out.faq = faq;
@@ -159,20 +159,20 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const path = normalizePath(req.query && req.query.path);
-      if (!path) return res.status(400).json({ error: 'path が不正です。' });
+      if (!path) return res.status(400).json({ error: 'path가 올바르지 않습니다.' });
       const storedAll = await store.get(SEO_KEY, null);
       return res.status(200).json({ path, seo: mergedSeo(path, storedAll) });
     }
 
     if (req.method === 'POST') {
       if (!verifyToken(bearer(req))) {
-        return res.status(401).json({ error: '認証が必要です。再度ログインしてください。' });
+        return res.status(401).json({ error: '인증이 필요합니다. 다시 로그인해 주세요.' });
       }
       const body =
         req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
 
       const path = normalizePath(body.path);
-      if (!path) return res.status(400).json({ error: 'path が不正です。' });
+      if (!path) return res.status(400).json({ error: 'path가 올바르지 않습니다.' });
 
       const r = validateSeoPatch(body.seo);
       if (r.error) return res.status(400).json({ error: r.error });
@@ -187,7 +187,7 @@ export default async function handler(req, res) {
         await store.set(SEO_KEY, storedAll);
       } catch (e) {
         console.error('[seo] write failed (read-only fs?)', e);
-        return res.status(500).json({ error: '保存に失敗しました。本番では Vercel KV をご利用ください。' });
+        return res.status(500).json({ error: '저장에 실패했습니다. 운영 환경에서는 Vercel KV를 사용해 주세요.' });
       }
       return res.status(200).json({ ok: true, path, seo: mergedSeo(path, storedAll) });
     }
@@ -196,6 +196,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (e) {
     console.error('[seo]', e);
-    return res.status(500).json({ error: 'サーバーエラーが発生しました。' });
+    return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 }

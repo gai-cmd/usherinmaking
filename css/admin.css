@@ -397,7 +397,7 @@ table.data .nowrap { white-space: nowrap; }
 .cal-cell.empty { background: transparent; cursor: default; }
 .cal-cell.today { box-shadow: inset 0 0 0 2px var(--accent-soft); }
 .cal-cell.blocked { background: var(--st-red-bg); color: var(--st-red-fg); border-color: #f0c9c5; }
-.cal-cell.blocked::after { content: "休"; font-size: 0.6rem; }
+.cal-cell.blocked::after { content: "휴"; font-size: 0.6rem; }
 .cal-cell.blocked span { display: none; }
 .blocked-side h4 { margin: 0 0 0.6rem; font-size: 0.9rem; }
 .blocked-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }

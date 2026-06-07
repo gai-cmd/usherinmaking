@@ -69,19 +69,19 @@ function toI18n(v) {
 // 保存用バリデーション: 文字列／{ja,en} オブジェクトの両方を許可し、{ja,en} に統一。
 function validateI18n(v, label, maxlen) {
   if (typeof v === 'string') {
-    if (v.length > maxlen) return { error: `${label} は${maxlen}文字以内で指定してください。` };
+    if (v.length > maxlen) return { error: `${label}은(는) ${maxlen}자 이내로 입력해 주세요.` };
     return { value: { ja: v, en: '' } };
   }
   if (isPlainObject(v)) {
     const ja = v.ja == null ? '' : v.ja;
     const en = v.en == null ? '' : v.en;
     if (typeof ja !== 'string' || typeof en !== 'string')
-      return { error: `${label} の ja / en は文字列で指定してください。` };
+      return { error: `${label}의 ja / en은 문자열로 지정해 주세요.` };
     if (ja.length > maxlen || en.length > maxlen)
-      return { error: `${label} は${maxlen}文字以内で指定してください。` };
+      return { error: `${label}은(는) ${maxlen}자 이내로 입력해 주세요.` };
     return { value: { ja, en } };
   }
-  return { error: `${label} は文字列または { ja, en } オブジェクトで指定してください。` };
+  return { error: `${label}은(는) 문자열 또는 { ja, en } 객체로 지정해 주세요.` };
 }
 
 // ─── 既定値（契約 v2 / v3） ───────────────────────────────────────────────
@@ -255,7 +255,7 @@ function hydrate(base, raw) {
 
 // ─── POST バリデーション（各関数は { value } か { error } を返す） ─────────────
 function validateNotice(v) {
-  if (!isPlainObject(v)) return { error: 'notice はオブジェクト形式で指定してください。' };
+  if (!isPlainObject(v)) return { error: 'notice는 객체 형식으로 지정해 주세요.' };
   const r = validateI18n(v.text == null ? '' : v.text, 'notice.text', 2000);
   if (r.error) return r;
   return {
@@ -268,19 +268,19 @@ function validateNotice(v) {
 }
 
 function validatePlans(v) {
-  if (!Array.isArray(v)) return { error: 'plans は配列で指定してください。' };
-  if (v.length > 50) return { error: 'plans は最大50件までです。' };
+  if (!Array.isArray(v)) return { error: 'plans는 배열로 지정해 주세요.' };
+  if (v.length > 50) return { error: 'plans는 최대 50건까지입니다.' };
   const out = [];
   for (let i = 0; i < v.length; i++) {
     const p = v[i];
     if (!isPlainObject(p))
-      return { error: `plans[${i}] はオブジェクト形式で指定してください。` };
+      return { error: `plans[${i}]은(는) 객체 형식으로 지정해 주세요.` };
     const nameR = validateI18n(p.name == null ? '' : p.name, `plans[${i}].name`, 120);
     if (nameR.error) return nameR;
     if (!nameR.value.ja.trim() && !nameR.value.en.trim())
-      return { error: `plans[${i}] の name（プラン名）は必須です。` };
+      return { error: `plans[${i}]의 name(플랜 이름)은 필수입니다.` };
     if (!String(p.price || '').trim())
-      return { error: `plans[${i}] の price（料金）は必須です。` };
+      return { error: `plans[${i}]의 price(요금)는 필수입니다.` };
     const descR = validateI18n(p.description == null ? '' : p.description, `plans[${i}].description`, 600);
     if (descR.error) return descR;
     // id / price / duration / includes / featured は store の正規化を流用、name/description は i18n で上書き。
@@ -291,10 +291,10 @@ function validatePlans(v) {
 }
 
 function validateBlockedDates(v) {
-  if (!Array.isArray(v)) return { error: 'blockedDates は配列で指定してください。' };
+  if (!Array.isArray(v)) return { error: 'blockedDates는 배열로 지정해 주세요.' };
   for (const d of v) {
     if (!isYmd(d))
-      return { error: 'blockedDates は YYYY-MM-DD 形式の日付のみ指定できます。' };
+      return { error: 'blockedDates는 YYYY-MM-DD 형식의 날짜만 지정할 수 있습니다.' };
   }
   return { value: Array.from(new Set(v)).sort() };
 }
@@ -302,31 +302,31 @@ function validateBlockedDates(v) {
 function validateCapacity(v) {
   const n = Number(v);
   if (!Number.isFinite(n) || n < 1)
-    return { error: 'capacityPerDay は1以上の整数で指定してください。' };
+    return { error: 'capacityPerDay는 1 이상의 정수로 지정해 주세요.' };
   return { value: Math.floor(n) };
 }
 
 // studio は文字列（URL / メール）のみ。既存値に対しキー単位で部分マージ。
 function validateStudio(existing, patch) {
   if (!isPlainObject(patch))
-    return { error: 'studio はオブジェクト形式で指定してください。' };
+    return { error: 'studio는 객체 형식으로 지정해 주세요.' };
   const out = { ...existing };
   for (const k of STUDIO_KEYS) {
     if (!(k in patch)) continue;
     const val = patch[k];
     if (typeof val !== 'string')
-      return { error: `studio.${k} は文字列（空文字または URL）で指定してください。` };
+      return { error: `studio.${k}은(는) 문자열(빈 문자열 또는 URL)로 지정해 주세요.` };
     const s = val.trim();
     if (s === '') {
       out[k] = '';
       continue;
     }
     if (k === 'email') {
-      if (!isEmail(s)) return { error: 'studio.email はメールアドレス形式で指定してください。' };
+      if (!isEmail(s)) return { error: 'studio.email은 이메일 주소 형식으로 지정해 주세요.' };
       out[k] = s.slice(0, 200);
     } else {
       if (!isHttpUrl(s))
-        return { error: `studio.${k} は http:// または https:// で始まる URL を指定してください。` };
+        return { error: `studio.${k}은(는) http:// 또는 https://로 시작하는 URL을 지정해 주세요.` };
       out[k] = s.slice(0, 500);
     }
   }
@@ -335,7 +335,7 @@ function validateStudio(existing, patch) {
 
 function validateHero(existing, patch) {
   if (!isPlainObject(patch))
-    return { error: 'hero はオブジェクト形式で指定してください。' };
+    return { error: 'hero는 객체 형식으로 지정해 주세요.' };
   const out = { ...existing };
   for (const k of HERO_KEYS) {
     if (!(k in patch)) continue;
@@ -348,11 +348,11 @@ function validateHero(existing, patch) {
 
 function validateEvent(existing, patch) {
   if (!isPlainObject(patch))
-    return { error: 'event はオブジェクト形式で指定してください。' };
+    return { error: 'event는 객체 형식으로 지정해 주세요.' };
   const out = { ...existing };
   if ('enabled' in patch) {
     if (typeof patch.enabled !== 'boolean')
-      return { error: 'event.enabled は true / false で指定してください。' };
+      return { error: 'event.enabled는 true / false로 지정해 주세요.' };
     out.enabled = patch.enabled;
   }
   for (const k of ['title', 'body', 'period']) {
@@ -369,31 +369,31 @@ function validateEvent(existing, patch) {
 //   visible は boolean（省略時 true）、caption は {ja,en} に正規化。
 function validateGalleries(existing, patch) {
   if (!isPlainObject(patch))
-    return { error: 'galleries はオブジェクト形式で指定してください。' };
+    return { error: 'galleries는 객체 형식으로 지정해 주세요.' };
   for (const k of Object.keys(patch)) {
     if (!GALLERY_SLOTS.includes(k))
-      return { error: `galleries のスロットは ${GALLERY_SLOTS.join(' / ')} のみ指定できます。` };
+      return { error: `galleries의 슬롯은 ${GALLERY_SLOTS.join(' / ')}만 지정할 수 있습니다.` };
   }
   const out = { ...existing };
   for (const slot of GALLERY_SLOTS) {
     if (!(slot in patch)) continue;
     const sv = patch[slot];
     if (!isPlainObject(sv) || !Array.isArray(sv.items))
-      return { error: `galleries.${slot} は { items: [...] } 形式で指定してください。` };
+      return { error: `galleries.${slot}은(는) { items: [...] } 형식으로 지정해 주세요.` };
     if (sv.items.length > GALLERY_MAX_ITEMS)
-      return { error: `galleries.${slot} の items は最大${GALLERY_MAX_ITEMS}件までです。` };
+      return { error: `galleries.${slot}의 items는 최대 ${GALLERY_MAX_ITEMS}건까지입니다.` };
     const items = [];
     for (let i = 0; i < sv.items.length; i++) {
       const it = sv.items[i];
       if (!isPlainObject(it))
-        return { error: `galleries.${slot}.items[${i}] はオブジェクト形式で指定してください。` };
+        return { error: `galleries.${slot}.items[${i}]은(는) 객체 형식으로 지정해 주세요.` };
       const src = String(it.src == null ? '' : it.src).trim();
       if (!(src.startsWith('/images/') || /^https:\/\//i.test(src)))
         return {
-          error: `galleries.${slot}.items[${i}].src は /images/ または https:// で始まる必要があります。`,
+          error: `galleries.${slot}.items[${i}].src는 /images/ 또는 https://로 시작해야 합니다.`,
         };
       if ('visible' in it && typeof it.visible !== 'boolean')
-        return { error: `galleries.${slot}.items[${i}].visible は true / false で指定してください。` };
+        return { error: `galleries.${slot}.items[${i}].visible은(는) true / false로 지정해 주세요.` };
       const capR = validateI18n(
         it.caption == null ? '' : it.caption,
         `galleries.${slot}.items[${i}].caption`,
@@ -423,7 +423,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
       if (!verifyToken(bearer(req))) {
-        return res.status(401).json({ error: '認証が必要です。再度ログインしてください。' });
+        return res.status(401).json({ error: '인증이 필요합니다. 다시 로그인해 주세요.' });
       }
       const body =
         req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
@@ -482,7 +482,7 @@ export default async function handler(req, res) {
         console.error('[content] write failed (read-only fs?)', e);
         return res
           .status(500)
-          .json({ error: '保存に失敗しました。本番では Vercel KV をご利用ください。' });
+          .json({ error: '저장에 실패했습니다. 운영 환경에서는 Vercel KV를 사용해 주세요.' });
       }
       return res.status(200).json({ ok: true, content: next });
     }
@@ -491,6 +491,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (e) {
     console.error('[content]', e);
-    return res.status(500).json({ error: 'サーバーエラーが発生しました。' });
+    return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 }

@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════
-// 管理コンソール — usher in making
+// 관리 콘솔 — usher in making
 //  ・ハッシュルーティング（#/dashboard 等）による 7 セクション切替
 //    dashboard / reservations / contacts / content / pages / seo / settings
 //  ・/api/admin・/api/content・/api/pages・/api/seo・/api/rebuild と連携
@@ -29,11 +29,11 @@
     const res = await fetch(path, Object.assign({}, opts, { headers }));
     if (res.status === 401) {
       clearToken();
-      showLogin('セッションの有効期限が切れました。再度ログインしてください。');
+      showLogin('세션이 만료되었습니다. 다시 로그인해 주세요.');
       throw new Error('unauthorized');
     }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `エラーが発生しました (${res.status})`);
+    if (!res.ok) throw new Error(data.error || `오류가 발생했습니다 (${res.status})`);
     return data;
   }
 
@@ -61,8 +61,8 @@
         : `<input type="text" ${a} placeholder="${esc(ph)}" value="${esc(m[lang])}" />`;
     };
     return `<div class="ml-pair">
-      <div class="ml-cell"><em class="ml-tag">日本語</em>${ctrl('ja')}</div>
-      <div class="ml-cell"><em class="ml-tag en">English</em>${ctrl('en')}</div>
+      <div class="ml-cell"><em class="ml-tag">일본어</em>${ctrl('ja')}</div>
+      <div class="ml-cell"><em class="ml-tag en">영어(EN)</em>${ctrl('en')}</div>
     </div>`;
   }
   // ラベル付きの JA/EN フィールド（単一フォーム用、id 参照）。
@@ -84,36 +84,36 @@
     const d = new Date(iso);
     if (isNaN(d)) return esc(iso);
     const p = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
   }
   function fmtDate(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
     if (isNaN(d)) return esc(iso);
     const p = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
+    return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
   }
   function relTime(iso) {
     const d = new Date(iso);
     if (isNaN(d)) return '';
     const diff = (Date.now() - d.getTime()) / 1000;
-    if (diff < 60)    return 'たった今';
-    if (diff < 3600)  return `${Math.floor(diff / 60)}分前`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}日前`;
+    if (diff < 60)    return '방금 전';
+    if (diff < 3600)  return `${Math.floor(diff / 60)}분 전`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
     return fmtDate(iso);
   }
 
   // 状態 → バッジ表示（契約のステータス値に準拠）
   const RESV_STATUS = {
-    pending:   { label: '保留',       tone: 'amber' },
-    confirmed: { label: '確定',       tone: 'green' },
-    cancelled: { label: 'キャンセル', tone: 'gray'  },
+    pending:   { label: '대기', tone: 'amber' },
+    confirmed: { label: '확정', tone: 'green' },
+    cancelled: { label: '취소', tone: 'gray'  },
   };
   const CONTACT_STATUS = {
-    new:     { label: '新規',   tone: 'blue'  },
-    read:    { label: '確認済', tone: 'gray'  },
-    replied: { label: '返信済', tone: 'green' },
+    new:     { label: '신규',     tone: 'blue'  },
+    read:    { label: '확인',     tone: 'gray'  },
+    replied: { label: '답변완료', tone: 'green' },
   };
   function badge(map, status) {
     const s = map[status] || { label: status || '—', tone: 'gray' };
@@ -147,7 +147,7 @@
       <strong>${esc(title)}</strong><span>${esc(sub)}</span>
     </div>`;
   }
-  const loadingRow = '<div class="loading-row"><span class="spinner"></span>読み込み中…</div>';
+  const loadingRow = '<div class="loading-row"><span class="spinner"></span>불러오는 중…</div>';
 
   // ════════════════ ビュー切替（ログイン / アプリ）════════════════
   const loginView = $('#login-view');
@@ -177,7 +177,7 @@
     msg.textContent = '';
     msg.classList.remove('is-error');
     btn.disabled = true;
-    btn.textContent = 'ログイン中…';
+    btn.textContent = '로그인 중…';
     try {
       const res = await fetch('/api/admin?action=login', {
         method: 'POST',
@@ -185,7 +185,7 @@
         body: JSON.stringify({ password: $('#password').value }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'パスワードが正しくありません。');
+      if (!res.ok) throw new Error(data.error || '비밀번호가 올바르지 않습니다.');
       setToken(data.token);
       $('#password').value = '';
       showApp();
@@ -194,7 +194,7 @@
       msg.classList.add('is-error');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'ログイン';
+      btn.textContent = '로그인';
     }
   });
 
@@ -205,13 +205,13 @@
 
   // ════════════════ ルーティング ════════════════
   const ROUTES = {
-    dashboard:    { title: 'ダッシュボード', render: renderDashboard },
-    reservations: { title: '予約管理',       render: renderReservations },
-    contacts:     { title: 'お問い合わせ',   render: renderContacts },
-    content:      { title: 'コンテンツ管理', render: renderContent },
-    pages:        { title: 'ページ管理',     render: renderPages },
-    seo:          { title: 'SEO / AEO',      render: renderSeo },
-    settings:     { title: '設定',           render: renderSettings },
+    dashboard:    { title: '대시보드',     render: renderDashboard },
+    reservations: { title: '예약 관리',    render: renderReservations },
+    contacts:     { title: '문의',         render: renderContacts },
+    content:      { title: '콘텐츠 관리',  render: renderContent },
+    pages:        { title: '페이지 관리',  render: renderPages },
+    seo:          { title: 'SEO / AEO',    render: renderSeo },
+    settings:     { title: '설정',         render: renderSettings },
   };
   function routeName() {
     const h = location.hash.replace(/^#\/?/, '').split('/')[0];
@@ -244,10 +244,10 @@
 
   // ════════════════ ① ダッシュボード ════════════════
   async function renderDashboard(root) {
-    root.innerHTML = `<div class="section-head"><div><h2>ダッシュボード</h2>
-      <p class="sub">お問い合わせ・ご予約の概況</p></div></div>
+    root.innerHTML = `<div class="section-head"><div><h2>대시보드</h2>
+      <p class="sub">문의·예약 현황</p></div></div>
       <div class="stat-grid" id="stat-grid">${loadingRow}</div>
-      <div class="card"><div class="card-head-row"><h3 class="card-title">最近の活動</h3></div>
+      <div class="card"><div class="card-head-row"><h3 class="card-title">최근 활동</h3></div>
       <div id="activity">${loadingRow}</div></div>`;
     try {
       const s = await api('/api/admin?action=stats');
@@ -262,15 +262,15 @@
       const ICO_CHECK = '<path d="M20 6 9 17l-5-5"/>';
       const ICO_CAL = '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>';
       $('#stat-grid').innerHTML =
-        stat('blue',  ICO_MAIL,  s.inquiries?.new ?? 0,        '新規お問い合わせ') +
-        stat('amber', ICO_CLOCK, s.reservations?.pending ?? 0, '予約（保留中）') +
-        stat('green', ICO_CHECK, s.reservations?.upcoming ?? 0,'今後のご予約') +
-        stat('teal',  ICO_CAL,   s.reservations?.total ?? 0,   '予約 累計');
+        stat('blue',  ICO_MAIL,  s.inquiries?.new ?? 0,        '신규 문의') +
+        stat('amber', ICO_CLOCK, s.reservations?.pending ?? 0, '예약(대기 중)') +
+        stat('green', ICO_CHECK, s.reservations?.upcoming ?? 0,'예정된 예약') +
+        stat('teal',  ICO_CAL,   s.reservations?.total ?? 0,   '누적 예약');
 
       const recent = Array.isArray(s.recent) ? s.recent : [];
       const act = $('#activity');
       if (!recent.length) {
-        act.innerHTML = emptyState('まだデータがありません', '新しいお問い合わせやご予約がここに表示されます。');
+        act.innerHTML = emptyState('아직 데이터가 없습니다', '새로운 문의나 예약이 여기에 표시됩니다.');
       } else {
         act.className = 'activity';
         act.innerHTML = recent.map((r) => {
@@ -281,8 +281,8 @@
           return `<div class="activity-item">
             <div class="activity-ico tone-${isResv ? 'teal' : 'blue'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ico}</svg></div>
             <div class="activity-main">
-              <strong>${esc(r.name || '名称未設定')}</strong>
-              <div class="a-sum">${esc(isResv ? 'ご予約' : 'お問い合わせ')}・${esc(r.summary || '')}</div>
+              <strong>${esc(r.name || '이름 없음')}</strong>
+              <div class="a-sum">${esc(isResv ? '예약' : '문의')}・${esc(r.summary || '')}</div>
             </div>
             <span class="activity-time">${relTime(r.createdAt)}</span>
           </div>`;
@@ -291,7 +291,7 @@
     } catch (err) {
       if (err.message === 'unauthorized') return;
       $('#stat-grid').innerHTML = '';
-      $('#activity').innerHTML = emptyState('読み込みに失敗しました', err.message, true);
+      $('#activity').innerHTML = emptyState('불러오기에 실패했습니다', err.message, true);
       toast(err.message, 'error');
     }
   }
@@ -318,12 +318,12 @@
   async function renderReservations(root) {
     root.innerHTML = `
       <div class="section-head">
-        <div><h2>予約管理</h2><p class="sub">ご予約の確認と状態の更新</p></div>
+        <div><h2>예약 관리</h2><p class="sub">예약 확인 및 상태 변경</p></div>
         <div class="filters" id="resv-filters"></div>
       </div>
       <div class="table-wrap"><div class="table-scroll"><table class="data">
         <thead><tr>
-          <th>希望日</th><th>お名前</th><th>プラン</th><th>連絡先</th><th>状態</th><th class="nowrap">受付日</th>
+          <th>희망일</th><th>이름</th><th>플랜</th><th>연락처</th><th>상태</th><th class="nowrap">접수일</th>
         </tr></thead>
         <tbody id="resv-body"><tr><td colspan="6">${loadingRow}</td></tr></tbody>
       </table></div></div>`;
@@ -334,7 +334,7 @@
       paintResvRows();
     } catch (err) {
       if (err.message === 'unauthorized') return;
-      $('#resv-body').innerHTML = `<tr><td colspan="6">${emptyState('読み込みに失敗しました', err.message, true)}</td></tr>`;
+      $('#resv-body').innerHTML = `<tr><td colspan="6">${emptyState('불러오기에 실패했습니다', err.message, true)}</td></tr>`;
       toast(err.message, 'error');
     }
   }
@@ -342,7 +342,7 @@
     const counts = { all: resvCache.length, pending: 0, confirmed: 0, cancelled: 0 };
     resvCache.forEach((r) => { if (counts[r.status] != null) counts[r.status]++; });
     const defs = [
-      ['all', 'すべて'], ['pending', '保留'], ['confirmed', '確定'], ['cancelled', 'キャンセル'],
+      ['all', '전체'], ['pending', '대기'], ['confirmed', '확정'], ['cancelled', '취소'],
     ];
     $('#resv-filters').innerHTML = defs.map(([k, label]) =>
       `<button class="chip${resvFilter === k ? ' is-active' : ''}" data-filter="${k}">${label}<span class="count">${counts[k] || 0}</span></button>`
@@ -352,7 +352,7 @@
     const body = $('#resv-body');
     const items = resvFilter === 'all' ? resvCache : resvCache.filter((r) => r.status === resvFilter);
     if (!items.length) {
-      body.innerHTML = `<tr><td colspan="6">${emptyState('まだデータがありません', 'この条件のご予約はありません。')}</td></tr>`;
+      body.innerHTML = `<tr><td colspan="6">${emptyState('아직 데이터가 없습니다', '이 조건의 예약이 없습니다.')}</td></tr>`;
       return;
     }
     body.innerHTML = items.map((r) => `
@@ -380,23 +380,23 @@
     const r = resvCache.find((x) => String(x.id) === String(id));
     if (!r) return;
     const rows = [
-      ['希望日', esc(r.date || '—')],
-      ['お名前', esc(r.name || '—')],
-      ['プラン', esc(r.plan || '—')],
-      ['メール', r.email ? `<a class="cell-mail" href="mailto:${esc(r.email)}">${esc(r.email)}</a>` : '—'],
-      ['連絡先', esc(r.contact || '—')],
-      ['受付日', fmtDateTime(r.createdAt)],
-      ['更新日', fmtDateTime(r.updatedAt)],
+      ['희망일', esc(r.date || '—')],
+      ['이름', esc(r.name || '—')],
+      ['플랜', esc(r.plan || '—')],
+      ['이메일', r.email ? `<a class="cell-mail" href="mailto:${esc(r.email)}">${esc(r.email)}</a>` : '—'],
+      ['연락처', esc(r.contact || '—')],
+      ['접수일', fmtDateTime(r.createdAt)],
+      ['수정일', fmtDateTime(r.updatedAt)],
     ];
     const actions = Object.entries(RESV_STATUS).map(([k, s]) =>
       `<button class="btn btn-ghost btn-sm${r.status === k ? ' is-current' : ''}" data-status="${k}">${esc(s.label)}</button>`
     ).join('');
-    openDrawer('予約の詳細', `
+    openDrawer('예약 상세', `
       <dl class="detail-list">${rows.map(([k, v]) => `<div class="detail-row"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
-      ${r.message ? `<p class="drawer-section-label">メッセージ</p><div class="detail-msg">${esc(r.message)}</div>` : ''}
-      <p class="drawer-section-label">状態を変更</p>
+      ${r.message ? `<p class="drawer-section-label">메시지</p><div class="detail-msg">${esc(r.message)}</div>` : ''}
+      <p class="drawer-section-label">상태 변경</p>
       <div class="status-actions" id="resv-status-actions">${actions}</div>
-      ${r.email ? `<div class="drawer-foot"><a class="btn btn-soft btn-block" href="mailto:${esc(r.email)}?subject=${encodeURIComponent('【usher in making】ご予約について')}">メールで連絡する</a></div>` : ''}
+      ${r.email ? `<div class="drawer-foot"><a class="btn btn-soft btn-block" href="mailto:${esc(r.email)}?subject=${encodeURIComponent('【usher in making】ご予約について')}">이메일로 연락하기</a></div>` : ''}
     `);
     $$('#resv-status-actions [data-status]').forEach((b) =>
       b.addEventListener('click', () => updateResvStatus(r.id, b.dataset.status)));
@@ -410,7 +410,7 @@
       });
       const idx = resvCache.findIndex((x) => String(x.id) === String(id));
       if (idx >= 0 && item) resvCache[idx] = item;
-      toast('予約の状態を更新しました。', 'ok');
+      toast('예약 상태를 변경했습니다.', 'ok');
       renderResvFilters();
       paintResvRows();
       openResvDrawer(id);
@@ -428,12 +428,12 @@
   async function renderContacts(root) {
     root.innerHTML = `
       <div class="section-head">
-        <div><h2>お問い合わせ</h2><p class="sub">受信したお問い合わせの管理</p></div>
+        <div><h2>문의</h2><p class="sub">수신한 문의 관리</p></div>
         <div class="filters" id="contact-filters"></div>
       </div>
       <div class="table-wrap"><div class="table-scroll"><table class="data">
         <thead><tr>
-          <th>お名前</th><th>メール</th><th>希望日</th><th>状態</th><th class="nowrap">受付日</th>
+          <th>이름</th><th>이메일</th><th>희망일</th><th>상태</th><th class="nowrap">접수일</th>
         </tr></thead>
         <tbody id="contact-body"><tr><td colspan="5">${loadingRow}</td></tr></tbody>
       </table></div></div>`;
@@ -444,14 +444,14 @@
       paintContactRows();
     } catch (err) {
       if (err.message === 'unauthorized') return;
-      $('#contact-body').innerHTML = `<tr><td colspan="5">${emptyState('読み込みに失敗しました', err.message, true)}</td></tr>`;
+      $('#contact-body').innerHTML = `<tr><td colspan="5">${emptyState('불러오기에 실패했습니다', err.message, true)}</td></tr>`;
       toast(err.message, 'error');
     }
   }
   function renderContactFilters() {
     const counts = { all: contactCache.length, new: 0, read: 0, replied: 0 };
     contactCache.forEach((c) => { if (counts[c.status] != null) counts[c.status]++; });
-    const defs = [['all', 'すべて'], ['new', '新規'], ['read', '確認済'], ['replied', '返信済']];
+    const defs = [['all', '전체'], ['new', '신규'], ['read', '확인'], ['replied', '답변완료']];
     $('#contact-filters').innerHTML = defs.map(([k, label]) =>
       `<button class="chip${contactFilter === k ? ' is-active' : ''}" data-cfilter="${k}">${label}<span class="count">${counts[k] || 0}</span></button>`
     ).join('');
@@ -460,7 +460,7 @@
     const body = $('#contact-body');
     const items = contactFilter === 'all' ? contactCache : contactCache.filter((c) => c.status === contactFilter);
     if (!items.length) {
-      body.innerHTML = `<tr><td colspan="5">${emptyState('まだデータがありません', 'この条件のお問い合わせはありません。')}</td></tr>`;
+      body.innerHTML = `<tr><td colspan="5">${emptyState('아직 데이터가 없습니다', '이 조건의 문의가 없습니다.')}</td></tr>`;
       return;
     }
     body.innerHTML = items.map((c) => `
@@ -488,11 +488,11 @@
     // 詳細を開いた時点で新規→確認済に自動更新（既読扱い）
     if (c.status === 'new') updateContactStatus(c.id, 'read', true);
     const rows = [
-      ['お名前', esc(c.name || '—')],
-      ['メール', c.email ? `<a class="cell-mail" href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '—'],
-      ['希望日', esc(c.date || '—')],
-      ['受付日', fmtDateTime(c.createdAt)],
-      ['更新日', fmtDateTime(c.updatedAt)],
+      ['이름', esc(c.name || '—')],
+      ['이메일', c.email ? `<a class="cell-mail" href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '—'],
+      ['희망일', esc(c.date || '—')],
+      ['접수일', fmtDateTime(c.createdAt)],
+      ['수정일', fmtDateTime(c.updatedAt)],
     ];
     const actions = Object.entries(CONTACT_STATUS).map(([k, s]) =>
       `<button class="btn btn-ghost btn-sm${c.status === k ? ' is-current' : ''}" data-status="${k}">${esc(s.label)}</button>`
@@ -500,13 +500,13 @@
     const replyHref = c.email
       ? `mailto:${esc(c.email)}?subject=${encodeURIComponent('【usher in making】お問い合わせありがとうございます')}&body=${encodeURIComponent((c.name || '') + ' 様\n\nこの度はお問い合わせいただきありがとうございます。\n\n')}`
       : '';
-    openDrawer('お問い合わせの詳細', `
+    openDrawer('문의 상세', `
       <dl class="detail-list">${rows.map(([k, v]) => `<div class="detail-row"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
-      <p class="drawer-section-label">メッセージ</p>
-      <div class="detail-msg">${esc(c.message || '（本文なし）')}</div>
-      <p class="drawer-section-label">状態を変更</p>
+      <p class="drawer-section-label">메시지</p>
+      <div class="detail-msg">${esc(c.message || '(본문 없음)')}</div>
+      <p class="drawer-section-label">상태 변경</p>
       <div class="status-actions" id="contact-status-actions">${actions}</div>
-      ${replyHref ? `<div class="drawer-foot"><a class="btn btn-soft btn-block" id="reply-btn" href="${replyHref}">メールで返信する</a></div>` : ''}
+      ${replyHref ? `<div class="drawer-foot"><a class="btn btn-soft btn-block" id="reply-btn" href="${replyHref}">이메일로 답변하기</a></div>` : ''}
     `);
     // 返信ボタン押下で「返信済」に
     const rb = $('#reply-btn');
@@ -527,7 +527,7 @@
       paintContactRows();
       refreshBadges();
       if (!silent) {
-        toast('お問い合わせの状態を更新しました。', 'ok');
+        toast('문의 상태를 변경했습니다.', 'ok');
         openContactDrawer(id);
       }
     } catch (err) {
@@ -543,17 +543,17 @@
 
   async function renderContent(root) {
     root.innerHTML = `
-      <div class="section-head"><div><h2>コンテンツ管理</h2>
-        <p class="sub">公開サイトのお知らせ・プラン・休業日・各種情報を編集</p></div>
+      <div class="section-head"><div><h2>콘텐츠 관리</h2>
+        <p class="sub">공개 사이트의 공지·플랜·휴무일·각종 정보 편집</p></div>
         <span class="sub" id="content-updated"></span></div>
       <div class="tabbar" id="content-tabs">
-        <button class="tab-btn is-active" data-ctab="notice">お知らせ</button>
-        <button class="tab-btn" data-ctab="plans">プラン管理</button>
-        <button class="tab-btn" data-ctab="blocked">休業日</button>
-        <button class="tab-btn" data-ctab="studio">スタジオ情報</button>
-        <button class="tab-btn" data-ctab="hero">トップ</button>
-        <button class="tab-btn" data-ctab="event">イベント</button>
-        <button class="tab-btn" data-ctab="gallery">ギャラリー</button>
+        <button class="tab-btn is-active" data-ctab="notice">공지</button>
+        <button class="tab-btn" data-ctab="plans">플랜 관리</button>
+        <button class="tab-btn" data-ctab="blocked">휴무일</button>
+        <button class="tab-btn" data-ctab="studio">스튜디오 정보</button>
+        <button class="tab-btn" data-ctab="hero">메인</button>
+        <button class="tab-btn" data-ctab="event">이벤트</button>
+        <button class="tab-btn" data-ctab="gallery">갤러리</button>
       </div>
       <div class="tab-pane is-active" data-cpane="notice"></div>
       <div class="tab-pane" data-cpane="plans"></div>
@@ -574,11 +574,11 @@
       content = await api('/api/content', { method: 'GET' });
     } catch (err) {
       if (err.message === 'unauthorized') return;
-      root.querySelector('[data-cpane="notice"]').innerHTML = emptyState('読み込みに失敗しました', err.message, true);
+      root.querySelector('[data-cpane="notice"]').innerHTML = emptyState('불러오기에 실패했습니다', err.message, true);
       toast(err.message, 'error');
       return;
     }
-    $('#content-updated').textContent = content.updatedAt ? `最終更新: ${fmtDateTime(content.updatedAt)}` : '';
+    $('#content-updated').textContent = content.updatedAt ? `최종 수정: ${fmtDateTime(content.updatedAt)}` : '';
     renderNoticePane();
     renderPlansPane();
     renderBlockedPane();
@@ -589,17 +589,17 @@
   }
 
   // 空欄維持の共通案内文（hero / event）
-  const KEEP_HINT = '空欄の場合は現在のサイト表示を維持します。';
+  const KEEP_HINT = '비워두면 현재 사이트 표시를 유지합니다.';
 
   // 部分オブジェクトを POST してマージ保存（契約: POST /api/content）
   async function saveContent(partial, btn, okMsg) {
     const prev = btn ? btn.textContent : '';
-    if (btn) { btn.disabled = true; btn.textContent = '保存中…'; }
+    if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
     try {
       const res = await api('/api/content', { method: 'POST', body: JSON.stringify(partial) });
       if (res.content) content = res.content;
-      $('#content-updated').textContent = content.updatedAt ? `最終更新: ${fmtDateTime(content.updatedAt)}` : '';
-      toast(okMsg || '保存しました。', 'ok');
+      $('#content-updated').textContent = content.updatedAt ? `최종 수정: ${fmtDateTime(content.updatedAt)}` : '';
+      toast(okMsg || '저장했습니다.', 'ok');
       return true;
     } catch (err) {
       if (err.message !== 'unauthorized') toast(err.message, 'error');
@@ -619,15 +619,15 @@
           <label class="switch">
             <input type="checkbox" id="notice-enabled" ${n.enabled ? 'checked' : ''} />
             <span class="track"></span>
-            <span>トップにお知らせバナーを表示する</span>
+            <span>메인에 공지 배너 표시</span>
           </label>
-          ${mlField('notice-text', 'お知らせ文', n.text, { textarea: true, rows: 2, ph: '例）年末年始は休業いたします。' })}
-          <label class="field"><span>リンク URL（任意）</span>
-            <input type="text" id="notice-link" placeholder="https://… または /plan.html" value="${esc(n.link || '')}" />
-            <p class="help-text">バナーをクリックした際の遷移先。空欄ならリンクなし。</p></label>
+          ${mlField('notice-text', '공지 문구', n.text, { textarea: true, rows: 2, ph: '예) 연말연시는 휴무입니다.' })}
+          <label class="field"><span>링크 URL(선택)</span>
+            <input type="text" id="notice-link" placeholder="https://… 또는 /plan.html" value="${esc(n.link || '')}" />
+            <p class="help-text">배너 클릭 시 이동할 주소. 비워두면 링크 없음.</p></label>
         </div>
         <div class="save-bar">
-          <button class="btn btn-primary" id="save-notice">保存する</button>
+          <button class="btn btn-primary" id="save-notice">저장</button>
         </div>
       </div>`;
     $('#save-notice').addEventListener('click', (e) => {
@@ -635,7 +635,7 @@
         enabled: $('#notice-enabled').checked,
         text: mlReadId('notice-text'),
         link: $('#notice-link').value.trim(),
-      } }, e.currentTarget, 'お知らせを保存しました。');
+      } }, e.currentTarget, '공지를 저장했습니다.');
     });
   }
 
@@ -647,22 +647,22 @@
     if (p.id) row.dataset.id = p.id;
     row.innerHTML = `
       <div class="plan-edit-head">
-        <span class="plan-no">プラン ${i + 1}</span>
-        <span class="feat-flag" data-feat-label hidden>★ おすすめ</span>
+        <span class="plan-no">플랜 ${i + 1}</span>
+        <span class="feat-flag" data-feat-label hidden>★ 추천</span>
         <span class="spacer"></span>
-        <label class="switch" title="おすすめ表示">
+        <label class="switch" title="추천 표시">
           <input type="checkbox" data-k="featured" ${p.featured ? 'checked' : ''} />
-          <span class="track"></span><span style="font-size:.8rem">おすすめ</span>
+          <span class="track"></span><span style="font-size:.8rem">추천</span>
         </label>
-        <button type="button" class="btn btn-danger btn-xs" data-remove>削除</button>
+        <button type="button" class="btn btn-danger btn-xs" data-remove>삭제</button>
       </div>
       <div class="plan-grid">
-        <div class="field wide"><span>プラン名</span>${mlInputs('data-k', 'name', p.name, { ph: 'ウェディングフォト' })}</div>
-        <label class="field"><span>料金</span><input type="text" data-k="price" value="${esc(p.price || '')}" placeholder="¥100,000(税込)" /></label>
-        <label class="field"><span>撮影時間など</span><input type="text" data-k="duration" value="${esc(p.duration || '')}" placeholder="撮影2時間ほど" /></label>
-        <label class="field"><span>並び順 / ID</span><input type="text" data-k="id" value="${esc(p.id || '')}" placeholder="wedding" /></label>
-        <div class="field wide"><span>説明</span>${mlInputs('data-k', 'description', p.description, { textarea: true, rows: 2, ph: 'プランの紹介文' })}</div>
-        <label class="field wide"><span>含まれるもの（1行に1項目）</span><textarea data-k="includes" rows="3" placeholder="データ全カット\nアルバム1冊">${esc(includes)}</textarea></label>
+        <div class="field wide"><span>플랜명</span>${mlInputs('data-k', 'name', p.name, { ph: '예) 웨딩 포토' })}</div>
+        <label class="field"><span>요금</span><input type="text" data-k="price" value="${esc(p.price || '')}" placeholder="¥100,000(세금포함)" /></label>
+        <label class="field"><span>촬영 시간 등</span><input type="text" data-k="duration" value="${esc(p.duration || '')}" placeholder="예) 촬영 2시간" /></label>
+        <label class="field"><span>정렬 순서 / ID</span><input type="text" data-k="id" value="${esc(p.id || '')}" placeholder="wedding" /></label>
+        <div class="field wide"><span>설명</span>${mlInputs('data-k', 'description', p.description, { textarea: true, rows: 2, ph: '플랜 소개문' })}</div>
+        <label class="field wide"><span>포함 내역(한 줄에 한 항목)</span><textarea data-k="includes" rows="3" placeholder="데이터 전체 컷\n앨범 1권">${esc(includes)}</textarea></label>
       </div>`;
     row.querySelector('[data-remove]').addEventListener('click', () => { row.remove(); renumberPlans(); });
     const feat = row.querySelector('[data-k="featured"]');
@@ -670,16 +670,16 @@
     return row;
   }
   function renumberPlans() {
-    $$('#plan-list .plan-edit').forEach((row, i) => { row.querySelector('.plan-no').textContent = `プラン ${i + 1}`; });
+    $$('#plan-list .plan-edit').forEach((row, i) => { row.querySelector('.plan-no').textContent = `플랜 ${i + 1}`; });
   }
   function renderPlansPane() {
     const plans = Array.isArray(content.plans) ? content.plans : [];
     const pane = $('[data-cpane="plans"]');
     pane.innerHTML = `
       <div class="plan-list" id="plan-list"></div>
-      <button type="button" class="btn btn-ghost btn-sm" id="add-plan">＋ プランを追加</button>
-      <div class="save-bar"><button class="btn btn-primary" id="save-plans">プランを保存する</button>
-        <p class="help-text" style="margin:0">変更は「保存」を押すまで公開されません。</p></div>`;
+      <button type="button" class="btn btn-ghost btn-sm" id="add-plan">＋ 플랜 추가</button>
+      <div class="save-bar"><button class="btn btn-primary" id="save-plans">플랜 저장</button>
+        <p class="help-text" style="margin:0">변경 사항은 [저장]을 누르기 전까지 공개되지 않습니다.</p></div>`;
     const list = $('#plan-list');
     if (!plans.length) list.appendChild(emptyPlansHint());
     else plans.forEach((p, i) => list.appendChild(planRow(p, i)));
@@ -693,7 +693,7 @@
   function emptyPlansHint() {
     const d = document.createElement('div');
     d.setAttribute('data-empty', '');
-    d.innerHTML = emptyState('プランがありません', '「＋ プランを追加」から登録してください。');
+    d.innerHTML = emptyState('플랜이 없습니다', '[＋ 플랜 추가]로 등록해 주세요.');
     return d;
   }
   function savePlans(btn) {
@@ -710,7 +710,7 @@
         featured: row.querySelector('[data-k="featured"]').checked,
       };
     });
-    saveContent({ plans }, btn, 'プランを保存しました。');
+    saveContent({ plans }, btn, '플랜을 저장했습니다.');
   }
 
   // ─ 休業日（カレンダー）─
@@ -723,23 +723,23 @@
       <div class="cal-layout">
         <div class="calendar">
           <div class="cal-head">
-            <button class="icon-btn" id="cal-prev" aria-label="前の月"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <button class="icon-btn" id="cal-prev" aria-label="이전 달"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
             <span class="cal-month" id="cal-month"></span>
-            <button class="icon-btn" id="cal-next" aria-label="次の月"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+            <button class="icon-btn" id="cal-next" aria-label="다음 달"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
           </div>
           <div class="cal-grid" id="cal-grid"></div>
         </div>
         <div class="blocked-side">
-          <h4>休業日の一覧（${'<span id="blocked-count"></span>'}件）</h4>
+          <h4>휴무일 목록(${'<span id="blocked-count"></span>'}일)</h4>
           <div class="blocked-chips" id="blocked-chips"></div>
-          <div class="save-bar"><button class="btn btn-primary" id="save-blocked">休業日を保存する</button></div>
-          <p class="help-text">日付をクリックして休業日を切り替えます。保存するまで公開サイトには反映されません。</p>
+          <div class="save-bar"><button class="btn btn-primary" id="save-blocked">휴무일 저장</button></div>
+          <p class="help-text">날짜를 클릭해 휴무일을 켜고 끕니다. 저장하기 전까지 공개 사이트에 반영되지 않습니다.</p>
         </div>
       </div>`;
     $('#cal-prev').addEventListener('click', () => { shiftMonth(-1); });
     $('#cal-next').addEventListener('click', () => { shiftMonth(1); });
     $('#save-blocked').addEventListener('click', (e) =>
-      saveContent({ blockedDates: blockedWorking.slice().sort() }, e.currentTarget, '休業日を保存しました。'));
+      saveContent({ blockedDates: blockedWorking.slice().sort() }, e.currentTarget, '휴무일을 저장했습니다.'));
     paintCalendar();
     paintBlockedChips();
   }
@@ -754,12 +754,12 @@
   }
   function paintCalendar() {
     const { y, m } = calRef;
-    $('#cal-month').textContent = `${y}年 ${m + 1}月`;
+    $('#cal-month').textContent = `${y}년 ${m + 1}월`;
     const first = new Date(y, m, 1).getDay();
     const days = new Date(y, m + 1, 0).getDate();
     const now = new Date();
     const todayStr = ymd(now.getFullYear(), now.getMonth(), now.getDate());
-    const dow = ['日', '月', '火', '水', '木', '金', '土'];
+    const dow = ['일', '월', '화', '수', '목', '금', '토'];
     let html = dow.map((d, i) => `<div class="cal-dow${i === 0 ? ' sun' : i === 6 ? ' sat' : ''}">${d}</div>`).join('');
     for (let i = 0; i < first; i++) html += '<div class="cal-cell empty"></div>';
     for (let d = 1; d <= days; d++) {
@@ -786,11 +786,11 @@
     $('#blocked-count').textContent = sorted.length;
     const wrap = $('#blocked-chips');
     if (!sorted.length) {
-      wrap.innerHTML = '<p class="help-text" style="margin:0">休業日は設定されていません。</p>';
+      wrap.innerHTML = '<p class="help-text" style="margin:0">설정된 휴무일이 없습니다.</p>';
       return;
     }
     wrap.innerHTML = sorted.map((d) =>
-      `<span class="date-chip">${esc(d)}<button data-rm="${esc(d)}" aria-label="削除"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`
+      `<span class="date-chip">${esc(d)}<button data-rm="${esc(d)}" aria-label="삭제"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`
     ).join('');
     $$('#blocked-chips [data-rm]').forEach((b) =>
       b.addEventListener('click', () => toggleBlocked(b.dataset.rm)));
@@ -811,12 +811,12 @@
             <input type="text" id="studio-kakao" placeholder="http://qr.kakao.com/talk/…" value="${esc(s.kakao || '')}" /></label>
           <label class="field"><span>Blog URL</span>
             <input type="text" id="studio-blog" placeholder="https://blog.naver.com/…" value="${esc(s.blog || '')}" /></label>
-          <label class="field"><span>メール</span>
+          <label class="field"><span>이메일</span>
             <input type="text" id="studio-email" placeholder="info@example.com" value="${esc(s.email || '')}" /></label>
-          <p class="help-text">公開サイト全ページの SNS リンク・連絡先に反映されます。</p>
+          <p class="help-text">공개 사이트 전 페이지의 SNS 링크·연락처에 반영됩니다.</p>
         </div>
         <div class="save-bar">
-          <button class="btn btn-primary" id="save-studio">保存する</button>
+          <button class="btn btn-primary" id="save-studio">저장</button>
         </div>
       </div>`;
     $('#save-studio').addEventListener('click', (e) => {
@@ -826,7 +826,7 @@
         kakao: $('#studio-kakao').value.trim(),
         blog: $('#studio-blog').value.trim(),
         email: $('#studio-email').value.trim(),
-      } }, e.currentTarget, 'スタジオ情報を保存しました。');
+      } }, e.currentTarget, '스튜디오 정보를 저장했습니다.');
     });
   }
 
@@ -837,13 +837,13 @@
     pane.innerHTML = `
       <div class="card card-pad editor-card">
         <div class="editor-grid">
-          ${mlField('hero-eyebrow', 'アイブロウ（小見出し）', h.eyebrow, { ph: '例）OKINAWA WEDDING PHOTO' })}
-          ${mlField('hero-title', 'タイトル', h.title, { ph: 'メインのキャッチコピー' })}
-          ${mlField('hero-subtitle', 'サブタイトル', h.subtitle, { textarea: true, rows: 2, ph: '補足のリード文' })}
+          ${mlField('hero-eyebrow', '아이브로우(소제목)', h.eyebrow, { ph: '예) OKINAWA WEDDING PHOTO' })}
+          ${mlField('hero-title', '제목', h.title, { ph: '메인 카피' })}
+          ${mlField('hero-subtitle', '서브 제목', h.subtitle, { textarea: true, rows: 2, ph: '보조 리드문' })}
           <p class="help-text">${esc(KEEP_HINT)}</p>
         </div>
         <div class="save-bar">
-          <button class="btn btn-primary" id="save-hero">保存する</button>
+          <button class="btn btn-primary" id="save-hero">저장</button>
         </div>
       </div>`;
     $('#save-hero').addEventListener('click', (e) => {
@@ -851,7 +851,7 @@
         eyebrow: mlReadId('hero-eyebrow'),
         title: mlReadId('hero-title'),
         subtitle: mlReadId('hero-subtitle'),
-      } }, e.currentTarget, 'トップの内容を保存しました。');
+      } }, e.currentTarget, '메인 내용을 저장했습니다.');
     });
   }
 
@@ -865,15 +865,15 @@
           <label class="switch">
             <input type="checkbox" id="event-enabled" ${ev.enabled ? 'checked' : ''} />
             <span class="track"></span>
-            <span>イベント情報を公開サイトに表示する</span>
+            <span>이벤트 정보를 공개 사이트에 표시</span>
           </label>
-          ${mlField('event-title', 'タイトル', ev.title, { ph: '例）夏季キャンペーン' })}
-          ${mlField('event-body', '本文', ev.body, { textarea: true, rows: 4, ph: 'イベントの内容' })}
-          ${mlField('event-period', '期間', ev.period, { ph: '例）2026/07/01〜2026/08/31' })}
+          ${mlField('event-title', '제목', ev.title, { ph: '예) 여름 캠페인' })}
+          ${mlField('event-body', '본문', ev.body, { textarea: true, rows: 4, ph: '이벤트 내용' })}
+          ${mlField('event-period', '기간', ev.period, { ph: '예) 2026/07/01〜2026/08/31' })}
           <p class="help-text">${esc(KEEP_HINT)}</p>
         </div>
         <div class="save-bar">
-          <button class="btn btn-primary" id="save-event">保存する</button>
+          <button class="btn btn-primary" id="save-event">저장</button>
         </div>
       </div>`;
     $('#save-event').addEventListener('click', (e) => {
@@ -882,16 +882,16 @@
         title: mlReadId('event-title'),
         body: mlReadId('event-body'),
         period: mlReadId('event-period'),
-      } }, e.currentTarget, 'イベント情報を保存しました。');
+      } }, e.currentTarget, '이벤트 정보를 저장했습니다.');
     });
   }
 
   // ─ ギャラリー（契約 v3）─
   const GAL_SLOTS = [
-    ['top', 'トップ'],
-    ['top-dress', 'トップ・ドレス'],
-    ['wedding', 'ウェディング'],
-    ['anniversary', 'アニバーサリー'],
+    ['top', '메인'],
+    ['top-dress', '메인·드레스'],
+    ['wedding', '웨딩'],
+    ['anniversary', '애니버서리'],
   ];
   let galWorking = {};        // 編集中の全スロット { slot: { items:[...] } }
   let galSlot = 'top';        // 表示中スロット
@@ -928,20 +928,20 @@
     const pane = $('[data-cpane="gallery"]');
     pane.innerHTML = `
       <div class="gal-toolbar">
-        <label class="field" style="max-width:300px"><span>スロット（表示位置）</span>
+        <label class="field" style="max-width:300px"><span>슬롯(표시 위치)</span>
           <select id="gal-slot">
             ${GAL_SLOTS.map(([k, label]) => `<option value="${k}"${k === galSlot ? ' selected' : ''}>${esc(label)}</option>`).join('')}
           </select></label>
         <div class="gal-add-bar">
-          <button type="button" class="btn btn-ghost btn-sm" id="gal-pick">＋ 画像を選ぶ</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="gal-upload">⤴ アップロード</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="gal-pick">＋ 이미지 선택</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="gal-upload">⤴ 업로드</button>
           <input type="file" id="gal-file" accept="image/*" multiple hidden />
         </div>
       </div>
-      <p class="help-text" style="margin:.2rem 0 1rem">サムネイルの「画像を選ぶ」で既存画像から追加、または端末から「アップロード」します。表示順は ▲▼ で変更、表示トグルで公開/非公開を切替。</p>
+      <p class="help-text" style="margin:.2rem 0 1rem">[이미지 선택]으로 기존 이미지에서 추가하거나, 기기에서 [업로드]합니다. 표시 순서는 ▲▼로 변경, 표시 토글로 공개/비공개를 전환합니다.</p>
       <div class="gal-items" id="gal-items"></div>
-      <div class="save-bar"><button class="btn btn-primary" id="save-gallery">ギャラリーを保存する</button>
-        <p class="help-text" style="margin:0">変更は「保存」を押すまで公開されません。</p></div>`;
+      <div class="save-bar"><button class="btn btn-primary" id="save-gallery">갤러리 저장</button>
+        <p class="help-text" style="margin:0">변경 사항은 [저장]을 누르기 전까지 공개되지 않습니다.</p></div>`;
 
     $('#gal-slot').addEventListener('change', (e) => { galSlot = e.target.value; paintGalItems(); });
     $('#gal-pick').addEventListener('click', () => openPicker({ onAdd: addSrcsToGallery }));
@@ -963,14 +963,14 @@
         <div class="gal-item-head">
           <span class="gal-fname" title="${esc(it.src)}">${esc(fname)}</span>
           <div class="gal-ctrls">
-            <button type="button" class="icon-btn gal-mini" data-act="up" aria-label="上へ" title="上へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
-            <button type="button" class="icon-btn gal-mini" data-act="down" aria-label="下へ" title="下へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
-            <label class="switch" title="公開/非公開"><input type="checkbox" data-vis ${it.visible ? 'checked' : ''} /><span class="track"></span><span style="font-size:.78rem">表示</span></label>
-            <button type="button" class="btn btn-danger btn-xs" data-act="del">削除</button>
+            <button type="button" class="icon-btn gal-mini" data-act="up" aria-label="위로" title="위로"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+            <button type="button" class="icon-btn gal-mini" data-act="down" aria-label="아래로" title="아래로"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+            <label class="switch" title="공개/비공개"><input type="checkbox" data-vis ${it.visible ? 'checked' : ''} /><span class="track"></span><span style="font-size:.78rem">표시</span></label>
+            <button type="button" class="btn btn-danger btn-xs" data-act="del">삭제</button>
           </div>
         </div>
-        ${mlInputs('data-cap', i, it.caption, { ph: 'キャプション' })}
-        <label class="field"><span>リンク先（href・任意）</span><input type="text" data-href value="${esc(it.href || '')}" placeholder="例）gallery-hare-8.html" /></label>
+        ${mlInputs('data-cap', i, it.caption, { ph: '캡션' })}
+        <label class="field"><span>링크(href·선택)</span><input type="text" data-href value="${esc(it.href || '')}" placeholder="예) gallery-hare-8.html" /></label>
       </div>
     </div>`;
   }
@@ -980,7 +980,7 @@
     const slot = galWorking[galSlot] || { items: [] };
     const wrap = $('#gal-items');
     if (!slot.items.length) {
-      wrap.innerHTML = emptyState('画像がありません', '「＋ 画像を選ぶ」または「アップロード」から追加してください。');
+      wrap.innerHTML = emptyState('이미지가 없습니다', '[＋ 이미지 선택] 또는 [업로드]로 추가해 주세요.');
       return;
     }
     wrap.innerHTML = slot.items.map((it, i) => galItemCard(it, i)).join('');
@@ -1022,14 +1022,14 @@
       }));
       galleries[k] = { items };
     });
-    saveContent({ galleries }, btn, 'ギャラリーを保存しました。');
+    saveContent({ galleries }, btn, '갤러리를 저장했습니다.');
   }
 
   function addSrcsToGallery(srcs) {
     const items = galWorking[galSlot].items;
     srcs.forEach((src) => items.push(normGalItem({ src, visible: true })));
     paintGalItems();
-    toast(`${srcs.length} 件の画像を追加しました。保存を忘れずに。`, 'ok');
+    toast(`${srcs.length}개 이미지를 추가했습니다. 저장을 잊지 마세요.`, 'ok');
   }
 
   // ════════════════ 画像ピッカー（manifest.json v2）════════════════
@@ -1065,13 +1065,13 @@
     if (p.startsWith('en/')) { en = true; p = p.slice(3); }
     const f = p.split('/').pop();
     let name;
-    if (f === 'index.html') name = 'トップ';
-    else if (f === 'wedding.html') name = 'ウェディング';
-    else if (f === 'anniversary.html') name = 'アニバーサリー';
-    else if (/^dress.*\.html$/i.test(f)) name = 'ドレス';
-    else if (/^gallery-.*\.html$/i.test(f)) name = 'ギャラリー詳細';
-    else if (/^plan/i.test(f)) name = 'プラン';
-    else if (/^contact/i.test(f)) name = 'お問い合わせ';
+    if (f === 'index.html') name = '메인';
+    else if (f === 'wedding.html') name = '웨딩';
+    else if (f === 'anniversary.html') name = '애니버서리';
+    else if (/^dress.*\.html$/i.test(f)) name = '드레스';
+    else if (/^gallery-.*\.html$/i.test(f)) name = '갤러리 상세';
+    else if (/^plan/i.test(f)) name = '플랜';
+    else if (/^contact/i.test(f)) name = '문의';
     else if (/^about/i.test(f)) name = 'ABOUT';
     else name = f;
     return en ? 'EN:' + name : name;
@@ -1082,12 +1082,12 @@
     let p = String(path || '');
     if (p.startsWith('en/')) p = p.slice(3);
     const f = p.split('/').pop();
-    if (f === 'index.html') return 'トップ';
-    if (f === 'wedding.html') return 'ウェディング';
-    if (f === 'anniversary.html') return 'アニバーサリー';
-    if (/^dress.*\.html$/i.test(f)) return 'ドレス';
-    if (/^gallery-.*\.html$/i.test(f)) return 'ギャラリー詳細';
-    return 'その他';
+    if (f === 'index.html') return '메인';
+    if (f === 'wedding.html') return '웨딩';
+    if (f === 'anniversary.html') return '애니버서리';
+    if (/^dress.*\.html$/i.test(f)) return '드레스';
+    if (/^gallery-.*\.html$/i.test(f)) return '갤러리 상세';
+    return '기타';
   }
 
   function orientOf(im) {
@@ -1107,21 +1107,21 @@
     bar.className = 'picker-filters';
     bar.id = 'picker-filters';
     bar.innerHTML = `
-      <label class="field picker-f-use"><span>使用ページ</span>
+      <label class="field picker-f-use"><span>사용 페이지</span>
         <select id="picker-use">
-          <option value="">すべて</option>
-          <option value="トップ">トップ</option>
-          <option value="ウェディング">ウェディング</option>
-          <option value="アニバーサリー">アニバーサリー</option>
-          <option value="ドレス">ドレス</option>
-          <option value="ギャラリー詳細">ギャラリー詳細</option>
-          <option value="その他">その他</option>
+          <option value="">전체</option>
+          <option value="메인">메인</option>
+          <option value="웨딩">웨딩</option>
+          <option value="애니버서리">애니버서리</option>
+          <option value="드레스">드레스</option>
+          <option value="갤러리 상세">갤러리 상세</option>
+          <option value="기타">기타</option>
         </select>
       </label>
-      <div class="picker-orient" id="picker-orient" role="group" aria-label="向きで絞り込み">
-        <button type="button" data-orient="all" class="is-on">全</button>
-        <button type="button" data-orient="portrait">縦</button>
-        <button type="button" data-orient="landscape">横</button>
+      <div class="picker-orient" id="picker-orient" role="group" aria-label="방향으로 필터">
+        <button type="button" data-orient="all" class="is-on">전체</button>
+        <button type="button" data-orient="portrait">세로</button>
+        <button type="button" data-orient="landscape">가로</button>
       </div>`;
     parent.insertBefore(bar, grid);
 
@@ -1147,28 +1147,28 @@
 
   function resetPreview() {
     const p = $('#picker-preview');
-    if (p) p.innerHTML = '<div class="picker-preview-empty">画像にカーソルを合わせると<br>ここに大きく表示されます</div>';
+    if (p) p.innerHTML = '<div class="picker-preview-empty">이미지에 커서를 올리면<br>여기에 크게 표시됩니다</div>';
   }
 
   function showPreview(im) {
     const p = $('#picker-preview');
     if (!p) return;
     const o = orientOf(im);
-    const oLabel = o === 'portrait' ? '縦長' : o === 'landscape' ? '横長' : '—';
+    const oLabel = o === 'portrait' ? '세로' : o === 'landscape' ? '가로' : '—';
     const fname = (im.src || '').split('/').pop();
     const uses = im.usedIn.length
       ? im.usedIn.map((x) => `<li>${esc(humanPage(x))}<small>${esc(x)}</small></li>`).join('')
-      : '<li class="muted">使用ページなし</li>';
+      : '<li class="muted">사용 페이지 없음</li>';
     p.innerHTML = `
       <div class="picker-preview-img"><img src="${esc(im.src)}" alt="" /></div>
       <div class="picker-preview-info">
         <strong title="${esc(im.src)}">${esc(fname)}</strong>
         <dl>
-          <div><dt>向き</dt><dd>${oLabel}</dd></div>
-          <div><dt>サイズ</dt><dd>${im.w && im.h ? `${im.w}×${im.h}px` : '不明'}</dd></div>
-          <div><dt>容量</dt><dd>${im.kb ? im.kb + 'KB' : '不明'}</dd></div>
+          <div><dt>방향</dt><dd>${oLabel}</dd></div>
+          <div><dt>크기</dt><dd>${im.w && im.h ? `${im.w}×${im.h}px` : '알 수 없음'}</dd></div>
+          <div><dt>용량</dt><dd>${im.kb ? im.kb + 'KB' : '알 수 없음'}</dd></div>
         </dl>
-        <div class="picker-preview-uses"><span>使用ページ（${im.usedIn.length}）</span><ul>${uses}</ul></div>
+        <div class="picker-preview-uses"><span>사용 페이지(${im.usedIn.length})</span><ul>${uses}</ul></div>
       </div>`;
   }
 
@@ -1176,7 +1176,7 @@
   function pickCell(im) {
     const src = im.src;
     const o = orientOf(im);
-    const orientLabel = o === 'portrait' ? '縦' : o === 'landscape' ? '横' : '';
+    const orientLabel = o === 'portrait' ? '세로' : o === 'landscape' ? '가로' : '';
     const badges = im.usedIn.slice(0, 2)
       .map((x) => `<span class="pick-badge">${esc(humanPage(x))}</span>`).join('');
     const more = im.usedIn.length > 2
@@ -1233,8 +1233,8 @@
       if (q && !im.src.toLowerCase().includes(q)) return false;
       if (pickerFilterOrient !== 'all' && orientOf(im) !== pickerFilterOrient) return false;
       if (pickerFilterUse) {
-        if (pickerFilterUse === 'その他') {
-          if (im.usedIn.some((p) => pageCategory(p) !== 'その他')) return false;
+        if (pickerFilterUse === '기타') {
+          if (im.usedIn.some((p) => pageCategory(p) !== '기타')) return false;
         } else if (!im.usedIn.some((p) => pageCategory(p) === pickerFilterUse)) {
           return false;
         }
@@ -1246,7 +1246,7 @@
   function paintPicker() {
     const grid = $('#picker-grid');
     if (!manifestImages || !manifestImages.length) {
-      grid.innerHTML = emptyState('画像が見つかりません', 'scripts/build_image_manifest.py を実行して manifest.json を生成してください。');
+      grid.innerHTML = emptyState('이미지를 찾을 수 없습니다', 'scripts/build_image_manifest.py 를 실행해 manifest.json 을 생성해 주세요.');
       pickerVisibleCount = 0;
       updatePickerCount();
       return;
@@ -1254,7 +1254,7 @@
     const list = filteredImages();
     pickerVisibleCount = list.length;
     if (!list.length) {
-      grid.innerHTML = emptyState('該当する画像がありません', '検索条件・フィルターを変更してください。');
+      grid.innerHTML = emptyState('해당하는 이미지가 없습니다', '검색 조건·필터를 변경해 주세요.');
       updatePickerCount();
       return;
     }
@@ -1298,7 +1298,7 @@
   function updatePickerCount() {
     const total = manifestImages ? manifestImages.length : 0;
     const el = $('#picker-count');
-    if (el) el.textContent = `選択 ${pickerSelected.length} 件 ／ 表示 ${pickerVisibleCount}/${total}件`;
+    if (el) el.textContent = `선택 ${pickerSelected.length}개 / 표시 ${pickerVisibleCount}/${total}개`;
     const add = $('#picker-add');
     if (add) add.disabled = pickerSelected.length === 0;
   }
@@ -1316,7 +1316,7 @@
     return new Promise((resolve, reject) => {
       const r = new FileReader();
       r.onload = () => resolve(r.result);
-      r.onerror = () => reject(new Error('ファイルの読み込みに失敗しました。'));
+      r.onerror = () => reject(new Error('파일을 불러오지 못했습니다.'));
       r.readAsDataURL(file);
     });
   }
@@ -1333,13 +1333,13 @@
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
           body: JSON.stringify({ filename: file.name, contentType: file.type, data: base64 }),
         });
-        if (res.status === 501) { toast('画像アップロードは Blob 未接続のため利用できません', 'error'); break; }
-        if (res.status === 401) { clearToken(); showLogin('セッションの有効期限が切れました。再度ログインしてください。'); return urls; }
+        if (res.status === 501) { toast('이미지 업로드는 Blob 미연결로 사용할 수 없습니다', 'error'); break; }
+        if (res.status === 401) { clearToken(); showLogin('세션이 만료되었습니다. 다시 로그인해 주세요.'); return urls; }
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) { toast(data.error || `アップロードに失敗しました (${res.status})`, 'error'); break; }
+        if (!res.ok) { toast(data.error || `업로드에 실패했습니다 (${res.status})`, 'error'); break; }
         if (data.url) urls.push(data.url);
       } catch (err) {
-        toast(err.message || 'アップロードに失敗しました。', 'error');
+        toast(err.message || '업로드에 실패했습니다.', 'error');
         break;
       }
     }
@@ -1395,7 +1395,7 @@
   }
   function pageSelectHtml(id, list, current) {
     return `<select id="${id}">
-      <option value=""${current ? '' : ' selected'}>— ページを選択 —</option>
+      <option value=""${current ? '' : ' selected'}>— 페이지 선택 —</option>
       ${list.map((p) => `<option value="${esc(p)}"${p === current ? ' selected' : ''}>${esc(p)}</option>`).join('')}
     </select>`;
   }
@@ -1413,14 +1413,14 @@
 
   async function renderPages(root) {
     root.innerHTML = `
-      <div class="section-head"><div><h2>ページ管理</h2>
-        <p class="sub">各ページの本文（ヒーロー・見出し・写真など）を JA / EN で編集</p></div></div>
+      <div class="section-head"><div><h2>페이지 관리</h2>
+        <p class="sub">각 페이지의 본문(히어로·제목·사진 등)을 일본어 / 영어로 편집</p></div></div>
       <div class="card card-pad" style="margin-bottom:1.2rem">
-        <label class="field" style="max-width:440px"><span>編集するページ</span>
-          <div id="pg-select-wrap"><select disabled><option>読み込み中…</option></select></div></label>
-        <p class="help-text">英語ページは同じ項目の「English」欄で編集します（en/ の別ページではありません）。</p>
+        <label class="field" style="max-width:440px"><span>편집할 페이지</span>
+          <div id="pg-select-wrap"><select disabled><option>불러오는 중…</option></select></div></label>
+        <p class="help-text">영어 페이지는 같은 항목의 [영어(EN)] 칸에서 편집합니다(en/ 별도 페이지가 아닙니다).</p>
       </div>
-      <div id="pg-body">${emptyState('ページを選択してください', '上のセレクターから編集するページを選びます。')}</div>`;
+      <div id="pg-body">${emptyState('페이지를 선택해 주세요', '위 선택기에서 편집할 페이지를 선택합니다.')}</div>`;
     const list = (await fetchPathList('/api/pages')) || PAGE_PATHS_FALLBACK;
     const wrap = $('#pg-select-wrap');
     if (!wrap) return; // ビューが切替済み
@@ -1434,7 +1434,7 @@
     const body = $('#pg-body');
     if (!body) return;
     if (!path) {
-      body.innerHTML = emptyState('ページを選択してください', '上のセレクターから編集するページを選びます。');
+      body.innerHTML = emptyState('페이지를 선택해 주세요', '위 선택기에서 편집할 페이지를 선택합니다.');
       return;
     }
     body.innerHTML = loadingRow;
@@ -1443,24 +1443,24 @@
       const regions = (data && data.regions) || {};
       pageRegions = Object.entries(regions).map(([id, val]) => normRegion(id, val));
       if (!pageRegions.length) {
-        body.innerHTML = emptyState('編集できる領域がありません', 'このページには編集可能な領域（data-region）が定義されていません。');
+        body.innerHTML = emptyState('편집 가능한 영역이 없습니다', '이 페이지에는 편집 가능한 영역(data-region)이 정의되어 있지 않습니다.');
         return;
       }
       body.innerHTML = `
-        <p class="help-text" style="margin:0 0 1rem">JA / EN 両方を編集できます。EN が空欄の場合、公開時に JA で補完されます。</p>
+        <p class="help-text" style="margin:0 0 1rem">일본어 / 영어 모두 편집할 수 있습니다. 영어가 비어 있으면 공개 시 일본어로 채워집니다.</p>
         <div id="pg-regions"></div>
-        <div class="save-bar"><button class="btn btn-primary" id="save-pages">このページを保存する</button>
-          <p class="help-text" style="margin:0">保存後、ヘッダーの「公開」で本番サイトに反映されます。</p></div>`;
+        <div class="save-bar"><button class="btn btn-primary" id="save-pages">이 페이지 저장</button>
+          <p class="help-text" style="margin:0">저장 후 헤더의 [발행(사이트 재구축)]으로 운영 사이트에 반영됩니다.</p></div>`;
       paintPageRegions();
       $('#save-pages').addEventListener('click', (e) => savePage(e.currentTarget));
     } catch (err) {
       if (err.message === 'unauthorized') return;
-      body.innerHTML = emptyState('読み込みに失敗しました', err.message, true);
+      body.innerHTML = emptyState('불러오기에 실패했습니다', err.message, true);
       toast(err.message, 'error');
     }
   }
 
-  const PG_TYPE_LABEL = { text: 'テキスト', lines: '行リスト', photos: '写真' };
+  const PG_TYPE_LABEL = { text: '텍스트', lines: '행 목록', photos: '사진' };
 
   function paintPageRegions() {
     const wrap = $('#pg-regions');
@@ -1475,15 +1475,15 @@
           <div class="pg-line" data-li="${j}">
             <div class="pg-line-main">${mlInputs('data-lk', `r${i}l${j}`, l.text)}</div>
             <div class="pg-line-ctrls">
-              <label class="switch" title="淡色表示（dim）"><input type="checkbox" data-dim ${l.dim ? 'checked' : ''} /><span class="track"></span><span style="font-size:.78rem">淡色</span></label>
-              <button type="button" class="icon-btn gal-mini" data-lact="up" aria-label="上へ" title="上へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
-              <button type="button" class="icon-btn gal-mini" data-lact="down" aria-label="下へ" title="下へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
-              <button type="button" class="btn btn-danger btn-xs" data-lact="del">削除</button>
+              <label class="switch" title="흐리게 표시(dim)"><input type="checkbox" data-dim ${l.dim ? 'checked' : ''} /><span class="track"></span><span style="font-size:.78rem">흐리게</span></label>
+              <button type="button" class="icon-btn gal-mini" data-lact="up" aria-label="위로" title="위로"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+              <button type="button" class="icon-btn gal-mini" data-lact="down" aria-label="아래로" title="아래로"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+              <button type="button" class="btn btn-danger btn-xs" data-lact="del">삭제</button>
             </div>
           </div>`).join('');
         return `<div class="pg-region" data-ri="${i}">${head}
-          <div class="pg-lines">${lines || '<p class="help-text" style="margin:0">行がありません。「＋ 行を追加」で追加してください。</p>'}</div>
-          <button type="button" class="btn btn-ghost btn-sm" data-addline>＋ 行を追加</button></div>`;
+          <div class="pg-lines">${lines || '<p class="help-text" style="margin:0">행이 없습니다. [＋ 행 추가]로 추가해 주세요.</p>'}</div>
+          <button type="button" class="btn btn-ghost btn-sm" data-addline>＋ 행 추가</button></div>`;
       }
       // photos
       const items = r.items.map((it, j) => {
@@ -1493,22 +1493,22 @@
           <div class="gal-body">
             <div class="gal-item-head"><span class="gal-fname" title="${esc(it.src)}">${esc(fname)}</span>
               <div class="gal-ctrls">
-                <button type="button" class="icon-btn gal-mini" data-pact="up" aria-label="上へ" title="上へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
-                <button type="button" class="icon-btn gal-mini" data-pact="down" aria-label="下へ" title="下へ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
-                <button type="button" class="btn btn-danger btn-xs" data-pact="del">削除</button>
+                <button type="button" class="icon-btn gal-mini" data-pact="up" aria-label="위로" title="위로"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+                <button type="button" class="icon-btn gal-mini" data-pact="down" aria-label="아래로" title="아래로"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+                <button type="button" class="btn btn-danger btn-xs" data-pact="del">삭제</button>
               </div>
             </div>
-            ${mlInputs('data-pcap', `r${i}p${j}`, it.caption, { ph: 'キャプション' })}
+            ${mlInputs('data-pcap', `r${i}p${j}`, it.caption, { ph: '캡션' })}
           </div>
         </div>`;
       }).join('');
       return `<div class="pg-region" data-ri="${i}">${head}
         <div class="gal-add-bar" style="margin-bottom:.7rem">
-          <button type="button" class="btn btn-ghost btn-sm" data-pact="pick">＋ 画像を選ぶ</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-pact="upload">⤴ アップロード</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-pact="pick">＋ 이미지 선택</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-pact="upload">⤴ 업로드</button>
           <input type="file" data-pfile accept="image/*" multiple hidden />
         </div>
-        <div class="gal-items">${items || emptyState('画像がありません', '「＋ 画像を選ぶ」または「アップロード」から追加してください。')}</div></div>`;
+        <div class="gal-items">${items || emptyState('이미지가 없습니다', '[＋ 이미지 선택] 또는 [업로드]로 추가해 주세요.')}</div></div>`;
     }).join('');
     bindPageRegions();
   }
@@ -1556,7 +1556,7 @@
         row.querySelector('[data-pact="del"]').addEventListener('click', () => { r.items.splice(j, 1); paintPageRegions(); });
       });
       const pickBtn = card.querySelector('[data-pact="pick"]');
-      if (pickBtn) pickBtn.addEventListener('click', () => openPicker({ onAdd: (srcs) => { srcs.forEach((src) => r.items.push({ src, caption: { ja: '', en: '' } })); paintPageRegions(); toast(`${srcs.length} 件の画像を追加しました。保存を忘れずに。`, 'ok'); } }));
+      if (pickBtn) pickBtn.addEventListener('click', () => openPicker({ onAdd: (srcs) => { srcs.forEach((src) => r.items.push({ src, caption: { ja: '', en: '' } })); paintPageRegions(); toast(`${srcs.length}개 이미지를 추가했습니다. 저장을 잊지 마세요.`, 'ok'); } }));
       const upBtn = card.querySelector('[data-pact="upload"]');
       const fileInp = card.querySelector('[data-pfile]');
       if (upBtn && fileInp) {
@@ -1564,7 +1564,7 @@
         fileInp.addEventListener('change', async (e) => {
           const files = Array.from(e.target.files || []); e.target.value = '';
           const urls = await uploadFiles(files);
-          if (urls.length) { urls.forEach((src) => r.items.push({ src, caption: { ja: '', en: '' } })); paintPageRegions(); toast(`${urls.length} 件の画像を追加しました。保存を忘れずに。`, 'ok'); }
+          if (urls.length) { urls.forEach((src) => r.items.push({ src, caption: { ja: '', en: '' } })); paintPageRegions(); toast(`${urls.length}개 이미지를 추가했습니다. 저장을 잊지 마세요.`, 'ok'); }
         });
       }
     });
@@ -1595,10 +1595,10 @@
     if (!pagesPath) return;
     const regions = collectPageRegions();
     const prev = btn.textContent;
-    btn.disabled = true; btn.textContent = '保存中…';
+    btn.disabled = true; btn.textContent = '저장 중…';
     try {
       await api('/api/pages', { method: 'POST', body: JSON.stringify({ path: pagesPath, regions }) });
-      toast('ページを保存しました。公開で本番に反映されます。', 'ok');
+      toast('페이지를 저장했습니다. 발행하면 운영 사이트에 반영됩니다.', 'ok');
     } catch (err) {
       if (err.message !== 'unauthorized') toast(err.message, 'error');
     } finally {
@@ -1620,21 +1620,21 @@
   async function renderSeo(root) {
     root.innerHTML = `
       <div class="section-head"><div><h2>SEO / AEO</h2>
-        <p class="sub">検索エンジン・AI検索向けのメタ情報と FAQ を編集</p></div></div>
+        <p class="sub">검색엔진·AI검색용 메타 정보와 FAQ 편집</p></div></div>
       <div class="card card-pad aeo-guide">
-        <div class="aeo-head"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/><path d="M9 21h6"/></svg>AEO（AI検索）作成ガイド</div>
+        <div class="aeo-head"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/><path d="M9 21h6"/></svg>AEO(AI검색) 작성 가이드</div>
         <ul class="aeo-list">
-          <li><strong>FAQ は「質問形」で</strong> — ユーザーが実際に検索・質問する文をそのまま Q にします。</li>
-          <li><strong>description は「検索意図」を満たす</strong> — 誰に何を提供するかを最初の1〜2文で明確に。</li>
-          <li><strong>固有名詞＋地域キーワード</strong>を含める — 例：沖縄／ウェディングフォト／前撮り。</li>
+          <li><strong>FAQ는 [질문형]으로</strong> — 사용자가 실제로 검색·질문하는 문장을 그대로 Q로 작성합니다.</li>
+          <li><strong>description은 [검색 의도]를 충족</strong> — 누구에게 무엇을 제공하는지 첫 1~2문장에서 명확히.</li>
+          <li><strong>고유명사＋지역 키워드</strong>를 포함 — 예: 오키나와／웨딩 포토／전촬영.</li>
         </ul>
       </div>
       <div class="card card-pad" style="margin:1.2rem 0">
-        <label class="field" style="max-width:440px"><span>編集するページ</span>
-          <div id="seo-select-wrap"><select disabled><option>読み込み中…</option></select></div></label>
-        <p class="help-text">英語ページは <code>en/</code> 始まりのパスを選択してください。</p>
+        <label class="field" style="max-width:440px"><span>편집할 페이지</span>
+          <div id="seo-select-wrap"><select disabled><option>불러오는 중…</option></select></div></label>
+        <p class="help-text">영어 페이지는 <code>en/</code>으로 시작하는 경로를 선택하세요.</p>
       </div>
-      <div id="seo-body">${emptyState('ページを選択してください', '上のセレクターから編集するページを選びます。')}</div>`;
+      <div id="seo-body">${emptyState('페이지를 선택해 주세요', '위 셀렉터에서 편집할 페이지를 선택합니다.')}</div>`;
     const list = (await fetchPathList('/api/seo')) || SEO_PATHS_FALLBACK;
     const wrap = $('#seo-select-wrap');
     if (!wrap) return;
@@ -1648,7 +1648,7 @@
     const body = $('#seo-body');
     if (!body) return;
     if (!path) {
-      body.innerHTML = emptyState('ページを選択してください', '上のセレクターから編集するページを選びます。');
+      body.innerHTML = emptyState('페이지를 선택해 주세요', '위 셀렉터에서 편집할 페이지를 선택합니다.');
       return;
     }
     body.innerHTML = loadingRow;
@@ -1660,26 +1660,26 @@
       body.innerHTML = `
         <div class="card card-pad editor-card">
           <div class="editor-grid">
-            <label class="field"><span>タイトル（title）</span>
-              <input type="text" id="seo-title" value="${esc(s.title || '')}" placeholder="ページタイトル｜usher in making" /></label>
-            <label class="field"><span>ディスクリプション（description）</span>
-              <textarea id="seo-desc" rows="3" placeholder="検索意図を満たす説明文（120〜160字程度）">${esc(s.description || '')}</textarea></label>
-            <label class="field"><span>キーワード（keywords・カンマ区切り）</span>
+            <label class="field"><span>제목 (title)</span>
+              <input type="text" id="seo-title" value="${esc(s.title || '')}" placeholder="페이지 제목｜usher in making" /></label>
+            <label class="field"><span>설명 (description)</span>
+              <textarea id="seo-desc" rows="3" placeholder="검색 의도를 충족하는 설명문 (120~160자 정도)">${esc(s.description || '')}</textarea></label>
+            <label class="field"><span>키워드 (keywords, 쉼표 구분)</span>
               <textarea id="seo-keywords" rows="2" placeholder="沖縄ウェディングフォト, 前撮り, …">${esc(s.keywords || '')}</textarea></label>
-            <div class="field"><span>OG画像（ogImage）</span>
+            <div class="field"><span>OG 이미지 (ogImage)</span>
               <div class="seo-og-row">
                 <div class="seo-og-thumb"${og ? '' : ' hidden'} id="seo-og-thumb"><img src="${esc(og)}" alt="" /></div>
                 <input type="text" id="seo-og" value="${esc(og)}" placeholder="/images/up/xxxx.jpg" />
-                <button type="button" class="btn btn-ghost btn-sm" id="seo-og-pick">画像を選ぶ</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="seo-og-pick">이미지 선택</button>
               </div></div>
           </div>
         </div>
-        <h3 class="card-title" style="margin:1.5rem 0 .3rem">FAQ（よくある質問）</h3>
-        <p class="help-text" style="margin:0 0 1rem">AI検索・リッチリザルト向け。質問形の Q と、検索意図に答える A を JA / EN で。</p>
+        <h3 class="card-title" style="margin:1.5rem 0 .3rem">FAQ (자주 묻는 질문)</h3>
+        <p class="help-text" style="margin:0 0 1rem">AI 검색·리치 리절트용. 질문형 Q와 검색 의도에 답하는 A를 일본어/영어로 작성하세요.</p>
         <div id="faq-list"></div>
-        <button type="button" class="btn btn-ghost btn-sm" id="faq-add">＋ FAQ を追加</button>
-        <div class="save-bar"><button class="btn btn-primary" id="save-seo">SEO / FAQ を保存する</button>
-          <p class="help-text" style="margin:0">保存後、ヘッダーの「公開」で本番サイトに反映されます。</p></div>`;
+        <button type="button" class="btn btn-ghost btn-sm" id="faq-add">＋ FAQ 추가</button>
+        <div class="save-bar"><button class="btn btn-primary" id="save-seo">SEO / FAQ 저장</button>
+          <p class="help-text" style="margin:0">저장 후 헤더의 [발행]으로 실제 사이트에 반영됩니다.</p></div>`;
       $('#seo-og-pick').addEventListener('click', () => openPicker({ single: true, onAdd: (srcs) => setSeoOg(srcs[0]) }));
       $('#seo-og').addEventListener('input', (e) => setSeoOg(e.target.value.trim(), true));
       $('#faq-add').addEventListener('click', () => { faqWorking.push({ q: { ja: '', en: '' }, a: { ja: '', en: '' } }); paintFaq(); });
@@ -1687,7 +1687,7 @@
       paintFaq();
     } catch (err) {
       if (err.message === 'unauthorized') return;
-      body.innerHTML = emptyState('読み込みに失敗しました', err.message, true);
+      body.innerHTML = emptyState('불러오기에 실패했습니다', err.message, true);
       toast(err.message, 'error');
     }
   }
@@ -1706,15 +1706,15 @@
     const wrap = $('#faq-list');
     if (!wrap) return;
     if (!faqWorking.length) {
-      wrap.innerHTML = '<p class="help-text" style="margin:0 0 .8rem">FAQ はまだありません。「＋ FAQ を追加」から登録してください。</p>';
+      wrap.innerHTML = '<p class="help-text" style="margin:0 0 .8rem">FAQ가 아직 없습니다. [＋ FAQ 추가]로 등록해 주세요.</p>';
       return;
     }
     wrap.innerHTML = faqWorking.map((f, i) => `
       <div class="faq-item" data-fi="${i}">
         <div class="faq-head"><span class="pg-rtype">FAQ ${i + 1}</span><span class="spacer"></span>
-          <button type="button" class="btn btn-danger btn-xs" data-faq-del>削除</button></div>
-        <div class="field"><span>質問（Q）</span>${mlInputs('data-fq', `f${i}q`, f.q, { ph: '例）沖縄での撮影は何時間かかりますか？' })}</div>
-        <div class="field"><span>回答（A）</span>${mlInputs('data-fa', `f${i}a`, f.a, { textarea: true, rows: 3, ph: '質問に直接答える簡潔な文' })}</div>
+          <button type="button" class="btn btn-danger btn-xs" data-faq-del>삭제</button></div>
+        <div class="field"><span>질문 (Q)</span>${mlInputs('data-fq', `f${i}q`, f.q, { ph: '예) 沖縄での撮影は何時間かかりますか？' })}</div>
+        <div class="field"><span>답변 (A)</span>${mlInputs('data-fa', `f${i}a`, f.a, { textarea: true, rows: 3, ph: '질문에 직접 답하는 간결한 문장' })}</div>
       </div>`).join('');
     $$('#faq-list .faq-item').forEach((item) => {
       const i = Number(item.dataset.fi);
@@ -1744,10 +1744,10 @@
         .filter((f) => f.q.ja || f.q.en || f.a.ja || f.a.en),
     };
     const prev = btn.textContent;
-    btn.disabled = true; btn.textContent = '保存中…';
+    btn.disabled = true; btn.textContent = '저장 중…';
     try {
       await api('/api/seo', { method: 'POST', body: JSON.stringify({ path: seoPath, seo }) });
-      toast('SEO / FAQ を保存しました。公開で本番に反映されます。', 'ok');
+      toast('SEO / FAQ를 저장했습니다. [발행]하면 실제 사이트에 반영됩니다.', 'ok');
     } catch (err) {
       if (err.message !== 'unauthorized') toast(err.message, 'error');
     } finally {
@@ -1766,27 +1766,27 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
       });
-      if (res.status === 401) { clearToken(); showLogin('セッションの有効期限が切れました。再度ログインしてください。'); return; }
+      if (res.status === 401) { clearToken(); showLogin('세션이 만료되었습니다. 다시 로그인해 주세요.'); return; }
       if (res.status === 501) { showRebuildSetup(); return; }
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { toast(data.error || `公開に失敗しました (${res.status})`, 'error'); return; }
-      toast('再構築を開始しました（反映まで約1〜2分）', 'ok');
+      if (!res.ok) { toast(data.error || `발행에 실패했습니다 (${res.status})`, 'error'); return; }
+      toast('재구축을 시작했습니다 (반영까지 약 1~2분)', 'ok');
     } catch (err) {
-      toast(err.message || '公開に失敗しました。', 'error');
+      toast(err.message || '발행에 실패했습니다.', 'error');
     } finally {
       rebuildBusy = false;
     }
   }
   function showRebuildSetup() {
-    openDrawer('公開の設定が必要です', `
-      <div class="detail-msg" style="margin-bottom:1.2rem">Vercel で Deploy Hook を作成し、環境変数 <code>DEPLOY_HOOK_URL</code> を設定してください。</div>
-      <p class="drawer-section-label">設定手順</p>
+    openDrawer('발행 설정이 필요합니다', `
+      <div class="detail-msg" style="margin-bottom:1.2rem">Vercel에서 Deploy Hook을 만들고 환경변수 <code>DEPLOY_HOOK_URL</code>을 설정해 주세요.</div>
+      <p class="drawer-section-label">설정 순서</p>
       <ol class="setup-steps">
-        <li>Vercel プロジェクト → Settings → Git → Deploy Hooks で新規フックを作成。</li>
-        <li>発行された URL を環境変数 <code>DEPLOY_HOOK_URL</code> に設定。</li>
-        <li>再デプロイ後、「公開」ボタンで本番サイトに反映されます。</li>
+        <li>Vercel 프로젝트 → Settings → Git → Deploy Hooks에서 새 훅 생성.</li>
+        <li>발급된 URL을 환경변수 <code>DEPLOY_HOOK_URL</code>에 설정.</li>
+        <li>재배포 후 [발행] 버튼으로 실제 사이트에 반영됩니다.</li>
       </ol>
-      <p class="help-text">編集内容はすでに保存済みです。Deploy Hook 設定後に「公開」を押すと反映されます。</p>`);
+      <p class="help-text">편집 내용은 이미 저장돼 있습니다. Deploy Hook 설정 후 [발행]을 누르면 반영됩니다.</p>`);
   }
   // ヘッダーの「公開」ボタン（アプリシェルの静的要素）
   $('#publish-top').addEventListener('click', async () => {
@@ -1798,53 +1798,53 @@
 
   // ════════════════ ⑦ 設定 ════════════════
   async function renderSettings(root) {
-    root.innerHTML = `<div class="section-head"><div><h2>設定</h2>
-      <p class="sub">予約システムとシステム情報</p></div></div>${loadingRow}`;
+    root.innerHTML = `<div class="section-head"><div><h2>설정</h2>
+      <p class="sub">예약 시스템과 시스템 정보</p></div></div>${loadingRow}`;
     try {
       content = await api('/api/content', { method: 'GET' });
     } catch (err) {
       if (err.message === 'unauthorized') return;
-      root.innerHTML = `<div class="section-head"><div><h2>設定</h2></div></div>${emptyState('読み込みに失敗しました', err.message, true)}`;
+      root.innerHTML = `<div class="section-head"><div><h2>설정</h2></div></div>${emptyState('불러오기에 실패했습니다', err.message, true)}`;
       toast(err.message, 'error');
       return;
     }
     const cap = content.capacityPerDay != null ? content.capacityPerDay : 1;
     root.innerHTML = `
-      <div class="section-head"><div><h2>設定</h2><p class="sub">予約システムとシステム情報</p></div></div>
+      <div class="section-head"><div><h2>설정</h2><p class="sub">예약 시스템과 시스템 정보</p></div></div>
       <div class="card card-pad editor-card" style="margin-bottom:1.2rem">
-        <h3 class="card-title">予約の受付上限</h3>
-        <p class="help-text" style="margin:.2rem 0 1rem">1日あたりに受け付けるご予約の上限数です。上限に達した日は公開サイトで「満員」と表示されます。</p>
-        <label class="field" style="max-width:200px"><span>1日あたりの予約上限</span>
+        <h3 class="card-title">예약 접수 상한</h3>
+        <p class="help-text" style="margin:.2rem 0 1rem">하루에 받을 예약 상한 수입니다. 상한에 도달한 날은 공개 사이트에서 '만석(満員)'으로 표시됩니다.</p>
+        <label class="field" style="max-width:200px"><span>1일 예약 상한</span>
           <input type="number" id="capacity" min="1" step="1" value="${esc(cap)}" /></label>
-        <div class="save-bar"><button class="btn btn-primary" id="save-capacity">保存する</button></div>
+        <div class="save-bar"><button class="btn btn-primary" id="save-capacity">저장</button></div>
       </div>
       <div class="card card-pad editor-card" style="margin-bottom:1.2rem">
-        <h3 class="card-title">公開（サイト再構築）</h3>
-        <p class="help-text" style="margin:.2rem 0 1rem">編集内容は保存済みです。「公開」を押すと本番HTMLに反映されます（反映まで約1〜2分）。SEO・本文の変更はこの公開後にクローラーへ反映されます。</p>
+        <h3 class="card-title">발행 (사이트 재구축)</h3>
+        <p class="help-text" style="margin:.2rem 0 1rem">편집 내용은 저장돼 있습니다. [발행]을 누르면 실제 HTML에 반영됩니다 (약 1~2분 소요). SEO·본문 변경은 발행 후 검색엔진 크롤러에 반영됩니다.</p>
         <div class="save-bar" style="margin-top:0;border-top:none;padding-top:0">
           <button class="btn btn-primary" id="publish-settings">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
-            公開（サイト再構築）</button>
+            발행 (사이트 재구축)</button>
         </div>
       </div>
       <div class="card card-pad editor-card">
-        <h3 class="card-title">システム情報</h3>
+        <h3 class="card-title">시스템 정보</h3>
         <dl class="detail-list" style="margin-top:.6rem">
-          <div class="detail-row"><dt>メール通知</dt><dd>サーバー側の環境設定で管理（表示のみ）</dd></div>
-          <div class="detail-row"><dt>コンテンツ最終更新</dt><dd>${fmtDateTime(content.updatedAt)}</dd></div>
-          <div class="detail-row"><dt>登録プラン数</dt><dd>${Array.isArray(content.plans) ? content.plans.length : 0} 件</dd></div>
-          <div class="detail-row"><dt>休業日</dt><dd>${Array.isArray(content.blockedDates) ? content.blockedDates.length : 0} 日</dd></div>
+          <div class="detail-row"><dt>메일 알림</dt><dd>서버 환경변수로 관리 (표시 전용)</dd></div>
+          <div class="detail-row"><dt>콘텐츠 최종 수정</dt><dd>${fmtDateTime(content.updatedAt)}</dd></div>
+          <div class="detail-row"><dt>등록 플랜 수</dt><dd>${Array.isArray(content.plans) ? content.plans.length : 0}개</dd></div>
+          <div class="detail-row"><dt>휴무일</dt><dd>${Array.isArray(content.blockedDates) ? content.blockedDates.length : 0}일</dd></div>
         </dl>
       </div>`;
     $('#save-capacity').addEventListener('click', (e) => {
       const val = parseInt($('#capacity').value, 10);
-      if (!Number.isFinite(val) || val < 1) { toast('1以上の数値を入力してください。', 'error'); return; }
-      saveContent({ capacityPerDay: val }, e.currentTarget, '予約上限を保存しました。');
+      if (!Number.isFinite(val) || val < 1) { toast('1 이상의 숫자를 입력해 주세요.', 'error'); return; }
+      saveContent({ capacityPerDay: val }, e.currentTarget, '예약 상한을 저장했습니다.');
     });
     $('#publish-settings').addEventListener('click', async (e) => {
       const b = e.currentTarget;
       const prev = b.innerHTML;
-      b.disabled = true; b.textContent = '公開中…';
+      b.disabled = true; b.textContent = '발행 중…';
       await rebuild();
       b.disabled = false; b.innerHTML = prev;
     });
@@ -1873,12 +1873,12 @@
 
   // ════════════════ 起動 ════════════════
   console.info(
-    '%c usher in making %c 管理コンソール ',
+    '%c usher in making %c 관리 콘솔 ',
     'background:#2f6f6a;color:#fff;border-radius:3px 0 0 3px;padding:2px 6px;font-weight:700',
     'background:#142028;color:#fff;border-radius:0 3px 3px 0;padding:2px 6px',
-    '\n  ルート: #/dashboard, #/reservations, #/contacts, #/content, #/pages, #/seo, #/settings' +
+    '\n  라우트: #/dashboard, #/reservations, #/contacts, #/content, #/pages, #/seo, #/settings' +
     '\n  API   : /api/admin, /api/content, /api/pages, /api/seo, /api/rebuild, /api/upload' +
-    '\n  認証  : Bearer トークン（sessionStorage）／401で自動ログアウト'
+    '\n  인증  : Bearer 토큰 (sessionStorage) / 401이면 자동 로그아웃'
   );
 
   (async function init() {

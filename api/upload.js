@@ -77,7 +77,7 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method Not Allowed' });
     }
     if (!verifyToken(bearer(req))) {
-      return res.status(401).json({ error: '認証が必要です。再度ログインしてください。' });
+      return res.status(401).json({ error: '인증이 필요합니다. 다시 로그인해 주세요.' });
     }
 
     // Blob 未接続なら 501（契約の固定メッセージ）。
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
     if (!blobToken) {
       return res
         .status(501)
-        .json({ error: '画像アップロードは未設定です（Vercel Blob 未接続）' });
+        .json({ error: '이미지 업로드가 설정되지 않았습니다 (Vercel Blob 미연결)' });
     }
 
     const body =
@@ -93,7 +93,7 @@ export default async function handler(req, res) {
     const filename = body.filename;
     const data = body.data;
     if (!data) {
-      return res.status(400).json({ error: 'data（base64 の画像データ）は必須です。' });
+      return res.status(400).json({ error: 'data(base64 이미지 데이터)는 필수입니다.' });
     }
 
     const name = safeName(filename);
@@ -101,13 +101,13 @@ export default async function handler(req, res) {
     const contentType = IMAGE_TYPES[ext];
     if (!contentType) {
       return res.status(400).json({
-        error: '対応していない画像形式です（jpg / png / webp / gif / avif のみ）。',
+        error: '지원하지 않는 이미지 형식입니다 (jpg / png / webp / gif / avif만 가능).',
       });
     }
 
     const buf = decodeData(data);
     if (!buf.length) {
-      return res.status(400).json({ error: '画像データを読み取れませんでした。' });
+      return res.status(400).json({ error: '이미지 데이터를 읽을 수 없습니다.' });
     }
 
     // @vercel/blob は Blob 利用時のみ動的 import（依存未インストール環境でも壊れない）。
@@ -121,6 +121,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ url: result.url });
   } catch (e) {
     console.error('[upload]', e);
-    return res.status(500).json({ error: 'アップロードに失敗しました。' });
+    return res.status(500).json({ error: '업로드에 실패했습니다.' });
   }
 }

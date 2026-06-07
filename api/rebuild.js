@@ -42,12 +42,14 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method Not Allowed' });
     }
     if (!verifyToken(bearer(req))) {
-      return res.status(401).json({ error: '認証が必要です。再度ログインしてください。' });
+      return res.status(401).json({ error: '인증이 필요합니다. 다시 로그인해 주세요.' });
     }
 
     const hook = process.env.DEPLOY_HOOK_URL;
     if (!hook) {
-      return res.status(501).json({ error: 'Deploy Hook 未設定' });
+      return res.status(501).json({
+        error: 'Deploy Hook이 설정되지 않았습니다. Vercel의 Deploy Hook URL을 DEPLOY_HOOK_URL 환경변수로 설정해 주세요.',
+      });
     }
 
     try {
@@ -55,16 +57,16 @@ export default async function handler(req, res) {
       if (!r.ok) {
         const detail = await r.text().catch(() => '');
         console.error('[rebuild] deploy hook returned', r.status, detail.slice(0, 200));
-        return res.status(502).json({ error: `Deploy Hook がエラーを返しました（${r.status}）。` });
+        return res.status(502).json({ error: `Deploy Hook이 오류를 반환했습니다 (${r.status}).` });
       }
     } catch (e) {
       console.error('[rebuild] deploy hook fetch failed', e);
-      return res.status(502).json({ error: 'Deploy Hook への接続に失敗しました。' });
+      return res.status(502).json({ error: 'Deploy Hook 연결에 실패했습니다.' });
     }
 
     return res.status(200).json({ ok: true });
   } catch (e) {
     console.error('[rebuild]', e);
-    return res.status(500).json({ error: 'サーバーエラーが発生しました。' });
+    return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 }
