@@ -895,10 +895,13 @@
   ];
   let galWorking = {};        // 編集中の全スロット { slot: { items:[...] } }
   let galSlot = 'top';        // 表示中スロット
-  let manifestImages = null;  // images/manifest.json のキャッシュ
+  let manifestImages = null;  // images/manifest.json のキャッシュ（正規化済みオブジェクト配列）
   let pickerSelected = [];    // ピッカーで選択中の src
   let pickerOnAdd = null;     // 確定時コールバック (srcs[]) => void（ギャラリー / ページ写真 / OG画像で共用）
   let pickerSingle = false;   // 単一選択モード（OG画像など）
+  let pickerFilterUse = '';   // 使用ページ絞り込み（カテゴリ名 / '' = すべて）
+  let pickerFilterOrient = 'all'; // 向き絞り込み（all / portrait / landscape）
+  let pickerVisibleCount = 0; // フィルタ後の表示件数（カウント表示用）
 
   function normGalItem(it) {
     it = it || {};
@@ -1029,68 +1032,277 @@
     toast(`${srcs.length} 件の画像を追加しました。保存を忘れずに。`, 'ok');
   }
 
-  // ─ 画像ピッカー（manifest.json）─ ギャラリー / ページ写真 / OG画像で共用
+  // ════════════════ 画像ピッカー（manifest.json v2）════════════════
+  //   ギャラリー / ページ写真 / OG画像で共用。
   //   opts.onAdd(srcs[]) : 確定時に呼ばれる。opts.single : 単一選択モード。
+  //   manifest v2 形式: { src, usedIn:[...], w, h, kb }。v1（文字列配列）も後方互換で受ける。
+
+  // SVG（選択チェック）
+  const PICK_CHECK_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+  // manifest を正規化（v1 文字列配列 / v2 オブジェクト配列 / 旧トップレベル配列のいずれも吸収）
+  function normManifest(data) {
+    let arr = [];
+    if (Array.isArray(data)) arr = data;
+    else if (data && Array.isArray(data.images)) arr = data.images;
+    return arr.map((it) => {
+      if (typeof it === 'string') return { src: it, usedIn: [], w: 0, h: 0, kb: 0 };
+      it = it || {};
+      return {
+        src: String(it.src || ''),
+        usedIn: Array.isArray(it.usedIn) ? it.usedIn.map(String) : [],
+        w: Number(it.w) || 0,
+        h: Number(it.h) || 0,
+        kb: Number(it.kb) || 0,
+      };
+    }).filter((im) => im.src);
+  }
+
+  // 使用ページのパスを人が読める名前へ。en/ 接頭辞は「EN:」を付ける。
+  function humanPage(path) {
+    let p = String(path || '');
+    let en = false;
+    if (p.startsWith('en/')) { en = true; p = p.slice(3); }
+    const f = p.split('/').pop();
+    let name;
+    if (f === 'index.html') name = 'トップ';
+    else if (f === 'wedding.html') name = 'ウェディング';
+    else if (f === 'anniversary.html') name = 'アニバーサリー';
+    else if (/^dress.*\.html$/i.test(f)) name = 'ドレス';
+    else if (/^gallery-.*\.html$/i.test(f)) name = 'ギャラリー詳細';
+    else if (/^plan/i.test(f)) name = 'プラン';
+    else if (/^contact/i.test(f)) name = 'お問い合わせ';
+    else if (/^about/i.test(f)) name = 'ABOUT';
+    else name = f;
+    return en ? 'EN:' + name : name;
+  }
+
+  // フィルタ用カテゴリ（EN/JA を問わず基本ページで分類）。該当しないものは「その他」。
+  function pageCategory(path) {
+    let p = String(path || '');
+    if (p.startsWith('en/')) p = p.slice(3);
+    const f = p.split('/').pop();
+    if (f === 'index.html') return 'トップ';
+    if (f === 'wedding.html') return 'ウェディング';
+    if (f === 'anniversary.html') return 'アニバーサリー';
+    if (/^dress.*\.html$/i.test(f)) return 'ドレス';
+    if (/^gallery-.*\.html$/i.test(f)) return 'ギャラリー詳細';
+    return 'その他';
+  }
+
+  function orientOf(im) {
+    if (im.w && im.h) return im.h > im.w ? 'portrait' : 'landscape';
+    return '';
+  }
+
+  // モーダルへフィルタバー・プレビューパネルを 1 度だけ注入（admin.html は変更しない）
+  function ensurePickerUI() {
+    if ($('#picker-filters')) return;
+    const grid = $('#picker-grid');
+    if (!grid) return;
+    const parent = grid.parentNode;
+
+    // ① フィルタバー（使用ページ / 向き）
+    const bar = document.createElement('div');
+    bar.className = 'picker-filters';
+    bar.id = 'picker-filters';
+    bar.innerHTML = `
+      <label class="field picker-f-use"><span>使用ページ</span>
+        <select id="picker-use">
+          <option value="">すべて</option>
+          <option value="トップ">トップ</option>
+          <option value="ウェディング">ウェディング</option>
+          <option value="アニバーサリー">アニバーサリー</option>
+          <option value="ドレス">ドレス</option>
+          <option value="ギャラリー詳細">ギャラリー詳細</option>
+          <option value="その他">その他</option>
+        </select>
+      </label>
+      <div class="picker-orient" id="picker-orient" role="group" aria-label="向きで絞り込み">
+        <button type="button" data-orient="all" class="is-on">全</button>
+        <button type="button" data-orient="portrait">縦</button>
+        <button type="button" data-orient="landscape">横</button>
+      </div>`;
+    parent.insertBefore(bar, grid);
+
+    // ② 本体（グリッド + プレビュー）を flex で横並びに
+    const body = document.createElement('div');
+    body.className = 'picker-body';
+    parent.insertBefore(body, grid);
+    body.appendChild(grid);
+    const prev = document.createElement('aside');
+    prev.className = 'picker-preview';
+    prev.id = 'picker-preview';
+    body.appendChild(prev);
+
+    // リスナー
+    $('#picker-use').addEventListener('change', (e) => { pickerFilterUse = e.target.value; paintPicker(); });
+    $$('#picker-orient button').forEach((b) =>
+      b.addEventListener('click', () => {
+        pickerFilterOrient = b.dataset.orient;
+        $$('#picker-orient button').forEach((x) => x.classList.toggle('is-on', x === b));
+        paintPicker();
+      }));
+  }
+
+  function resetPreview() {
+    const p = $('#picker-preview');
+    if (p) p.innerHTML = '<div class="picker-preview-empty">画像にカーソルを合わせると<br>ここに大きく表示されます</div>';
+  }
+
+  function showPreview(im) {
+    const p = $('#picker-preview');
+    if (!p) return;
+    const o = orientOf(im);
+    const oLabel = o === 'portrait' ? '縦長' : o === 'landscape' ? '横長' : '—';
+    const fname = (im.src || '').split('/').pop();
+    const uses = im.usedIn.length
+      ? im.usedIn.map((x) => `<li>${esc(humanPage(x))}<small>${esc(x)}</small></li>`).join('')
+      : '<li class="muted">使用ページなし</li>';
+    p.innerHTML = `
+      <div class="picker-preview-img"><img src="${esc(im.src)}" alt="" /></div>
+      <div class="picker-preview-info">
+        <strong title="${esc(im.src)}">${esc(fname)}</strong>
+        <dl>
+          <div><dt>向き</dt><dd>${oLabel}</dd></div>
+          <div><dt>サイズ</dt><dd>${im.w && im.h ? `${im.w}×${im.h}px` : '不明'}</dd></div>
+          <div><dt>容量</dt><dd>${im.kb ? im.kb + 'KB' : '不明'}</dd></div>
+        </dl>
+        <div class="picker-preview-uses"><span>使用ページ（${im.usedIn.length}）</span><ul>${uses}</ul></div>
+      </div>`;
+  }
+
+  // サムネイルセル（オーバーレイ情報つき）
+  function pickCell(im) {
+    const src = im.src;
+    const o = orientOf(im);
+    const orientLabel = o === 'portrait' ? '縦' : o === 'landscape' ? '横' : '';
+    const badges = im.usedIn.slice(0, 2)
+      .map((x) => `<span class="pick-badge">${esc(humanPage(x))}</span>`).join('');
+    const more = im.usedIn.length > 2
+      ? `<span class="pick-badge pick-badge-more">+${im.usedIn.length - 2}</span>` : '';
+    return `<button type="button" class="pick-cell${pickerSelected.includes(src) ? ' is-sel' : ''}" data-src="${esc(src)}" title="${esc(src)}">
+      <img src="${esc(src)}" alt="" loading="lazy" />
+      <span class="pick-check" aria-hidden="true">${PICK_CHECK_SVG}</span>
+      <span class="pick-meta">
+        <span class="pick-meta-top">
+          ${orientLabel ? `<span class="pick-orient">${orientLabel}</span>` : ''}
+          ${im.kb ? `<span class="pick-kb">${im.kb}KB</span>` : ''}
+        </span>
+        <span class="pick-badges">${badges}${more}</span>
+      </span>
+    </button>`;
+  }
+
   async function openPicker(opts = {}) {
     pickerOnAdd = typeof opts.onAdd === 'function' ? opts.onAdd : null;
     pickerSingle = !!opts.single;
     pickerSelected = [];
+    pickerFilterUse = '';
+    pickerFilterOrient = 'all';
     $('#picker').hidden = false;
     $('#picker-scrim').hidden = false;
-    const grid = $('#picker-grid');
+    ensurePickerUI();
+    // フィルタ UI を初期状態へ
     $('#picker-search').value = '';
+    const useSel = $('#picker-use'); if (useSel) useSel.value = '';
+    $$('#picker-orient button').forEach((b) => b.classList.toggle('is-on', b.dataset.orient === 'all'));
+    resetPreview();
+    const grid = $('#picker-grid');
     if (!manifestImages) {
       grid.innerHTML = loadingRow;
       try {
         const res = await fetch('/images/manifest.json', { cache: 'no-cache' });
         const data = await res.json();
-        manifestImages = Array.isArray(data.images) ? data.images : [];
+        manifestImages = normManifest(data);
       } catch {
         manifestImages = [];
       }
     }
-    paintPicker('');
-    updatePickerCount();
+    paintPicker();
   }
   function closePicker() {
     $('#picker').hidden = true;
     $('#picker-scrim').hidden = true;
   }
-  function paintPicker(q) {
-    const grid = $('#picker-grid');
-    const list = !q ? manifestImages : manifestImages.filter((s) => s.toLowerCase().includes(q.toLowerCase()));
-    if (!manifestImages.length) {
-      grid.innerHTML = emptyState('画像が見つかりません', 'scripts/build_image_manifest.py を実行して manifest.json を生成してください。');
-      return;
-    }
-    if (!list.length) {
-      grid.innerHTML = emptyState('該当する画像がありません', '検索条件を変更してください。');
-      return;
-    }
-    grid.innerHTML = list.map((src) =>
-      `<button type="button" class="pick-cell${pickerSelected.includes(src) ? ' is-sel' : ''}" data-src="${esc(src)}">
-        <img src="${esc(src)}" alt="" loading="lazy" />
-        <span class="pick-check" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-      </button>`).join('');
-    $$('#picker-grid .pick-cell').forEach((cell) =>
-      cell.addEventListener('click', () => {
-        const src = cell.dataset.src;
-        const idx = pickerSelected.indexOf(src);
-        if (pickerSingle) {
-          // 単一選択: 他の選択を解除して 1 件だけ
-          pickerSelected = idx >= 0 ? [] : [src];
-          $$('#picker-grid .pick-cell').forEach((c) => c.classList.toggle('is-sel', c.dataset.src === src && idx < 0));
-        } else {
-          if (idx >= 0) pickerSelected.splice(idx, 1); else pickerSelected.push(src);
-          cell.classList.toggle('is-sel', pickerSelected.includes(src));
+
+  // 検索語・フィルタを適用した一覧
+  function filteredImages() {
+    const q = ($('#picker-search') ? $('#picker-search').value : '').trim().toLowerCase();
+    return manifestImages.filter((im) => {
+      if (q && !im.src.toLowerCase().includes(q)) return false;
+      if (pickerFilterOrient !== 'all' && orientOf(im) !== pickerFilterOrient) return false;
+      if (pickerFilterUse) {
+        if (pickerFilterUse === 'その他') {
+          if (im.usedIn.some((p) => pageCategory(p) !== 'その他')) return false;
+        } else if (!im.usedIn.some((p) => pageCategory(p) === pickerFilterUse)) {
+          return false;
         }
-        updatePickerCount();
-      }));
+      }
+      return true;
+    });
   }
+
+  function paintPicker() {
+    const grid = $('#picker-grid');
+    if (!manifestImages || !manifestImages.length) {
+      grid.innerHTML = emptyState('画像が見つかりません', 'scripts/build_image_manifest.py を実行して manifest.json を生成してください。');
+      pickerVisibleCount = 0;
+      updatePickerCount();
+      return;
+    }
+    const list = filteredImages();
+    pickerVisibleCount = list.length;
+    if (!list.length) {
+      grid.innerHTML = emptyState('該当する画像がありません', '検索条件・フィルターを変更してください。');
+      updatePickerCount();
+      return;
+    }
+    grid.innerHTML = list.map(pickCell).join('');
+    $$('#picker-grid .pick-cell').forEach((cell) => {
+      const src = cell.dataset.src;
+      const im = manifestImages.find((x) => x.src === src);
+      cell.addEventListener('click', () => toggleSelect(src, cell));
+      // ダブルクリックで即確定（単一・複数いずれも該当画像を選択して決定）
+      cell.addEventListener('dblclick', () => { selectOne(src); confirmPicker(); });
+      if (im) {
+        cell.addEventListener('mouseenter', () => showPreview(im));
+        cell.addEventListener('focus', () => showPreview(im));
+      }
+    });
+    updatePickerCount();
+  }
+
+  function toggleSelect(src, cell) {
+    const idx = pickerSelected.indexOf(src);
+    if (pickerSingle) {
+      // 単一選択: 他の選択を解除して 1 件だけ
+      pickerSelected = idx >= 0 ? [] : [src];
+      $$('#picker-grid .pick-cell').forEach((c) => c.classList.toggle('is-sel', c.dataset.src === src && idx < 0));
+    } else {
+      if (idx >= 0) pickerSelected.splice(idx, 1); else pickerSelected.push(src);
+      cell.classList.toggle('is-sel', pickerSelected.includes(src));
+    }
+    updatePickerCount();
+  }
+
+  function selectOne(src) {
+    if (pickerSingle) {
+      pickerSelected = [src];
+      $$('#picker-grid .pick-cell').forEach((c) => c.classList.toggle('is-sel', c.dataset.src === src));
+    } else if (!pickerSelected.includes(src)) {
+      pickerSelected.push(src);
+    }
+  }
+
   function updatePickerCount() {
-    $('#picker-count').textContent = `${pickerSelected.length} 件選択中`;
-    $('#picker-add').disabled = pickerSelected.length === 0;
+    const total = manifestImages ? manifestImages.length : 0;
+    const el = $('#picker-count');
+    if (el) el.textContent = `選択 ${pickerSelected.length} 件 ／ 表示 ${pickerVisibleCount}/${total}件`;
+    const add = $('#picker-add');
+    if (add) add.disabled = pickerSelected.length === 0;
   }
+
   function confirmPicker() {
     if (!pickerSelected.length) return;
     const srcs = pickerSelected.slice();
@@ -1657,7 +1869,7 @@
   $('#picker-close').addEventListener('click', closePicker);
   $('#picker-scrim').addEventListener('click', closePicker);
   $('#picker-add').addEventListener('click', confirmPicker);
-  $('#picker-search').addEventListener('input', (e) => paintPicker(e.target.value.trim()));
+  $('#picker-search').addEventListener('input', () => paintPicker());
 
   // ════════════════ 起動 ════════════════
   console.info(

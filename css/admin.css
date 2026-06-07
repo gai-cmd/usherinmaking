@@ -458,23 +458,88 @@ table.data .nowrap { white-space: nowrap; }
 .picker-head h2 { font-size: 1.02rem; margin: 0; white-space: nowrap; }
 .picker-search { flex: 1; margin: 0; }
 .picker-search input { width: 100%; }
+/* フィルタバー（使用ページ / 向き）— JS が注入 */
+.picker-filters {
+  display: flex; align-items: flex-end; gap: 0.8rem; flex-wrap: wrap;
+  padding: 0.7rem 1.2rem; border-bottom: 1px solid var(--border); background: var(--surface-2);
+}
+.picker-filters .picker-f-use { margin: 0; min-width: 180px; }
+.picker-orient {
+  display: inline-flex; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); overflow: hidden;
+}
+.picker-orient button {
+  border: 0; background: var(--surface); color: var(--ink-2); cursor: pointer;
+  padding: 0.42rem 0.8rem; font-size: 0.85rem; font-weight: 600; line-height: 1;
+  border-left: 1px solid var(--border); transition: background 0.12s, color 0.12s;
+}
+.picker-orient button:first-child { border-left: 0; }
+.picker-orient button.is-on { background: var(--accent); color: #fff; }
+.picker-orient button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* 本体: グリッド + プレビュー */
+.picker-body { flex: 1; display: flex; min-height: 0; }
 .picker-grid {
   flex: 1; overflow-y: auto; padding: 1rem 1.2rem;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.7rem; align-content: start;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; align-content: start;
 }
 .pick-cell {
   position: relative; aspect-ratio: 4 / 3; border: 2px solid var(--border);
   border-radius: var(--radius-sm); overflow: hidden; cursor: pointer; padding: 0; background: var(--surface-2);
-  transition: border-color 0.13s;
+  transition: border-color 0.13s, box-shadow 0.13s;
 }
 .pick-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pick-cell:hover { border-color: var(--muted); }
+.pick-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pick-cell.is-sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .pick-check {
   position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%;
-  background: var(--accent); color: #fff; display: none; place-items: center;
+  background: var(--accent); color: #fff; display: none; place-items: center; z-index: 2;
 }
 .pick-cell.is-sel .pick-check { display: grid; }
+/* オーバーレイ情報（向き・容量・使用処バッジ） */
+.pick-meta {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 5px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(15,23,30,0.35) 0%, rgba(15,23,30,0) 32%, rgba(15,23,30,0) 52%, rgba(15,23,30,0.55) 100%);
+}
+.pick-meta-top { display: flex; gap: 4px; }
+.pick-orient, .pick-kb {
+  font-size: 0.68rem; font-weight: 700; line-height: 1; color: #fff;
+  background: rgba(15,23,30,0.6); padding: 3px 5px; border-radius: 5px; backdrop-filter: blur(1px);
+}
+.pick-orient { background: rgba(47,111,106,0.85); }
+.pick-badges { display: flex; flex-wrap: wrap; gap: 3px; }
+.pick-badge {
+  font-size: 0.66rem; font-weight: 700; line-height: 1; color: #fff;
+  background: rgba(15,23,30,0.62); padding: 3px 5px; border-radius: 5px; white-space: nowrap;
+}
+.pick-badge-more { background: rgba(47,111,106,0.85); }
+
+/* プレビューパネル */
+.picker-preview {
+  flex: none; width: 240px; border-left: 1px solid var(--border); overflow-y: auto;
+  padding: 1rem; background: var(--surface-2); display: flex; flex-direction: column; gap: 0.7rem;
+}
+.picker-preview-empty { color: var(--muted); font-size: 0.82rem; text-align: center; margin: auto 0; line-height: 1.7; }
+.picker-preview-img {
+  width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  display: grid; place-items: center; overflow: hidden;
+}
+.picker-preview-img img { max-width: 100%; max-height: 260px; object-fit: contain; display: block; }
+.picker-preview-info > strong { display: block; font-size: 0.84rem; word-break: break-all; }
+.picker-preview-info dl { margin: 0.5rem 0; display: grid; gap: 0.25rem; }
+.picker-preview-info dl > div { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.8rem; }
+.picker-preview-info dt { color: var(--muted); font-weight: 600; }
+.picker-preview-info dd { margin: 0; font-weight: 600; }
+.picker-preview-uses > span { font-size: 0.76rem; font-weight: 700; color: var(--muted); }
+.picker-preview-uses ul { list-style: none; margin: 0.35rem 0 0; padding: 0; display: grid; gap: 0.3rem; }
+.picker-preview-uses li {
+  font-size: 0.78rem; font-weight: 600; display: flex; flex-direction: column; line-height: 1.3;
+  padding: 0.3rem 0.45rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+}
+.picker-preview-uses li small { font-size: 0.66rem; color: var(--muted); font-weight: 500; word-break: break-all; }
+.picker-preview-uses li.muted { color: var(--muted); font-weight: 500; }
+
 .picker-foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem 1.2rem; border-top: 1px solid var(--border); }
 
 /* ════════════════ ページ管理（契約 v4）════════════════ */
@@ -591,5 +656,17 @@ table.data .nowrap { white-space: nowrap; }
   .picker-head { flex-wrap: wrap; }
   .picker-head h2 { flex: 1 1 auto; }
   .picker-search { flex: 1 1 100%; order: 3; }
-  .picker-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+  /* モバイル: グリッドは 2 列、プレビューは下段へ回り込み */
+  .picker-filters { gap: 0.6rem; }
+  .picker-filters .picker-f-use { flex: 1 1 100%; min-width: 0; }
+  .picker-body { flex-direction: column; }
+  .picker-grid { grid-template-columns: repeat(2, 1fr); }
+  .picker-preview {
+    width: auto; border-left: 0; border-top: 1px solid var(--border);
+    flex-direction: row; flex-wrap: wrap; max-height: 42dvh;
+  }
+  .picker-preview-img { width: 120px; flex: none; }
+  .picker-preview-img img { max-height: 120px; }
+  .picker-preview-info { flex: 1; min-width: 140px; }
+  .picker-preview-empty { width: 100%; }
 }
