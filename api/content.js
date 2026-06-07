@@ -90,7 +90,7 @@ const STUDIO_DEFAULTS = {
   line: 'https://line.me/ti/p/8Udy1kYg1l',
   instagram: 'https://www.instagram.com/usherinmaking/',
   kakao: 'http://qr.kakao.com/talk/YdBfdGeaBd1EXL3ZVVpEJrSpzMU-',
-  blog: 'https://blog.naver.com/moya100',
+  blog: 'https://blog.naver.com/usherinmaking/',
   email: '',
 };
 const STUDIO_KEYS = ['line', 'instagram', 'kakao', 'blog', 'email'];
