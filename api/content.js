@@ -169,7 +169,7 @@ const GALLERIES_DEFAULTS = {
       gi('gallery-family-753.html', '/images/up/1440241c37bf4fc2.jpg', '七五三お祝い'),
       gi('gallery-date.html', '/images/up/441db675bf47ff78.jpg', 'デート'),
       gi('gallery-family.html', '/images/up/c0aa505600aa3595.jpg', '家族'),
-      gi('gallery-date-rain.html', '/images/up/c0aa505600aa3595.jpg', 'デート雨天'),
+      gi('gallery-date-rain.html', '/images/up/b9aef876a3ebddb5.jpg', 'デート雨天'),
     ],
   },
 };
