@@ -82,6 +82,14 @@ export default async function handler(req, res) {
         res.setHeader('Allow', 'POST');
         return res.status(405).json({ error: 'Method Not Allowed' });
       }
+      // ブルートフォース対策: 同一IPからのログイン試行を 10分あたり 10回までに制限。
+      //   （KV 利用時のみ有効。store.rateLimit は KV 無し=dev では no-op で許可。）
+      const ip = String((req.headers['x-forwarded-for'] || '').split(',')[0] || '').trim() || 'unknown';
+      const rl = await store.rateLimit('login', ip, 10, 600);
+      if (!rl.ok) {
+        res.setHeader('Retry-After', '600');
+        return res.status(429).json({ error: '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.' });
+      }
       if (!adminPassword()) {
         return res.status(500).json({ error: '서버가 설정되지 않았습니다.' });
       }
