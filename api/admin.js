@@ -22,7 +22,6 @@
 //   POST /api/admin?action=update-contact     (Bearer) {id,status} → { ok, item }
 //   POST /api/admin?action=update-reservation (Bearer) {id,status} → { ok, item }
 
-import crypto from 'node:crypto';
 import store, {
   KEYS,
   CONTACT_STATUSES,
@@ -30,43 +29,15 @@ import store, {
   normalizeContact,
   normalizeReservation,
 } from './_lib/store.js';
+import { signToken, verifyToken, safeEqual } from './_lib/auth.js';
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 8; // 8 時間有効
 
 // ─── トークン（自己検証） ───────────────────────────────────────────────
-// 形式: base64url(exp).hmacSHA256(exp, secret)
-// 秘密鍵は ADMIN_PASSWORD 由来。パスワードを変えると既存トークンは無効化されます。
-function secret() {
+// 署名・検証は api/_lib/auth.js に集約（形式は従来と同一）。
+// ログイン照合のパスワードは ADMIN_PASSWORD を直接使う。
+function adminPassword() {
   return process.env.ADMIN_PASSWORD || '';
-}
-function sign(data) {
-  return crypto.createHmac('sha256', secret()).update(data).digest('base64url');
-}
-function createToken() {
-  const exp = String(Date.now() + TOKEN_TTL_MS);
-  const payload = Buffer.from(exp).toString('base64url');
-  return `${payload}.${sign(exp)}`;
-}
-function verifyToken(token) {
-  if (!token || !secret()) return false;
-  const [payload, sig] = String(token).split('.');
-  if (!payload || !sig) return false;
-  let exp;
-  try {
-    exp = Buffer.from(payload, 'base64url').toString();
-  } catch {
-    return false;
-  }
-  const expected = sign(exp);
-  // タイミング安全比較
-  if (sig.length !== expected.length) return false;
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false;
-  return Date.now() < Number(exp);
-}
-function bearer(req) {
-  const h = req.headers.authorization || req.headers.Authorization || '';
-  const m = /^Bearer\s+(.+)$/i.exec(h);
-  return m ? m[1].trim() : '';
 }
 
 // action → 共通ストアキーの対応
@@ -111,26 +82,21 @@ export default async function handler(req, res) {
         res.setHeader('Allow', 'POST');
         return res.status(405).json({ error: 'Method Not Allowed' });
       }
-      if (!secret()) {
-        return res.status(500).json({
-          error: 'ADMIN_PASSWORD가 설정되지 않았습니다. Vercel 환경변수를 설정해 주세요.',
-        });
+      if (!adminPassword()) {
+        return res.status(500).json({ error: '서버가 설정되지 않았습니다.' });
       }
       const body =
         req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
       const password = (body.password || '').toString();
-      // タイミング安全な照合
-      const a = Buffer.from(password);
-      const b = Buffer.from(secret());
-      const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
-      if (!ok) {
+      // タイミング安全な照合（両辺を sha256 でハッシュしてから比較）
+      if (!safeEqual(password, adminPassword())) {
         return res.status(401).json({ error: '비밀번호가 올바르지 않습니다.' });
       }
-      return res.status(200).json({ token: createToken(), expiresIn: TOKEN_TTL_MS });
+      return res.status(200).json({ token: signToken(TOKEN_TTL_MS), expiresIn: TOKEN_TTL_MS });
     }
 
     // --- 以降は要トークン ---
-    const authed = verifyToken(bearer(req));
+    const authed = verifyToken(req);
 
     if (action === 'verify') {
       return res.status(authed ? 200 : 401).json({ ok: authed });

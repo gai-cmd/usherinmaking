@@ -72,6 +72,17 @@ def step_merge_seo(seo):
     log("merged uim:seo into seo/seo.json (%d pages)" % merged)
 
 
+def step_bake_blog(posts):
+    """公開記事からブログ静的ページ・feed・SEO エントリを生成。"""
+    if not isinstance(posts, list):
+        log("no uim:posts data — skip blog bake")
+        return
+    from bake_blog import bake_blog
+    urls = bake_blog(posts, root=ROOT)
+    pub = len([p for p in posts if isinstance(p, dict) and p.get("status") == "published"])
+    log("baked blog: %d published posts, %d urls" % (pub, len(urls)))
+
+
 def step_apply_seo():
     res = subprocess.run([sys.executable, BUILD_SEO, "apply"],
                          cwd=ROOT, capture_output=True, text=True)
@@ -79,6 +90,15 @@ def step_apply_seo():
         log("build_seo: " + res.stdout.strip())
     if res.returncode != 0:
         log("build_seo apply nonzero exit %d: %s" % (res.returncode, res.stderr.strip()))
+
+
+def step_build_sitemap():
+    res = subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "build_sitemap.py")],
+                         cwd=ROOT, capture_output=True, text=True)
+    if res.stdout:
+        log("build_sitemap: " + res.stdout.strip())
+    if res.returncode != 0:
+        log("build_sitemap nonzero exit %d: %s" % (res.returncode, res.stderr.strip()))
 
 
 def main():
@@ -90,7 +110,7 @@ def main():
 
     log("KV env detected — running bake pipeline")
 
-    pages, seo = {}, {}
+    pages, seo, posts = {}, {}, []
     try:
         pages = kv_get(base_url, token, "uim:pages") or {}
         log("fetched uim:pages (%d page entries)" % len(pages))
@@ -101,11 +121,20 @@ def main():
         log("fetched uim:seo (%d page entries)" % len(seo))
     except Exception as ex:
         log("KV GET uim:seo failed: %s" % ex)
+    try:
+        posts = kv_get(base_url, token, "uim:posts") or []
+        log("fetched uim:posts (%d posts)" % len(posts))
+    except Exception as ex:
+        log("KV GET uim:posts failed: %s" % ex)
 
     try:
         step_bake(pages)
     except Exception as ex:
         log("step_bake error: %s" % ex)
+    try:
+        step_bake_blog(posts)
+    except Exception as ex:
+        log("step_bake_blog error: %s" % ex)
     try:
         step_merge_seo(seo)
     except Exception as ex:
@@ -114,6 +143,10 @@ def main():
         step_apply_seo()
     except Exception as ex:
         log("step_apply_seo error: %s" % ex)
+    try:
+        step_build_sitemap()
+    except Exception as ex:
+        log("step_build_sitemap error: %s" % ex)
 
     log("pipeline complete. exit 0")
 

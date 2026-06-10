@@ -21,33 +21,10 @@
 //   （studio/hero/event/galleries）は「raw（生の保存値）」から読み戻して補完する
 //   （store.js は契約上このエージェントの所有外＝変更しない）。
 
-import crypto from 'node:crypto';
 import store, { KEYS, normalizePlan } from './_lib/store.js';
+import { verifyToken } from './_lib/auth.js';
 
-// ─── トークン検証（admin.js と同方式・自己完結） ───────────────────────
-function secret() {
-  return process.env.ADMIN_PASSWORD || '';
-}
-function verifyToken(token) {
-  if (!token || !secret()) return false;
-  const [payload, sig] = String(token).split('.');
-  if (!payload || !sig) return false;
-  let exp;
-  try {
-    exp = Buffer.from(payload, 'base64url').toString();
-  } catch {
-    return false;
-  }
-  const expected = crypto.createHmac('sha256', secret()).update(exp).digest('base64url');
-  if (sig.length !== expected.length) return false;
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false;
-  return Date.now() < Number(exp);
-}
-function bearer(req) {
-  const h = req.headers.authorization || req.headers.Authorization || '';
-  const m = /^Bearer\s+(.+)$/i.exec(h);
-  return m ? m[1].trim() : '';
-}
+// ─── トークン検証は api/_lib/auth.js に集約（ADMIN_TOKEN_SECRET / ADMIN_PASSWORD 由来） ───
 
 const isYmd = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const isPlainObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
@@ -442,7 +419,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      if (!verifyToken(bearer(req))) {
+      if (!verifyToken(req)) {
         return res.status(401).json({ error: '인증이 필요합니다. 다시 로그인해 주세요.' });
       }
       const body =

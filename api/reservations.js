@@ -30,11 +30,19 @@
 
 import store, { KEYS } from './_lib/store.js';
 
+// 受信ボディの上限（PII・スパム対策）。
+export const config = { api: { bodyParser: { sizeLimit: '1mb' } } };
+
 const loadAll = () => store.list(KEYS.reservations);
 
 const isYmd = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const isMonth = (s) => typeof s === 'string' && /^\d{4}-\d{2}$/.test(s);
 const isEmail = (s) => typeof s === 'string' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s);
+
+// 件名（subject）に使う名前から CR/LF・制御文字を除去（ヘッダーインジェクション対策）。
+function sanitizeHeader(s) {
+  return String(s).replace(/[\r\n\t\f\v -]/g, ' ').trim();
+}
 
 export default async function handler(req, res) {
   try {
@@ -81,6 +89,14 @@ async function handleGet(req, res) {
 
 // ── POST: 予約作成（同日重複検証）────────────────────────────────
 async function handlePost(req, res) {
+  // レート制限（KV があれば 60 秒に 5 回まで。dev は no-op）。
+  const ip = String((req.headers && req.headers['x-forwarded-for']) || '')
+    .split(',')[0]
+    .trim();
+  const rl = await store.rateLimit('reserve', ip, 5, 60);
+  if (!rl.ok)
+    return res.status(429).json({ error: 'リクエストが多すぎます。しばらくしてから再度お試しください。' });
+
   const body =
     req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
 
@@ -96,6 +112,9 @@ async function handlePost(req, res) {
     return res.status(400).json({ error: 'ご希望の撮影日を選択してください。' });
   if (!name || !contact)
     return res.status(400).json({ error: 'お名前とご連絡先は必須です。' });
+  // 入力長の上限（過大入力を弾く）
+  if (name.length > 120 || contact.length > 200 || plan.length > 120 || message.length > 4000)
+    return res.status(400).json({ error: '入力が長すぎます。' });
 
   // 過去日は不可
   const todayYmd = new Date().toISOString().slice(0, 10);
@@ -109,7 +128,7 @@ async function handlePost(req, res) {
   if (content.blockedDates.includes(date))
     return res.status(409).json({ error: 'その日は撮影の受付を行っておりません。別の日をお選びください。' });
 
-  // 同日重複検証（満席判定）
+  // 事前の満席判定（高速な早期リターン。確定判定はロック内で再度行う）。
   const sameDay = all.filter(
     (r) => r && r.status !== 'cancelled' && r.date === date
   ).length;
@@ -133,7 +152,28 @@ async function handlePost(req, res) {
     createdAt: now,
     updatedAt: now,
   };
-  await store.push(KEYS.reservations, record);
+
+  // ── クリティカルセクション: 同日ロックで「再カウント → push」を原子化 ─────────
+  //   非ロック時（dev）はそのまま実行。ロック取得失敗（他リクエストが同日を処理中）は 409。
+  let lock;
+  try {
+    lock = await store.withLock(`uim:reslock:${date}`, 15, async () => {
+      const fresh = await loadAll();
+      const taken = fresh.filter(
+        (r) => r && r.status !== 'cancelled' && r.date === date
+      ).length;
+      if (taken >= capacity) return { full: true };
+      await store.push(KEYS.reservations, record);
+      return { full: false };
+    });
+  } catch (e) {
+    console.error('[reservations] save failed:', e);
+    return res.status(500).json({ error: 'サーバーエラーが発生しました。' });
+  }
+  if (lock.busy)
+    return res.status(409).json({ error: 'その日は現在ご予約手続き中です。少し時間をおいて再度お試しください。' });
+  if (lock.value && lock.value.full)
+    return res.status(409).json({ error: 'その日は既に受付終了（満席）です。別の日をお選びください。' });
 
   // ── スタジオへメール通知（設定時のみ）──────────────────────────
   const KEY = process.env.RESEND_API_KEY;
@@ -147,7 +187,7 @@ async function handlePost(req, res) {
         body: JSON.stringify({
           from: FROM,
           to: [TO],
-          subject: `【ご予約申込】${date}／${name} 様`,
+          subject: `【ご予約申込】${date}／${sanitizeHeader(name)} 様`,
           text:
             `新しい撮影予約の申し込みがありました。\n\n` +
             `撮影日　: ${date}\n` +
@@ -159,12 +199,12 @@ async function handlePost(req, res) {
             `受付時刻: ${record.createdAt}\n`,
         }),
       });
-      if (!r.ok) console.error('[reservations] resend error:', await r.text());
+      if (!r.ok) console.error('[reservations] resend error: status', r.status);
     } catch (e) {
       console.error('[reservations] mail failed:', e); // 通知失敗でも予約自体は受付済み
     }
   } else {
-    console.log('[reservations] received (mail not configured):', record.id, date);
+    console.log('[reservations] received (mail not configured)');
   }
 
   return res.status(201).json({ ok: true, id: record.id, date });

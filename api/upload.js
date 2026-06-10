@@ -12,31 +12,15 @@
 // トークン検証ロジックは api/admin.js と同じ方式（ADMIN_PASSWORD 由来の HMAC 署名）。
 
 import crypto from 'node:crypto';
+import { verifyToken } from './_lib/auth.js';
 
-// ─── トークン検証（admin.js / content.js と同方式・自己完結） ───────────────
-function secret() {
-  return process.env.ADMIN_PASSWORD || '';
-}
-function verifyToken(token) {
-  if (!token || !secret()) return false;
-  const [payload, sig] = String(token).split('.');
-  if (!payload || !sig) return false;
-  let exp;
-  try {
-    exp = Buffer.from(payload, 'base64url').toString();
-  } catch {
-    return false;
-  }
-  const expected = crypto.createHmac('sha256', secret()).update(exp).digest('base64url');
-  if (sig.length !== expected.length) return false;
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false;
-  return Date.now() < Number(exp);
-}
-function bearer(req) {
-  const h = req.headers.authorization || req.headers.Authorization || '';
-  const m = /^Bearer\s+(.+)$/i.exec(h);
-  return m ? m[1].trim() : '';
-}
+// ─── トークン検証は api/_lib/auth.js に集約（ADMIN_TOKEN_SECRET / ADMIN_PASSWORD 由来） ───
+
+// アップロード上限（base64 デコード後の実バイト数）。bodyParser の sizeLimit と整合。
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+// 受信ボディは base64 で肥大化するため bodyParser の上限を引き上げる。
+export const config = { api: { bodyParser: { sizeLimit: '8mb' } } };
 
 // 拡張子 → Content-Type（画像のみ許可）。
 const IMAGE_TYPES = {
@@ -70,13 +54,40 @@ function decodeData(data) {
   return Buffer.from(b64.replace(/\s+/g, ''), 'base64');
 }
 
+// マジックバイト（先頭シグネチャ）が拡張子の主張する画像形式と一致するか検証。
+//   JPEG: FF D8 FF / PNG: 89 50 4E 47 / GIF: 47 49 46 38 /
+//   WEBP: "RIFF"....「WEBP」/ AVIF: 'ftyp' ボックスの brand に avif/avis 等。
+function sniffMatches(buf, contentType) {
+  if (!buf || buf.length < 12) return false;
+  const b = buf;
+  switch (contentType) {
+    case 'image/jpeg':
+      return b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+    case 'image/png':
+      return b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
+    case 'image/gif':
+      return b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38;
+    case 'image/webp':
+      // "RIFF" .... "WEBP"
+      return (
+        b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP'
+      );
+    case 'image/avif':
+      // ISO-BMFF: 4byte size + 'ftyp' + brand。brand に avif/avis を許容。
+      if (b.toString('ascii', 4, 8) !== 'ftyp') return false;
+      return /avif|avis|mif1|miaf/.test(b.toString('ascii', 8, 12));
+    default:
+      return false;
+  }
+}
+
 export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') {
       res.setHeader('Allow', 'POST');
       return res.status(405).json({ error: 'Method Not Allowed' });
     }
-    if (!verifyToken(bearer(req))) {
+    if (!verifyToken(req)) {
       return res.status(401).json({ error: '인증이 필요합니다. 다시 로그인해 주세요.' });
     }
 
@@ -108,6 +119,16 @@ export default async function handler(req, res) {
     const buf = decodeData(data);
     if (!buf.length) {
       return res.status(400).json({ error: '이미지 데이터를 읽을 수 없습니다.' });
+    }
+    // サイズ上限（デコード後の実バイト数）。
+    if (buf.length > MAX_UPLOAD_BYTES) {
+      return res.status(413).json({ error: '이미지 용량이 너무 큽니다 (최대 8MB).' });
+    }
+    // マジックバイト検証（拡張子の偽装を弾く）。
+    if (!sniffMatches(buf, contentType)) {
+      return res
+        .status(415)
+        .json({ error: '파일 내용이 이미지 형식과 일치하지 않습니다.' });
     }
 
     // @vercel/blob は Blob 利用時のみ動的 import（依存未インストール環境でも壊れない）。

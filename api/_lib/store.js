@@ -201,12 +201,21 @@ export async function get(key, fallback = null) {
   return readFile(key, fallback);
 }
 
+// 本番（VERCEL_ENV === 'production'）で KV 未設定なら永続化できないため、
+// /tmp への揮発書き込み（予約・PII の消失）を避けて明示的に失敗させる。
+function assertWritableInProd() {
+  if (!useKV && process.env.VERCEL_ENV === 'production') {
+    throw new Error('Persistent storage (KV) is not configured');
+  }
+}
+
 export async function set(key, value) {
   if (useKV) {
     const kv = await kvClient();
     await kv.set(key, value);
     return value;
   }
+  assertWritableInProd();
   writeFile(key, value);
   return value;
 }
@@ -222,10 +231,49 @@ export async function push(key, entry) {
   //   来ると、後勝ちで片方を取りこぼす可能性がある（低トラフィック想定の簡易実装）。
   //   厳密な原子性が必要になったら、Vercel KV のリスト型（rpush / lrange）へ移行するか、
   //   楽観ロック（バージョン番号付き set）／キュー化を検討すること。
+  assertWritableInProd();
   const arr = await list(key);
   arr.push(entry);
   await set(key, arr);
   return entry;
+}
+
+// ─── レート制限（KV があれば incr+expire、無ければ no-op） ─────────────────────
+//   bucket: 用途名（'contact' / 'reserve' 等）、ip: クライアント IP。
+//   limit: window 内の許容回数、windowSec: ウィンドウ秒数。
+//   返り値 { ok, remaining }。KV 未使用（dev）は常に許可。
+export async function rateLimit(bucket, ip, limit, windowSec) {
+  if (!useKV) return { ok: true, remaining: limit };
+  const kv = await kvClient();
+  const key = `uim:rl:${bucket}:${ip || 'unknown'}`;
+  const n = await kv.incr(key);
+  if (n === 1) {
+    // 最初のヒットで有効期限を設定（ウィンドウの開始）。
+    await kv.expire(key, windowSec);
+  }
+  const remaining = Math.max(0, limit - n);
+  return { ok: n <= limit, remaining };
+}
+
+// ─── ベストエフォートのロック（KV の SET NX EX。無ければそのまま実行） ──────────
+//   key: ロックキー、ttlSec: 自動解放までの秒数、fn: クリティカルセクション。
+//   取得できなければ { busy: true } を返す（fn は実行しない）。
+//   取得できれば fn() を実行し、終了後にロックを解放して { busy:false, value } を返す。
+export async function withLock(key, ttlSec, fn) {
+  if (!useKV) return { busy: false, value: await fn() };
+  const kv = await kvClient();
+  const acquired = await kv.set(key, '1', { nx: true, ex: ttlSec });
+  if (!acquired) return { busy: true };
+  try {
+    const value = await fn();
+    return { busy: false, value };
+  } finally {
+    try {
+      await kv.del(key);
+    } catch {
+      // 解放失敗は ttl による自動解放に委ねる。
+    }
+  }
 }
 
 // 受付 ID 発行（crypto。失敗時はタイムスタンプ＋乱数にフォールバック）
@@ -243,6 +291,8 @@ export default {
   set,
   list,
   push,
+  rateLimit,
+  withLock,
   genId,
   // ステータス／コンテンツ補助
   CONTACT_STATUSES,

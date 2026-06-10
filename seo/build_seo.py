@@ -63,11 +63,18 @@ def extract():
     site = {
         "name": "usher in making",
         "alternateName": "usherinmaking",
-        "baseUrl": "https://usherinmaking.jp/",
+        "baseUrl": "https://usherinmaking.vercel.app/",
         "businessType": "PhotographyBusiness",
         "logo": "/images/logo.png",
         "description": "沖縄で活動している唯一の韓国女性カメラマン。沖縄ウェディングフォト、前撮り、セルフウェディング、記念日撮影、家族写真を韓流スタイルで撮影します。",
+        "descriptionEn": "usher in making is the only Korean female photographer based in Okinawa. We shoot Okinawa wedding photos, pre-wedding, self-wedding, anniversary and family snaps in a soft Korean style.",
         "areaServed": "Okinawa, Japan",
+        "priceRange": "¥¥",
+        "telephone": "",
+        "email": "",
+        "address": {"addressCountry": "JP", "addressRegion": "沖縄県", "addressLocality": "", "postalCode": "", "streetAddress": ""},
+        "geo": {"latitude": "", "longitude": ""},
+        "openingHours": "",
         "sameAs": [
             "https://www.instagram.com/usherinmaking/",
             "https://blog.naver.com/moya100",
@@ -184,10 +191,15 @@ def build_block(site, f, p):
     L.append(f'<meta name="twitter:title" content="{attr(title)}" />')
     L.append(f'<meta name="twitter:description" content="{attr(desc)}" />')
     L.append(f'<meta name="twitter:image" content="{attr(ogimg)}" />')
+    L.append(f'<meta property="og:image:alt" content="{attr(title)}" />')
+    L.append(f'<meta name="twitter:image:alt" content="{attr(title)}" />')
+    L.append('<link rel="icon" href="/favicon.png" />')
+    L.append('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />')
     L.append(f'<link rel="alternate" hreflang="ja" href="{attr(base + jpslug)}" />')
     L.append(f'<link rel="alternate" hreflang="en" href="{attr(base + enslug)}" />')
     L.append(f'<link rel="alternate" hreflang="x-default" href="{attr(base + jpslug)}" />')
 
+    bizdesc = (site.get("descriptionEn") if is_en else "") or site.get("description", "")
     biz = {
         "@context": "https://schema.org",
         "@type": site.get("businessType", "LocalBusiness"),
@@ -196,10 +208,29 @@ def build_block(site, f, p):
         "url": url,
         "logo": absu(site.get("logo", "")),
         "image": ogimg,
-        "description": site.get("description", ""),
+        "description": bizdesc,
         "areaServed": {"@type": "Place", "name": site.get("areaServed", "")},
         "sameAs": site.get("sameAs", []),
     }
+    if site.get("priceRange"):
+        biz["priceRange"] = site["priceRange"]
+    if site.get("telephone"):
+        biz["telephone"] = site["telephone"]
+    if site.get("email"):
+        biz["email"] = site["email"]
+    # PostalAddress: always know country/region; add the rest only when supplied
+    addr = site.get("address") or {}
+    post = {"@type": "PostalAddress"}
+    for k in ("streetAddress", "addressLocality", "addressRegion", "postalCode", "addressCountry"):
+        if addr.get(k):
+            post[k] = addr[k]
+    if len(post) > 1:
+        biz["address"] = post
+    geo = site.get("geo") or {}
+    if geo.get("latitude") and geo.get("longitude"):
+        biz["geo"] = {"@type": "GeoCoordinates", "latitude": geo["latitude"], "longitude": geo["longitude"]}
+    if site.get("openingHours"):
+        biz["openingHoursSpecification"] = {"@type": "OpeningHoursSpecification", "description": site["openingHours"]}
     L.append(jsonld(biz))
 
     if p.get("website"):
@@ -207,9 +238,27 @@ def build_block(site, f, p):
                          "name": site["name"], "url": base, "inLanguage": ("en" if is_en else "ja"),
                          "description": desc}))
     if p.get("breadcrumb"):
+        # Rebuild item URLs deterministically — the stored URLs point at the old
+        # domain / WordPress paths (all 404). Keep the stored NAMES only:
+        #   first  -> home (base);  last -> this page's canonical url;
+        #   middle -> base + (en/) + <name>.html IF that flat file exists, else drop.
+        crumbs = p["breadcrumb"]
+        last = len(crumbs) - 1
+        prefix = "en/" if is_en else ""
+        items = []
+        for i, (n, _old) in enumerate(crumbs):
+            if i == 0:
+                items.append((n, base))
+            elif i == last:
+                items.append((n, url))
+            else:
+                cand = n.strip().lower()
+                if os.path.exists(os.path.join(ROOT, prefix + cand + ".html")):
+                    items.append((n, base + prefix + cand + ".html"))
+                # else: drop this middle crumb (don't emit a 404)
         L.append(jsonld({"@context": "https://schema.org", "@type": "BreadcrumbList",
                          "itemListElement": [{"@type": "ListItem", "position": i + 1, "name": n, "item": u}
-                                             for i, (n, u) in enumerate(p["breadcrumb"])]}))
+                                             for i, (n, u) in enumerate(items)]}))
     if p.get("product"):
         pr = p["product"]
         L.append(jsonld({"@context": "https://schema.org", "@type": "Product",
@@ -223,6 +272,19 @@ def build_block(site, f, p):
         L.append(jsonld({"@context": "https://schema.org", "@type": "FAQPage",
                          "mainEntity": [{"@type": "Question", "name": q,
                                          "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in p["faq"]]}))
+    if p.get("article"):
+        art = p["article"]
+        L.append(jsonld({"@context": "https://schema.org", "@type": "BlogPosting",
+                         "headline": title,
+                         "image": [ogimg] if ogimg else [],
+                         "datePublished": art.get("datePublished", ""),
+                         "dateModified": art.get("dateModified", "") or art.get("datePublished", ""),
+                         "inLanguage": ("en" if is_en else "ja"),
+                         "author": {"@type": "Organization", "name": art.get("author") or site["name"]},
+                         "publisher": {"@type": "Organization", "name": site["name"],
+                                       "logo": {"@type": "ImageObject", "url": absu(site.get("logo", ""))}},
+                         "mainEntityOfPage": {"@type": "WebPage", "@id": url},
+                         "description": desc}))
     L.append(END)
     return "\n".join(L)
 
@@ -234,6 +296,7 @@ LEGACY = [
     r'<meta\s+property="og:[^"]*"[^>]*>',
     r'<meta\s+name="twitter:[^"]*"[^>]*>',
     r'<link\s+rel="canonical"[^>]*>',
+    r'<link\s+rel="(?:icon|apple-touch-icon)"[^>]*>',
     r'<link\s+rel="alternate"\s+hreflang="[^"]*"[^>]*>',
     r'<script[^>]*type="application/ld\+json"[^>]*>.*?</script>',
     r'<!--\s*(?:Open Graph|Twitter|hreflang)\s*-->',

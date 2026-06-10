@@ -286,3 +286,33 @@ ul{list-style:none}
   .big-statement .word{opacity:1}
   .reveal{opacity:1;transform:none}
 }
+
+/* ════════════════ 블로그 ════════════════ */
+.blog-index{max-width:1120px;margin:0 auto;padding:7rem 1.4rem 5rem}
+.blog-head{text-align:center;margin-bottom:2.6rem}
+.blog-head h1{font-family:"Cormorant Garamond",serif;font-size:2.6rem;font-weight:500;letter-spacing:.04em;margin:0 0 .3rem}
+.blog-head p{color:#8a8378;font-size:.95rem;margin:0}
+.blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2rem}
+.blog-card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 18px rgba(40,34,28,.06);transition:transform .35s ease,box-shadow .35s ease}
+.blog-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(40,34,28,.12)}
+.blog-card-thumb{aspect-ratio:4/3;background:#efeae3;overflow:hidden}
+.blog-card-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.blog-card-noimg{display:block;width:100%;height:100%;background:linear-gradient(135deg,#efeae3,#e2dacd)}
+.blog-card-body{padding:1.1rem 1.2rem 1.4rem}
+.blog-card-meta{font-size:.74rem;letter-spacing:.06em;color:#a89f90;text-transform:uppercase}
+.blog-card-body h2{font-family:"Shippori Mincho B1",serif;font-size:1.12rem;font-weight:600;line-height:1.5;margin:.4rem 0 .5rem}
+.blog-card-body p{font-size:.88rem;line-height:1.6;color:#6f685d;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.blog-empty{text-align:center;color:#a89f90;padding:4rem 0}
+.blog-post-wrap{max-width:760px;margin:0 auto;padding:7rem 1.4rem 5rem}
+.blog-back{display:inline-block;color:#a89f90;text-decoration:none;font-size:.85rem;margin-bottom:1.4rem}
+.blog-back:hover{color:#6f685d}
+.blog-post-meta{font-size:.78rem;letter-spacing:.06em;color:#a89f90;text-transform:uppercase}
+.blog-post h1{font-family:"Shippori Mincho B1",serif;font-size:1.9rem;font-weight:700;line-height:1.45;margin:.4rem 0 1.4rem}
+.blog-post-cover{margin:0 0 1.8rem;border-radius:12px;overflow:hidden}
+.blog-post-cover img{width:100%;height:auto;display:block}
+.blog-post-body{font-size:1rem;line-height:1.95;color:#3f3a33}
+.blog-post-body p{margin:0 0 1.3rem}
+.blog-post-body figure{margin:1.6rem 0}
+.blog-post-body img{max-width:100%;height:auto;border-radius:10px;display:block;margin:0 auto}
+.blog-post-body h2,.blog-post-body h3{font-family:"Shippori Mincho B1",serif;margin:2rem 0 .8rem;line-height:1.5}
+@media(max-width:640px){.blog-head h1{font-size:2.1rem}.blog-post h1{font-size:1.55rem}}

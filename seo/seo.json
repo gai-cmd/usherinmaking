@@ -6,7 +6,23 @@
     "businessType": "PhotographyBusiness",
     "logo": "/images/logo.png",
     "description": "沖縄で活動している唯一の韓国女性カメラマン。沖縄ウェディングフォト、前撮り、セルフウェディング、記念日撮影、家族写真を韓流スタイルで撮影します。",
+    "descriptionEn": "usher in making is the only Korean female photographer based in Okinawa. We shoot Okinawa wedding photos, pre-wedding, self-wedding, anniversary and family snaps in a soft Korean style.",
     "areaServed": "Okinawa, Japan",
+    "priceRange": "¥¥",
+    "telephone": "",
+    "email": "",
+    "address": {
+      "addressCountry": "JP",
+      "addressRegion": "沖縄県",
+      "addressLocality": "",
+      "postalCode": "",
+      "streetAddress": ""
+    },
+    "geo": {
+      "latitude": "",
+      "longitude": ""
+    },
+    "openingHours": "",
     "sameAs": [
       "https://www.instagram.com/usherinmaking/",
       "https://blog.naver.com/usherinmaking/",
@@ -33,6 +49,20 @@
           "ABOUT",
           "https://usherinmaking.jp/about/"
         ]
+      ],
+      "faq": [
+        [
+          "usher in making はどんなチームですか？",
+          "沖縄で活動する唯一の韓国人女性カメラマンと女性スタイリストのチームです。韓流スタイルの世界観づくりと丁寧なレタッチで撮影します。"
+        ],
+        [
+          "韓国語でも相談できますか？",
+          "はい。韓国語と日本語の両方で相談に対応しています。"
+        ],
+        [
+          "どんな撮影をお願いできますか？",
+          "ウェディングフォト・前撮り・セルフウェディング・記念日撮影・家族写真に対応しています。"
+        ]
       ]
     },
     "anniversary.html": {
@@ -50,6 +80,20 @@
         [
           "ANNIVERSARY",
           "https://usherinmaking.jp/anniversary/"
+        ]
+      ],
+      "faq": [
+        [
+          "記念写真はどんな撮影に対応していますか？",
+          "七五三・マタニティ・家族写真・デートフォトなど、人生の節目の記念写真に対応しています。韓国人女性カメラマンが韓流スタイルで撮影します。"
+        ],
+        [
+          "記念写真の料金はいくらからですか？",
+          "記念写真は¥38,000〜です。"
+        ],
+        [
+          "予約や問い合わせはどこからできますか？",
+          "ご予約は予約ページのカレンダーから、お問い合わせはフォーム・LINE・Instagramから承っています。"
         ]
       ],
       "gallery": [
@@ -82,6 +126,16 @@
         [
           "contact",
           "https://usherinmaking.jp/contact/"
+        ]
+      ],
+      "faq": [
+        [
+          "問い合わせはどこからできますか？",
+          "お問い合わせフォーム、LINE（ID: usherinmaking）、Instagram（@usherinmaking）からお気軽にご連絡いただけます。韓国語・日本語に対応しています。"
+        ],
+        [
+          "撮影日の予約もここからできますか？",
+          "撮影日のご予約は予約ページのカレンダーから承っています。内容や料金のご相談はフォーム・LINE・Instagramからどうぞ。"
         ]
       ]
     },
@@ -318,6 +372,16 @@
           "https://usherinmaking.jp/dress/"
         ]
       ],
+      "faq": [
+        [
+          "ドレスはレンタルできますか？",
+          "はい。usher in making のドレスコレクションはレンタル可能で、前撮りやセルフウェディングに合わせてお選びいただけます。"
+        ],
+        [
+          "どんなドレスがありますか？",
+          "ヴィンテージから韓流スタイルまで、沖縄ウェディングフォト向けのドレスを取り揃えています。一覧でご覧いただけます。"
+        ]
+      ],
       "gallery": [
         "/images/up/4e341ed711379b07.jpg",
         "/images/up/e931797c804343f0.jpg",
@@ -347,6 +411,20 @@
           "ABOUT",
           "https://usherinmaking.jp/en/about/"
         ]
+      ],
+      "faq": [
+        [
+          "Who is behind usher in making?",
+          "A team led by the only Korean female photographer based in Okinawa, working with a female stylist to create a Korean-style world and careful retouching."
+        ],
+        [
+          "Can I communicate in Korean?",
+          "Yes. We support both Korean and Japanese."
+        ],
+        [
+          "What kinds of shoots can I book?",
+          "Wedding, pre-wedding, self-wedding, anniversary and family photos."
+        ]
       ]
     },
     "en/anniversary.html": {
@@ -364,6 +442,20 @@
         [
           "ANNIVERSARY",
           "https://usherinmaking.jp/en/anniversary/"
+        ]
+      ],
+      "faq": [
+        [
+          "What kinds of anniversary photos do you shoot?",
+          "We shoot Shichi-Go-San (children's celebration), maternity, family and date snaps, capturing life's milestones in a Korean style."
+        ],
+        [
+          "How much do anniversary photos cost?",
+          "Anniversary photos start from ¥38,000."
+        ],
+        [
+          "How do I book or get in touch?",
+          "Book your date from the calendar on the reserve page, or reach us via the contact form, LINE or Instagram."
         ]
       ],
       "gallery": [
@@ -394,6 +486,16 @@
         [
           "CONTACT",
           "https://usherinmaking.jp/en/contact/"
+        ]
+      ],
+      "faq": [
+        [
+          "How can I get in touch?",
+          "Reach us via the contact form, LINE (ID: usherinmaking) or Instagram (@usherinmaking). We support English and Korean."
+        ],
+        [
+          "Can I book a shoot date here too?",
+          "Shoot dates are booked from the calendar on the reserve page. For questions about plans or pricing, use the form, LINE or Instagram."
         ]
       ]
     },
@@ -628,6 +730,16 @@
         [
           "DRESS",
           "https://usherinmaking.jp/en/dress/"
+        ]
+      ],
+      "faq": [
+        [
+          "Can I rent the dresses?",
+          "Yes. The usher in making dress collection is available for rental and can be chosen to match your pre-wedding or self-wedding shoot."
+        ],
+        [
+          "What kinds of dresses do you have?",
+          "From vintage to Korean-style looks, we offer a range of dresses for Okinawa wedding photography. Browse the full collection in the gallery."
         ]
       ],
       "gallery": [
@@ -1464,7 +1576,25 @@
       "keywords": "Okinawa wedding photo, Okinawa pre-wedding, self-wedding, Korean female photographer Okinawa, anniversary photo, family snap, booking, usherinmaking",
       "ogType": "website",
       "ogImage": "/images/up/adba32345d8088a3.jpg",
-      "website": true
+      "website": true,
+      "faq": [
+        [
+          "What is usher in making?",
+          "It is a photo studio run by the only Korean female photographer based in Okinawa, shooting wedding, pre-wedding, self-wedding, anniversary and family photos in a soft Korean style."
+        ],
+        [
+          "What kinds of shoots do you offer?",
+          "We shoot wedding photos, pre-wedding, self-wedding, anniversary and family photos."
+        ],
+        [
+          "How much do shoots cost?",
+          "Anniversary photos start from ¥38,000 and wedding photos from ¥76,000. We offer three plans: Simple ¥76,000, Basic ¥100,000 and Afterfull ¥128,000."
+        ],
+        [
+          "Can I book and ask questions in English or Korean?",
+          "We support Korean and Japanese. You can book your shoot date from the calendar on the reserve page, and reach us via the contact form, LINE or Instagram."
+        ]
+      ]
     },
     "en/plan.html": {
       "slug": "en/plan.html",
@@ -1499,6 +1629,20 @@
         [
           "WEDDING",
           "https://usherinmaking.jp/en/wedding/"
+        ]
+      ],
+      "faq": [
+        [
+          "How much do wedding photos cost?",
+          "Wedding photos start from ¥76,000. We offer three plans: Simple ¥76,000, Basic ¥100,000 and Afterfull ¥128,000."
+        ],
+        [
+          "What kinds of wedding shoots do you offer?",
+          "Pre-wedding, self-wedding, resort wedding and garden wedding shoots, all captured in a Korean style on location in Okinawa."
+        ],
+        [
+          "How do I book?",
+          "Book your shoot date from the calendar on the reserve page. For questions, reach us via the contact form, LINE or Instagram."
         ]
       ],
       "gallery": [
@@ -2341,7 +2485,25 @@
       "keywords": "沖縄ウェディングフォト, 沖縄ソロウェディング, 前撮り, セルフウェディング, 韓国人女性カメラマン, 韓流スタイル, 記念日撮影, 家族写真, リゾートウェディング沖縄, ビーチウェディング沖縄, usherinmaking",
       "ogType": "website",
       "ogImage": "/images/up/adba32345d8088a3.jpg",
-      "website": true
+      "website": true,
+      "faq": [
+        [
+          "usher in making はどんなスタジオですか？",
+          "沖縄で活動する唯一の韓国人女性カメラマンによる、ウェディング・前撮り・セルフウェディング・記念日・家族写真のフォトスタジオです。韓流スタイルの柔らかな世界観で撮影します。"
+        ],
+        [
+          "どんな撮影に対応していますか？",
+          "ウェディングフォト、前撮り、セルフウェディング、記念日撮影、家族写真に対応しています。"
+        ],
+        [
+          "料金はいくらからですか？",
+          "記念写真は¥38,000〜、ウェディングフォトは¥76,000〜です。プランはSimple ¥76,000／Basic ¥100,000／Afterfull ¥128,000の3つをご用意しています。"
+        ],
+        [
+          "日本語以外でも相談できますか？",
+          "韓国語と日本語に対応しています。ご予約は予約ページのカレンダーから、お問い合わせはフォーム・LINE・Instagramからお気軽にどうぞ。"
+        ]
+      ]
     },
     "plan.html": {
       "slug": "plan.html",
@@ -2432,6 +2594,20 @@
           "https://usherinmaking.jp/wedding/"
         ]
       ],
+      "faq": [
+        [
+          "ウェディングフォトの料金はいくらからですか？",
+          "ウェディングフォトは¥76,000〜です。Simple ¥76,000／Basic ¥100,000／Afterfull ¥128,000の3プランをご用意しています。"
+        ],
+        [
+          "どんなウェディング撮影に対応していますか？",
+          "前撮りウェディング、セルフウェディング、リゾートウェディング、ガーデンウェディングなどに対応し、韓流スタイルで撮影します。"
+        ],
+        [
+          "予約はどこからできますか？",
+          "ご予約は予約ページのカレンダーから承っています。ご相談はフォーム・LINE・Instagramからどうぞ。"
+        ]
+      ],
       "gallery": [
         "/images/up/d2cea40222d726a2.jpg",
         "/images/up/7f3a93c9ed2abf5a.jpg",
@@ -2448,6 +2624,42 @@
         "/images/up/9f6de30fc830219f.jpg",
         "/images/up/934c72ebb62d141a.jpg",
         "/images/up/ddb78d75fc3e564b.jpg"
+      ]
+    },
+    "blog.html": {
+      "slug": "blog.html",
+      "title": "ブログ｜usher in making",
+      "description": "沖縄ウェディング・前撮り・記念日フォトのブログ。撮影の記録やお知らせをお届けします。",
+      "keywords": "",
+      "ogType": "website",
+      "ogImage": "",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ]
+      ]
+    },
+    "en/blog.html": {
+      "slug": "en/blog.html",
+      "title": "Blog | usher in making",
+      "description": "Okinawa wedding, pre-wedding and anniversary photo stories and news from usher in making.",
+      "keywords": "",
+      "ogType": "website",
+      "ogImage": "",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ]
       ]
     }
   }

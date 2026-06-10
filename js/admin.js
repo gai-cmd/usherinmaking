@@ -210,6 +210,7 @@
     contacts:     { title: '문의',         render: renderContacts },
     content:      { title: '콘텐츠 관리',  render: renderContent },
     pages:        { title: '페이지 관리',  render: renderPages },
+    blog:         { title: '블로그',       render: renderBlog },
     seo:          { title: 'SEO / AEO',    render: renderSeo },
     settings:     { title: '설정',         render: renderSettings },
   };
@@ -1848,6 +1849,212 @@
       await rebuild();
       b.disabled = false; b.innerHTML = prev;
     });
+  }
+
+  // ════════════════ ブログ ════════════════
+  const BLOG_STATUS = {
+    draft:     { label: '초안',   tone: 'amber' },
+    published: { label: '공개',   tone: 'green' },
+  };
+  const tline = (v) => esc((v && (v.ja || v.ko || v.en)) || '(제목 없음)');
+
+  async function renderBlog(root) {
+    root.innerHTML = `<div class="section-head">
+        <div><h2>블로그</h2><p class="sub">기사 작성·번역, 네이버블로그 가져오기. [공개]로 발행하면 사이트 재구축 시 정적 페이지로 반영됩니다.</p></div>
+        <div class="head-actions">
+          <button class="btn btn-ghost" id="blog-import-open">네이버 가져오기</button>
+          <button class="btn btn-primary" id="blog-new">새 글</button>
+        </div>
+      </div>${loadingRow}`;
+    let posts = [];
+    try {
+      posts = (await api('/api/posts?all=1', { method: 'GET' })).posts || [];
+    } catch (err) {
+      if (err.message === 'unauthorized') return;
+      root.querySelector('.loading-row').outerHTML = emptyState('불러오기에 실패했습니다', err.message, true);
+      toast(err.message, 'error');
+      return;
+    }
+    const rows = posts.length
+      ? posts.map((p) => `
+        <tr data-id="${esc(p.id)}">
+          <td><strong>${tline(p.title)}</strong><br><span class="sub">/blog/${esc(p.slug)}.html</span></td>
+          <td>${badge(BLOG_STATUS, p.status)}</td>
+          <td>${esc(p.category || '—')}</td>
+          <td>${esc(p.date || '—')}</td>
+          <td class="lang-flags"><span class="${p.hasJa ? 'on' : 'off'}">JA</span> <span class="${p.hasEn ? 'on' : 'off'}">EN</span></td>
+          <td class="row-actions">
+            <button class="btn btn-ghost btn-sm" data-act="edit">편집</button>
+            <button class="btn btn-ghost btn-sm" data-act="del">삭제</button>
+          </td>
+        </tr>`).join('')
+      : '';
+    root.querySelector('.loading-row').outerHTML = posts.length
+      ? `<div class="card"><table class="data-table blog-table">
+          <thead><tr><th>제목</th><th>상태</th><th>카테고리</th><th>날짜</th><th>번역</th><th></th></tr></thead>
+          <tbody>${rows}</tbody></table></div>`
+      : emptyState('아직 기사가 없습니다', '[새 글] 또는 [네이버 가져오기]로 시작하세요.');
+
+    $('#blog-new').addEventListener('click', () => blogEdit(root, null));
+    $('#blog-import-open').addEventListener('click', () => blogImport(root));
+    root.querySelectorAll('tr[data-id]').forEach((tr) => {
+      const id = tr.dataset.id;
+      tr.querySelector('[data-act="edit"]').addEventListener('click', () => blogEdit(root, id));
+      tr.querySelector('[data-act="del"]').addEventListener('click', async () => {
+        if (!confirm('이 기사를 삭제할까요?')) return;
+        try {
+          await api('/api/posts', { method: 'POST', body: JSON.stringify({ action: 'delete', id }) });
+          toast('삭제했습니다.', 'ok');
+          renderBlog(root);
+        } catch (err) { toast(err.message, 'error'); }
+      });
+    });
+  }
+
+  // ─── 記事エディタ ───────────────────────────────────────────────────────────
+  async function blogEdit(root, id) {
+    root.innerHTML = loadingRow;
+    let post = { id: '', slug: '', status: 'draft', category: '', tags: [], cover: '', date: '', author: 'usher in making', title: {ja:'',en:'',ko:''}, excerpt: {ja:'',en:'',ko:''}, body: {ja:'',en:'',ko:''} };
+    if (id) {
+      try { post = (await api(`/api/posts?all=1&id=${encodeURIComponent(id)}`, { method: 'GET' })).post; }
+      catch (err) { if (err.message === 'unauthorized') return; toast(err.message, 'error'); return renderBlog(root); }
+    }
+    const tri = (base, m, opts = {}) => {
+      const rows = opts.rows || 2;
+      const ctl = (lang) => opts.textarea
+        ? `<textarea id="${base}-${lang}" rows="${rows}" class="mono">${esc(m[lang] || '')}</textarea>`
+        : `<input type="text" id="${base}-${lang}" value="${esc(m[lang] || '')}" />`;
+      return `<div class="tri-pair">
+        <div class="tri-cell"><em class="ml-tag">일본어 JA</em>${ctl('ja')}</div>
+        <div class="tri-cell"><em class="ml-tag en">영어 EN</em>${ctl('en')}</div>
+        <div class="tri-cell"><em class="ml-tag ko">원문 KO</em>${ctl('ko')}</div>
+      </div>`;
+    };
+    root.innerHTML = `
+      <div class="section-head"><div><h2>${id ? '기사 편집' : '새 기사'}</h2>
+        <p class="sub">${post.source && post.source.url ? `원본: <a href="${esc(post.source.url)}" target="_blank" rel="noopener">네이버 글</a>` : '직접 작성'}</p></div>
+        <div class="head-actions"><button class="btn btn-ghost" id="blog-back">← 목록</button></div>
+      </div>
+      <div class="card card-pad editor-card">
+        <div class="field-grid">
+          <label class="field"><span>슬러그 (URL)</span><input type="text" id="b-slug" value="${esc(post.slug)}" placeholder="okinawa-family-snap" /></label>
+          <label class="field"><span>상태</span><select id="b-status">
+            <option value="draft"${post.status==='draft'?' selected':''}>초안</option>
+            <option value="published"${post.status==='published'?' selected':''}>공개</option>
+          </select></label>
+          <label class="field"><span>카테고리</span><input type="text" id="b-category" value="${esc(post.category)}" placeholder="스냅" /></label>
+          <label class="field"><span>날짜</span><input type="date" id="b-date" value="${esc(post.date)}" /></label>
+          <label class="field"><span>태그 (쉼표로 구분)</span><input type="text" id="b-tags" value="${esc((post.tags||[]).join(', '))}" /></label>
+          <label class="field"><span>커버 이미지</span><span class="pick-row"><input type="text" id="b-cover" value="${esc(post.cover)}" placeholder="/images/up/... 또는 https://" /><button type="button" class="btn btn-ghost btn-sm" id="b-cover-pick">선택</button></span></label>
+        </div>
+        <div class="field"><span>제목</span>${tri('b-title', post.title)}</div>
+        <div class="field"><span>요약 (목록·검색 설명)</span>${tri('b-excerpt', post.excerpt, {textarea:true, rows:2})}</div>
+        <div class="field"><span>본문 (HTML)</span>${tri('b-body', post.body, {textarea:true, rows:14})}</div>
+        <div class="translate-bar">
+          <span class="sub">원문(KO)에서 번역 → </span>
+          <button class="btn btn-ghost btn-sm" id="b-tr-ja">일본어 번역</button>
+          <button class="btn btn-ghost btn-sm" id="b-tr-en">영어 번역</button>
+          <span class="sub tr-hint">번역은 저장 후 실행됩니다.</span>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-ghost" id="b-preview" type="button">미리보기(JA)</button>
+          <button class="btn btn-primary" id="b-save">저장</button>
+        </div>
+      </div>`;
+
+    const readForm = () => ({
+      id: post.id || undefined,
+      slug: $('#b-slug').value.trim(),
+      status: $('#b-status').value,
+      category: $('#b-category').value.trim(),
+      date: $('#b-date').value.trim(),
+      tags: $('#b-tags').value.split(',').map((s) => s.trim()).filter(Boolean),
+      cover: $('#b-cover').value.trim(),
+      title: { ja: $('#b-title-ja').value, en: $('#b-title-en').value, ko: $('#b-title-ko').value },
+      excerpt: { ja: $('#b-excerpt-ja').value, en: $('#b-excerpt-en').value, ko: $('#b-excerpt-ko').value },
+      body: { ja: $('#b-body-ja').value, en: $('#b-body-en').value, ko: $('#b-body-ko').value },
+    });
+    const save = async () => {
+      const res = await api('/api/posts', { method: 'POST', body: JSON.stringify({ action: 'save', post: readForm() }) });
+      post = res.post;
+      return post;
+    };
+
+    $('#blog-back').addEventListener('click', () => renderBlog(root));
+    $('#b-cover-pick').addEventListener('click', () => openPicker({ single: true, onAdd: (srcs) => { $('#b-cover').value = srcs[0] || ''; } }));
+    $('#b-save').addEventListener('click', async (e) => {
+      const b = e.currentTarget; b.disabled = true; b.textContent = '저장 중…';
+      try { await save(); toast('저장했습니다.', 'ok'); blogEdit(root, post.id); }
+      catch (err) { toast(err.message, 'error'); b.disabled = false; b.textContent = '저장'; }
+    });
+    $('#b-preview').addEventListener('click', () => {
+      const html = $('#b-body-ja').value || $('#b-body-ko').value;
+      openDrawer('미리보기 (JA)', `<div class="post-preview">${html}</div>`);
+    });
+    const doTranslate = async (target, btn) => {
+      const prev = btn.textContent; btn.disabled = true; btn.textContent = '번역 중…';
+      try {
+        await save();
+        const res = await api('/api/posts', { method: 'POST', body: JSON.stringify({ action: 'translate', id: post.id, target }) });
+        post = res.post;
+        toast(`${target === 'ja' ? '일본어' : '영어'} 번역 완료.`, 'ok');
+        blogEdit(root, post.id);
+      } catch (err) {
+        toast(err.message, 'error'); btn.disabled = false; btn.textContent = prev;
+      }
+    };
+    $('#b-tr-ja').addEventListener('click', (e) => doTranslate('ja', e.currentTarget));
+    $('#b-tr-en').addEventListener('click', (e) => doTranslate('en', e.currentTarget));
+  }
+
+  // ─── Naver RSS 取り込み ──────────────────────────────────────────────────────
+  async function blogImport(root) {
+    root.innerHTML = `
+      <div class="section-head"><div><h2>네이버블로그 가져오기</h2>
+        <p class="sub">RSS에서 최신 글 목록을 불러와 선택한 글을 초안으로 가져옵니다. 가져온 뒤 편집에서 번역·공개하세요.</p></div>
+        <div class="head-actions"><button class="btn btn-ghost" id="blog-back">← 목록</button></div>
+      </div>
+      <div class="card card-pad editor-card">
+        <label class="field" style="max-width:360px"><span>블로그 ID</span>
+          <span class="pick-row"><input type="text" id="imp-id" value="usherinmaking" /><button class="btn btn-primary btn-sm" id="imp-load">불러오기</button></span></label>
+        <div id="imp-list"></div>
+      </div>`;
+    $('#blog-back').addEventListener('click', () => renderBlog(root));
+    const load = async () => {
+      const wrap = $('#imp-list'); wrap.innerHTML = loadingRow;
+      let items = [];
+      try { items = (await api('/api/posts', { method: 'POST', body: JSON.stringify({ action: 'rss', blogId: $('#imp-id').value.trim() }) })).items || []; }
+      catch (err) { wrap.innerHTML = emptyState('불러오기 실패', err.message, true); return; }
+      if (!items.length) { wrap.innerHTML = emptyState('글이 없습니다', 'RSS에서 항목을 찾지 못했습니다.'); return; }
+      wrap.innerHTML = `
+        <div class="imp-toolbar"><label><input type="checkbox" id="imp-all" /> 전체 선택</label>
+          <button class="btn btn-primary btn-sm" id="imp-go">선택 가져오기</button></div>
+        <ul class="imp-items">${items.map((it, i) => `
+          <li><label>
+            <input type="checkbox" class="imp-chk" data-i="${i}" />
+            ${it.thumbnail ? `<img src="${esc(it.thumbnail)}" alt="" loading="lazy" />` : '<span class="imp-noimg"></span>'}
+            <span class="imp-meta"><strong>${esc(it.title)}</strong><span class="sub">${esc(it.date || '')} · ${esc(it.category || '')}</span></span>
+          </label></li>`).join('')}</ul>`;
+      const chks = wrap.querySelectorAll('.imp-chk');
+      $('#imp-all').addEventListener('change', (e) => chks.forEach((c) => (c.checked = e.target.checked)));
+      $('#imp-go').addEventListener('click', async (e) => {
+        const picked = Array.from(chks).filter((c) => c.checked).map((c) => items[+c.dataset.i]);
+        if (!picked.length) { toast('가져올 글을 선택하세요.', 'error'); return; }
+        const b = e.currentTarget; b.disabled = true;
+        let ok = 0, skip = 0, fail = 0;
+        for (const it of picked) {
+          b.textContent = `가져오는 중… ${ok + skip + fail + 1}/${picked.length}`;
+          try {
+            await api('/api/posts', { method: 'POST', body: JSON.stringify({ action: 'import', blogId: $('#imp-id').value.trim(), logNo: it.logNo, category: it.category, date: it.date }) });
+            ok++;
+          } catch (err) { (err.message && err.message.includes('이미') ? skip++ : fail++); }
+        }
+        toast(`가져오기 완료: ${ok}건${skip ? `, 중복 ${skip}건` : ''}${fail ? `, 실패 ${fail}건` : ''}`, fail ? 'error' : 'ok');
+        renderBlog(root);
+      });
+    };
+    $('#imp-load').addEventListener('click', load);
+    load();
   }
 
   // ════════════════ ドロワー制御 ════════════════
