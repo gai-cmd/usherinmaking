@@ -42,15 +42,21 @@
   const growFrame = document.querySelector('.grow-frame');
   const hScroll = document.querySelector('.h-scroll');
   const hTrack = document.querySelector('.h-track');
-  const litTargets = [...document.querySelectorAll('.big-statement .word')];
+  let litTargets = [...document.querySelectorAll('.big-statement .word')];
 
   /* cinematic statement (long text): parallax bg + line-by-line brighten */
   const cine = document.querySelector('.statement-cine');
   const scBg = cine && cine.querySelector('.sc-bg');
-  const scLines = cine ? [...cine.querySelectorAll('.sc-text .line')] : [];
+  let scLines = cine ? [...cine.querySelectorAll('.sc-text .line')] : [];
+
+  /* site-content.js (admin CMS) may re-render [data-region] spans after we
+     cached them — detached nodes toggle classes invisibly, so re-query */
+  const refresh = (list, root, sel) =>
+    (!list.length || list[0].isConnected) ? list : [...root.querySelectorAll(sel)];
 
   function frame() {
     if (cine) {
+      scLines = refresh(scLines, cine, '.sc-text .line');
       const r = cine.getBoundingClientRect();
       const scrollable = cine.offsetHeight - window.innerHeight;
       const p = clamp(-r.top / scrollable, 0, 1);
@@ -86,6 +92,7 @@
         const cap = growFrame.querySelector('.grow-caption');
         if (cap) cap.style.opacity = String(clamp((p - 0.5) * 3, 0, 1));
       }
+      litTargets = refresh(litTargets, document, '.big-statement .word');
       litTargets.forEach(el => {
         const r = el.getBoundingClientRect();
         el.classList.toggle('lit', r.top < window.innerHeight * 0.75);
