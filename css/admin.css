@@ -230,7 +230,7 @@ body {
 }
 .user-name { font-size: 0.86rem; font-weight: 600; color: var(--ink-2); }
 
-.view-root { padding: 1.6rem 1.6rem 4rem; max-width: 1180px; width: 100%; }
+.view-root { padding: 1.6rem 1.6rem 4rem; width: 100%; }
 .view { animation: rise 0.22s ease; }
 @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
@@ -357,7 +357,7 @@ table.data .nowrap { white-space: nowrap; }
 .tab-pane { display: none; }
 .tab-pane.is-active { display: block; animation: rise 0.2s ease; }
 
-.editor-card { max-width: 680px; }
+.editor-card { max-width: none; }
 .editor-grid { display: grid; gap: 1.05rem; }
 .help-text { font-size: 0.8rem; color: var(--faint); margin: 0.1rem 0 0; }
 .save-bar { display: flex; align-items: center; gap: 1rem; margin-top: 1.3rem; padding-top: 1.1rem; border-top: 1px solid var(--border); }
