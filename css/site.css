@@ -270,7 +270,11 @@ ul{list-style:none}
 }
 @media(max-width:760px){
   :root{--grow-start-w:80;--grow-start-h:46}
-  .nav{position:fixed;inset:0 0 0 auto;width:74%;max-width:320px;background:var(--bg);flex-direction:column;justify-content:center;gap:26px;padding:40px;transform:translateX(100%);transition:transform .4s var(--ease)}
+  /* height must be explicit: .nav is a child of the centered flex header, and
+     modern Chrome aligns inset-positioned flex children instead of stretching
+     them — inset:0 alone collapses the drawer to content height, leaving the
+     links floating over the page with no background */
+  .nav{position:fixed;inset:0 0 0 auto;height:100vh;height:100dvh;align-self:auto;width:74%;max-width:320px;background:var(--bg);flex-direction:column;justify-content:center;gap:26px;padding:40px;transform:translateX(100%);transition:transform .4s var(--ease)}
   .nav.open{transform:none}
   .nav a{color:var(--ink);font-size:1.15rem}
   .site-header.scrolled .nav a{color:var(--ink)}
