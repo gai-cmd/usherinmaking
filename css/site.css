@@ -180,21 +180,30 @@ ul{list-style:none}
 .btn-fill:hover{background:var(--gold)}
 
 /* =================================================================
-   PLAN SHOWCASE (plan.html) — Apple-style pinned reveal:
-   section pins for 240vh while heading, then each card, rises in
-   (scrubbed by scroll in JS; ≤900px falls back to per-card reveal)
+   PLAN SHOWCASE (plan.html) — Apple MacBook-Pro-chip selector:
+   section pins; all 3 cards stay visible; scroll selects one card
+   (highlighted) and crossfades the matching product photo. JS drives
+   the active index (frame loop). ≤900px → sticky photo + scrolling list.
 ================================================================= */
-.plan-showcase{height:240vh;position:relative}
-.ps-sticky{position:sticky;top:0;min-height:100vh;display:flex;align-items:center;overflow:hidden;padding:88px 0 24px}
-.ps-sticky .container{width:100%}
-.plan-showcase .section-head{margin-bottom:36px}
-.plan-showcase .plan-card{padding:36px 28px}
-/* flow mode (JS-toggled): narrow screens, or CMS rendered more cards than fit
-   one viewport — unpin and reveal each card as it enters instead */
-.plan-showcase.ps-flow{height:auto}
-.plan-showcase.ps-flow .ps-sticky{position:static;min-height:0;display:block;overflow:visible;padding:80px 0 40px}
-.plan-showcase.ps-flow .plan-card{opacity:0;transform:translateY(40px);transition:opacity .7s var(--ease),transform .7s var(--ease),box-shadow .4s var(--ease)}
-.plan-showcase.ps-flow .plan-card.ps-in{opacity:1;transform:none}
+.plan-showcase{position:relative;height:300vh}
+.ps-sticky{position:sticky;top:0;min-height:100vh;display:flex;align-items:center;overflow:hidden;padding:84px 0 40px}
+.ps-sticky>.container{width:100%}
+.plan-showcase .section-head{margin-bottom:30px}
+.ps-stage{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center}
+.ps-media{position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--sand);box-shadow:0 24px 60px rgba(40,34,28,.16)}
+.ps-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.05);transition:opacity .7s var(--ease),transform 1.3s var(--ease)}
+.ps-photo.is-active{opacity:1;transform:scale(1)}
+.ps-cards{display:flex;flex-direction:column;gap:14px}
+.ps-cards .plan-card{text-align:left;padding:22px 26px;margin:0}
+.ps-cards .plan-card .badge{position:static;transform:none;display:inline-block;margin:0 0 8px}
+.ps-cards .plan-card h3{font-size:1.35rem}
+.ps-cards .plan-card .plan-price{margin:8px 0 12px;font-size:1.4rem}
+.ps-cards .plan-card .plan-spec{font-size:.86rem;line-height:1.7}
+@media(min-width:901px){
+  .ps-cards .plan-card{opacity:.45;transform:scale(.96);transform-origin:left center;
+    transition:opacity .5s var(--ease),transform .5s var(--ease),box-shadow .5s var(--ease),border-color .5s var(--ease)}
+  .ps-cards .plan-card.ps-active{opacity:1;transform:scale(1);border-color:var(--gold);box-shadow:0 18px 44px rgba(40,34,28,.15)}
+}
 
 /* contact */
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
@@ -284,6 +293,14 @@ ul{list-style:none}
   .grid-3{grid-template-columns:repeat(2,1fr)}
   .dress-grid,.plan-grid{grid-template-columns:1fr}
   .contact-grid{grid-template-columns:1fr;gap:40px}
+  /* plan showcase: unpin; product photo sticks at top while the card list
+     scrolls beneath, the centered card highlighting + switching the photo */
+  .plan-showcase{height:auto}
+  .ps-sticky{position:static;min-height:0;display:block;overflow:visible;padding:70px 0 30px}
+  .ps-stage{grid-template-columns:1fr;gap:20px}
+  .ps-media{position:sticky;top:74px;aspect-ratio:3/2;max-height:42vh;z-index:1}
+  .ps-cards{gap:16px}
+  .ps-cards .plan-card.ps-active{border-color:var(--gold);box-shadow:0 14px 34px rgba(40,34,28,.14)}
 }
 @media(max-width:760px){
   :root{--grow-start-w:80;--grow-start-h:46}
@@ -312,7 +329,10 @@ ul{list-style:none}
   .reveal{opacity:1;transform:none}
   .plan-showcase{height:auto!important}
   .ps-sticky{position:static!important;min-height:0!important}
-  .plan-showcase .plan-card{opacity:1!important;transform:none!important}
+  .ps-media{position:static!important;max-height:none}
+  .ps-photo{opacity:0}
+  .ps-photo[data-i="0"]{opacity:1}
+  .ps-cards .plan-card{opacity:1!important;transform:none!important}
 }
 
 /* ════════════════ 블로그 ════════════════ */

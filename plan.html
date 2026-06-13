@@ -173,7 +173,7 @@
   </div>
 </section>
 
-<!-- WEDDING PHOTO PRICING — スクロール固定ショーケース（カードが順に立ち上がる） -->
+<!-- WEDDING PHOTO PRICING — スクロール固定ショーケース（選択カードが際立ち、対応写真が切替） -->
 <section class="plan-showcase">
   <div class="ps-sticky">
     <div class="container">
@@ -182,29 +182,37 @@
         <h2 class="section-title jp">ウェディングフォト</h2>
         <p class="section-desc" style="margin-left:auto;margin-right:auto">ロケーション、前撮り、後撮り。撮影時間・撮影箇所・お渡しカット数に応じて3つのプランからお選びいただけます。</p>
       </div>
-      <!-- 管理コンテンツ連携先。下記の静的カードは API 失敗時の fallback として維持。 -->
-      <div class="plan-grid" data-content="plans" data-plan-group="wedding">
-        <div class="plan-card">
-          <h3>Simple</h3>
-          <p class="plan-price">¥76,000(税込)</p>
-          <p class="plan-spec">撮影時間 1時間、1ヶ所
+      <div class="ps-stage">
+        <!-- 商品写真（管理者で差し替え予定）。data-i はカード並び順に対応 -->
+        <div class="ps-media">
+          <img class="ps-photo is-active" data-i="0" src="/images/up/b51080bb4475e995.jpg" alt="Simple プラン — 日中ロケーション撮影" loading="lazy" decoding="async">
+          <img class="ps-photo" data-i="1" src="/images/up/d75860e5c4d9e276.jpg" alt="Basic プラン — サンセット撮影" loading="lazy" decoding="async">
+          <img class="ps-photo" data-i="2" src="/images/up/b52582a5717ad7a3.jpg" alt="Afterfull プラン — 夕景・夜景撮影" loading="lazy" decoding="async">
+        </div>
+        <!-- 管理コンテンツ連携先。下記の静的カードは API 失敗時の fallback として維持。 -->
+        <div class="ps-cards" data-content="plans" data-plan-group="wedding">
+          <div class="plan-card">
+            <h3>Simple</h3>
+            <p class="plan-price">¥76,000(税込)</p>
+            <p class="plan-spec">撮影時間 1時間、1ヶ所
 お渡し写真原本全データ200カット以上+詳細編集30カット
 1か所で撮影、日中のみ</p>
-        </div>
-        <div class="plan-card featured">
-          <span class="badge">Basic</span>
-          <h3>Basic</h3>
-          <p class="plan-price">¥100,000(税込)</p>
-          <p class="plan-spec">撮影時間 2時間ほど
+          </div>
+          <div class="plan-card featured">
+            <span class="badge">Basic</span>
+            <h3>Basic</h3>
+            <p class="plan-price">¥100,000(税込)</p>
+            <p class="plan-spec">撮影時間 2時間ほど
 お渡し写真原本全データ400カット以上 +詳細編集40カット
 2か所で撮影 日中又は遅い午後からサンセット時間まで可能</p>
-        </div>
-        <div class="plan-card">
-          <h3>Afterfull</h3>
-          <p class="plan-price">¥128,000(税込)</p>
-          <p class="plan-spec">撮影時間 3時間半ほど
+          </div>
+          <div class="plan-card">
+            <h3>Afterfull</h3>
+            <p class="plan-price">¥128,000(税込)</p>
+            <p class="plan-spec">撮影時間 3時間半ほど
 お渡し写真原本全データ600カット以上 +詳細編集50カット
 3か所で撮影 日中、サンセット、夜景まで可能</p>
+          </div>
         </div>
       </div>
     </div>
