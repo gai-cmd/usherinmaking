@@ -250,8 +250,15 @@
     if (!containers.length) return;
 
     Array.prototype.forEach.call(containers, function (container) {
+      // data-plan-group="wedding" 等があれば id 接頭辞でフィルタ
+      //（無指定は従来どおり全件 — 既存ページ互換）
+      var group = container.getAttribute('data-plan-group');
+      var list = group
+        ? plans.filter(function (p) { return p && p.id && p.id.indexOf(group + '-') === 0; })
+        : plans;
+      if (!list.length) return; // 該当グループ無し → 静的カードを維持
       var frag = document.createDocumentFragment();
-      plans.forEach(function (p) {
+      list.forEach(function (p) {
         frag.appendChild(buildPlanCard(p));
       });
       container.innerHTML = '';

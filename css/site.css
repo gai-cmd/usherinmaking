@@ -179,6 +179,23 @@ ul{list-style:none}
 .btn-fill{display:inline-block;font-family:var(--en);letter-spacing:.15em;font-size:.9rem;background:var(--ink);color:#fff;padding:13px 34px;border-radius:30px;transition:background .35s var(--ease)}
 .btn-fill:hover{background:var(--gold)}
 
+/* =================================================================
+   PLAN SHOWCASE (plan.html) — Apple-style pinned reveal:
+   section pins for 240vh while heading, then each card, rises in
+   (scrubbed by scroll in JS; ≤900px falls back to per-card reveal)
+================================================================= */
+.plan-showcase{height:240vh;position:relative}
+.ps-sticky{position:sticky;top:0;min-height:100vh;display:flex;align-items:center;overflow:hidden;padding:88px 0 24px}
+.ps-sticky .container{width:100%}
+.plan-showcase .section-head{margin-bottom:36px}
+.plan-showcase .plan-card{padding:36px 28px}
+/* flow mode (JS-toggled): narrow screens, or CMS rendered more cards than fit
+   one viewport — unpin and reveal each card as it enters instead */
+.plan-showcase.ps-flow{height:auto}
+.plan-showcase.ps-flow .ps-sticky{position:static;min-height:0;display:block;overflow:visible;padding:80px 0 40px}
+.plan-showcase.ps-flow .plan-card{opacity:0;transform:translateY(40px);transition:opacity .7s var(--ease),transform .7s var(--ease),box-shadow .4s var(--ease)}
+.plan-showcase.ps-flow .plan-card.ps-in{opacity:1;transform:none}
+
 /* contact */
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
 .contact-methods{display:flex;flex-direction:column;gap:18px}
@@ -293,6 +310,9 @@ ul{list-style:none}
   .grow-frame{width:100vw;height:100vh;border-radius:0}
   .big-statement .word{opacity:1}
   .reveal{opacity:1;transform:none}
+  .plan-showcase{height:auto!important}
+  .ps-sticky{position:static!important;min-height:0!important}
+  .plan-showcase .plan-card{opacity:1!important;transform:none!important}
 }
 
 /* ════════════════ 블로그 ════════════════ */

@@ -44,6 +44,10 @@
   const hTrack = document.querySelector('.h-track');
   let litTargets = [...document.querySelectorAll('.big-statement .word')];
 
+  /* plan showcase (plan.html): pinned section, heading then cards rise in */
+  const planShow = document.querySelector('.plan-showcase');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
   /* cinematic statement (long text): parallax bg + line-by-line brighten */
   const cine = document.querySelector('.statement-cine');
   const scBg = cine && cine.querySelector('.sc-bg');
@@ -55,6 +59,48 @@
     (!list.length || list[0].isConnected) ? list : [...root.querySelectorAll(sel)];
 
   function frame() {
+    if (planShow && !reduceMotion.matches) {
+      // cards are CMS-rendered (site-content.js), so query live each frame
+      const cards = planShow.querySelectorAll('.plan-grid .plan-card');
+      const sticky = planShow.querySelector('.ps-sticky');
+      // unpin when narrow, or when CMS rendered more cards than fit one
+      // viewport — hysteresis (enter >vh, exit only with 40px slack) so the
+      // layout can't oscillate at the boundary
+      const inFlow = planShow.classList.contains('ps-flow');
+      const h = sticky ? sticky.scrollHeight : 0;
+      const flow = window.innerWidth <= 900 ||
+        (inFlow ? h > window.innerHeight - 40 : h > window.innerHeight + 4);
+      planShow.classList.toggle('ps-flow', flow);
+      if (flow) {
+        cards.forEach(c => {
+          c.style.opacity = ''; c.style.transform = ''; c.style.transition = '';
+          if (!c.classList.contains('ps-in') && c.getBoundingClientRect().top < window.innerHeight * 0.85) c.classList.add('ps-in');
+        });
+        const head = planShow.querySelector('.section-head');
+        if (head) { head.style.opacity = ''; head.style.transform = ''; }
+      } else {
+        const scrollable = planShow.offsetHeight - window.innerHeight;
+        const p = clamp(-planShow.getBoundingClientRect().top / Math.max(scrollable, 1), 0, 1);
+        const head = planShow.querySelector('.section-head');
+        if (head) {
+          const e = clamp(p / 0.14, 0, 1);
+          head.style.opacity = String(e);
+          head.style.transform = `translateY(${24 * (1 - e)}px)`;
+        }
+        const step = 0.5 / Math.max(cards.length - 1, 1);
+        cards.forEach((c, i) => {
+          const q = clamp((p - (0.16 + i * step)) / 0.22, 0, 1);
+          if (q === 1) { // settled: restore stylesheet styles so hover lift works
+            c.style.opacity = ''; c.style.transform = ''; c.style.transition = '';
+          } else {
+            const e = 1 - Math.pow(1 - q, 3);
+            c.style.transition = 'none';
+            c.style.opacity = String(e);
+            c.style.transform = `translateY(${64 * (1 - e)}px) scale(${0.94 + 0.06 * e})`;
+          }
+        });
+      }
+    }
     if (cine) {
       scLines = refresh(scLines, cine, '.sc-text .line');
       const r = cine.getBoundingClientRect();
