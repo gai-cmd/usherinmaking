@@ -17,10 +17,23 @@ usher in making — ブログ静的ベイク（pure Python 3 stdlib）
 robustness: ベイクは例外を投げてもビルドを壊さない方針（vercel_build 側で握る）。
 """
 import os, re, json, html, glob
+from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SEO_JSON = os.path.join(ROOT, "seo", "seo.json")
-BASE_URL = "https://usherinmaking.vercel.app/"
+
+def _base_url():
+    """ドメインの単一情報源は seo/seo.json の _site.baseUrl（無ければ既定値）。"""
+    try:
+        with open(SEO_JSON, encoding="utf-8") as fh:
+            u = (json.load(fh).get("_site") or {}).get("baseUrl") or ""
+        if u.startswith("http"):
+            return u if u.endswith("/") else u + "/"
+    except Exception:
+        pass
+    return "https://usherinmaking.vercel.app/"
+
+BASE_URL = _base_url()
 
 # ── chrome（site.css 既存スタイルを利用。サブディレクトリ対策で全て絶対パス）──
 FONTS = (
@@ -121,7 +134,16 @@ def post_body(p, is_en):
     title = pick(p.get("title"), lang) or "(無題)"
     body = pick(p.get("body"), lang)
     cover = p.get("cover") or ""
-    meta = " · ".join(x for x in [esc(p.get("date","")), esc(p.get("category",""))] if x)
+    author = p.get("author") or "usher in making"
+    # 著者・発行日を本文にも明示（E-E-A-T / AI 引用対策: 目に見える出典情報）
+    meta_parts = []
+    if p.get("date"):
+        label = "Published" if is_en else "公開日"
+        meta_parts.append(f'<time datetime="{esc(p["date"])}">{label}: {esc(p["date"])}</time>')
+    if p.get("category"):
+        meta_parts.append(esc(p.get("category", "")))
+    meta_parts.append(("By " if is_en else "撮影・執筆: ") + esc(author))
+    meta = " · ".join(meta_parts)
     back = "/en/blog.html" if is_en else "/blog.html"
     back_t = "← Blog" if is_en else "← ブログ一覧"
     hero = (f'<div class="blog-post-cover"><img src="{esc(cover)}" alt="{esc(title)}" decoding="async"></div>'
@@ -140,26 +162,44 @@ def write(rel, content):
 
 
 # ── feed.xml（日本語）──────────────────────────────────────────────────────────
+def _rfc822(ymd):
+    """"YYYY-MM-DD" → RFC 822（RSS pubDate 形式、JST 09:00 固定）。不正なら空。"""
+    try:
+        d = datetime.strptime(ymd, "%Y-%m-%d")
+        return d.strftime("%a, %d %b %Y 09:00:00 +0900")
+    except Exception:
+        return ""
+
 def build_feed(posts):
     items = []
+    latest = ""
     for p in posts[:30]:
         url = BASE_URL + f"blog/{p.get('slug','')}.html"
         title = pick(p.get("title"), "ja") or "(無題)"
         desc = pick(p.get("excerpt"), "ja")
+        pub = _rfc822(p.get("date") or "")
+        if not latest and pub:
+            latest = pub  # posts は新しい順ソート済み
         items.append(
             "    <item>\n"
             f"      <title>{esc(title)}</title>\n"
             f"      <link>{esc(url)}</link>\n"
             f"      <guid>{esc(url)}</guid>\n"
             f"      <description>{esc(desc)}</description>\n"
+            + (f"      <pubDate>{pub}</pubDate>\n" if pub else "")
             + (f"      <category>{esc(p.get('category',''))}</category>\n" if p.get("category") else "")
             + "    </item>"
         )
-    return ('<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0">\n  <channel>\n'
+    last_build = latest or datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n  <channel>\n'
             '    <title>usher in making — Blog</title>\n'
             f'    <link>{BASE_URL}blog.html</link>\n'
+            f'    <atom:link href="{BASE_URL}feed.xml" rel="self" type="application/rss+xml" />\n'
             '    <description>沖縄ウェディング・記念日フォトのブログ</description>\n'
-            '    <language>ja</language>\n' + "\n".join(items) + "\n  </channel>\n</rss>\n")
+            '    <language>ja</language>\n'
+            f'    <lastBuildDate>{last_build}</lastBuildDate>\n'
+            + "\n".join(items) + "\n  </channel>\n</rss>\n")
 
 
 # ── seo.json 登録 ──────────────────────────────────────────────────────────────

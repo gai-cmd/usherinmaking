@@ -77,7 +77,7 @@ def extract():
         "openingHours": "",
         "sameAs": [
             "https://www.instagram.com/usherinmaking/",
-            "https://blog.naver.com/moya100",
+            "https://blog.naver.com/usherinmaking/",
             "https://line.me/ti/p/8Udy1kYg1l",
         ],
         "localeJa": "ja_JP",
@@ -147,6 +147,76 @@ def extract():
 def jsonld(obj):
     return '<script type="application/ld+json">\n' + json.dumps(obj, ensure_ascii=False, indent=2) + "\n</script>"
 
+def faq_pairs(p, is_en):
+    """faq を (q, a) ペアの list に正規化する。
+    2 つの保存形式を受け付ける:
+      - seo.json 由来:   [[q, a], ...]（文字列ペア。ページ単位で言語別）
+      - KV(/api/seo) 由来: [{"q": {ja,en}, "a": {ja,en}}, ...]（i18n オブジェクト）
+    """
+    out = []
+    for item in p.get("faq") or []:
+        if isinstance(item, (list, tuple)) and len(item) == 2:
+            q, a = item[0], item[1]
+        elif isinstance(item, dict):
+            q, a = item.get("q", ""), item.get("a", "")
+        else:
+            continue
+        def pick(v):
+            if isinstance(v, dict):
+                en = (v.get("en") or "").strip()
+                ja = (v.get("ja") or "").strip()
+                return (en or ja) if is_en else (ja or en)
+            return (v or "").strip() if isinstance(v, str) else ""
+        q, a = pick(q), pick(a)
+        if q and a:
+            out.append((q, a))
+    return out
+
+# ---- 可視 FAQ セクション（本文へベイク） -----------------------------------
+# Google の構造化データポリシー: FAQPage のマークアップ内容はページ上で
+# ユーザーに見えていなければならない。head の JSON-LD と同じ seo.json の
+# faq データから、本文にも管理ブロックとして Q&A セクションを注入する。
+FAQ_START = "<!-- FAQ:START (managed by seo/build_seo.py — edit seo/seo.json faq then: python3 seo/build_seo.py apply) -->"
+FAQ_END = "<!-- FAQ:END -->"
+
+def build_faq_section(p, is_en):
+    faq = faq_pairs(p, is_en)
+    if not faq:
+        return ""
+    heading = "FAQ" if is_en else "よくある質問"
+    items = []
+    for q, a in faq:
+        items.append(
+            '    <div class="faq-item">\n'
+            f'      <dt>{attr(q)}</dt>\n'
+            f'      <dd>{attr(a)}</dd>\n'
+            '    </div>'
+        )
+    return (
+        f"{FAQ_START}\n"
+        '<section class="faq-section" aria-label="FAQ">\n'
+        '  <div class="faq-inner">\n'
+        f'    <h2>{heading}</h2>\n'
+        '    <dl class="faq-list">\n' + "\n".join(items) + "\n    </dl>\n"
+        "  </div>\n"
+        "</section>\n"
+        f"{FAQ_END}"
+    )
+
+def inject_faq(c, p, is_en):
+    """既存の FAQ 管理ブロックを除去し、faq があればフッター直前に再注入。"""
+    c = re.sub(re.escape(FAQ_START) + r".*?" + re.escape(FAQ_END) + r"\n?", "", c, flags=re.S)
+    section = build_faq_section(p, is_en)
+    if not section:
+        return c
+    m = re.search(r'<footer[\s>]', c, re.I)
+    if m:
+        return c[:m.start()] + section + "\n\n" + c[m.start():]
+    m = re.search(r'</body>', c, re.I)
+    if m:
+        return c[:m.start()] + section + "\n" + c[m.start():]
+    return c
+
 def build_block(site, f, p):
     base = site["baseUrl"]
     rbase = base.rstrip("/")
@@ -195,6 +265,7 @@ def build_block(site, f, p):
     L.append(f'<meta name="twitter:image:alt" content="{attr(title)}" />')
     L.append('<link rel="icon" href="/favicon.png" />')
     L.append('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />')
+    L.append(f'<link rel="alternate" type="application/rss+xml" title="{attr(site["name"])} — Blog" href="{attr(rbase + "/feed.xml")}" />')
     L.append(f'<link rel="alternate" hreflang="ja" href="{attr(base + jpslug)}" />')
     L.append(f'<link rel="alternate" hreflang="en" href="{attr(base + enslug)}" />')
     L.append(f'<link rel="alternate" hreflang="x-default" href="{attr(base + jpslug)}" />')
@@ -268,19 +339,27 @@ def build_block(site, f, p):
     if p.get("gallery"):
         L.append(jsonld({"@context": "https://schema.org", "@type": "ImageGallery",
                          "name": title, "description": desc, "image": [absu(x) for x in p["gallery"]]}))
-    if p.get("faq"):
+    faq = faq_pairs(p, is_en)
+    if faq:
         L.append(jsonld({"@context": "https://schema.org", "@type": "FAQPage",
                          "mainEntity": [{"@type": "Question", "name": q,
-                                         "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in p["faq"]]}))
+                                         "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq]}))
     if p.get("article"):
         art = p["article"]
+        # E-E-A-T: seo.json の _site.authorName（撮影者名）が設定されていれば
+        # Person として明示し、about ページへリンクする。無ければ Organization。
+        if site.get("authorName"):
+            author = {"@type": "Person", "name": site["authorName"],
+                      "url": base + ("en/about.html" if is_en else "about.html")}
+        else:
+            author = {"@type": "Organization", "name": art.get("author") or site["name"]}
         L.append(jsonld({"@context": "https://schema.org", "@type": "BlogPosting",
                          "headline": title,
                          "image": [ogimg] if ogimg else [],
                          "datePublished": art.get("datePublished", ""),
                          "dateModified": art.get("dateModified", "") or art.get("datePublished", ""),
                          "inLanguage": ("en" if is_en else "ja"),
-                         "author": {"@type": "Organization", "name": art.get("author") or site["name"]},
+                         "author": author,
                          "publisher": {"@type": "Organization", "name": site["name"],
                                        "logo": {"@type": "ImageObject", "url": absu(site.get("logo", ""))}},
                          "mainEntityOfPage": {"@type": "WebPage", "@id": url},
@@ -325,6 +404,8 @@ def apply():
             if m:
                 c = c[:m.end()] + "\n" + block + c[m.end():]
                 break
+        # 可視 FAQ セクション（JSON-LD と同じデータを本文にもベイク）
+        c = inject_faq(c, p, p.get("slug", "").startswith("en/"))
         write(f, c)
         n += 1
     print(f"applied managed SEO/AEO block to {n} pages")

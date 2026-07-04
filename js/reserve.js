@@ -59,13 +59,20 @@
     return fetch('/api/reservations?month=' + encodeURIComponent(key), {
       headers: { Accept: 'application/json' },
     })
-      .then(function (r) { return r.ok ? r.json() : { full: [] }; })
+      .then(function (r) {
+        if (!r.ok) throw new Error('month fetch failed: ' + r.status);
+        return r.json();
+      })
       .then(function (data) {
         var full = (data && (data.full || data.reserved)) || [];
         monthCache[key] = full;
         return full;
       })
-      .catch(function () { monthCache[key] = []; return []; })
+      .catch(function () {
+        // 取得失敗はキャッシュしない（次回の描画で再取得できるようにする）。
+        // 空き状況が不明のまま「全日空き」に見せない。
+        return null;
+      })
       .then(function (full) {
         if (loadingEl) loadingEl.style.display = 'none';
         return full;
@@ -73,8 +80,11 @@
   }
 
   // ── 描画 ──────────────────────────────────────────────────────
+  var renderSeq = 0; // 月送り連打時に古いレスポンスで塗らないための世代トークン
+
   function render() {
     var key = ym(viewYear, viewMonth);
+    var seq = ++renderSeq;
     titleEl.innerHTML =
       '<span>' + viewYear + '</span> ' + JP_MONTH[viewMonth + 1] +
       '<span class="cal-jp">／' + monthEnNarrow(viewMonth) + '</span>';
@@ -83,6 +93,13 @@
     nextBtn.disabled = key >= maxKey;
 
     fetchMonth(key).then(function (fullDates) {
+      if (seq !== renderSeq) return; // すでに別の月へ移動済み
+      if (fullDates === null) {
+        fullSet = {};
+        paint();
+        showMsg('err', '空き状況の取得に失敗しました。表示は最新でない場合があります。');
+        return;
+      }
       fullSet = {};
       fullDates.forEach(function (d) { fullSet[d] = true; });
       paint();
@@ -310,11 +327,21 @@
       return;
     }
     summaryEl.className = 'sel-summary';
-    summaryEl.innerHTML =
-      '<span class="ss-label">撮影日</span><strong>' +
-      (selectedDate ? formatJpDate(selectedDate) : '未選択') + '</strong>' +
-      '<span class="ss-label">プラン</span><strong>' +
-      (plan || '未選択') + '</strong>';
+    // プラン名は /api/content 由来（管理画面で編集可能）のため、
+    // innerHTML 連結ではなく textContent で組み立てる（XSS 対策）。
+    summaryEl.textContent = '';
+    [
+      ['撮影日', selectedDate ? formatJpDate(selectedDate) : '未選択'],
+      ['プラン', plan || '未選択'],
+    ].forEach(function (pair) {
+      var label = document.createElement('span');
+      label.className = 'ss-label';
+      label.textContent = pair[0];
+      var val = document.createElement('strong');
+      val.textContent = pair[1];
+      summaryEl.appendChild(label);
+      summaryEl.appendChild(val);
+    });
   }
 
   // ── 送信 ──────────────────────────────────────────────────────
@@ -367,7 +394,12 @@
       body: JSON.stringify(data),
     })
       .then(function (r) {
-        return r.json().then(function (j) { return { ok: r.ok, status: r.status, body: j }; });
+        // 本文が JSON でなくても成功／失敗の判定は落とさない
+        // （成功後の parse 失敗で「通信エラー→再送→二重予約」となるのを防ぐ）。
+        return r
+          .json()
+          .catch(function () { return {}; })
+          .then(function (j) { return { ok: r.ok, status: r.status, body: j }; });
       })
       .then(function (res) {
         if (res.ok) {
