@@ -33,7 +33,11 @@
       throw new Error('unauthorized');
     }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `오류가 발생했습니다 (${res.status})`);
+    if (!res.ok) {
+      const err = new Error(data.error || `오류가 발생했습니다 (${res.status})`);
+      err.status = res.status; // 호출 측이 메시지 문자열이 아닌 상태 코드로 분기할 수 있게
+      throw err;
+    }
     return data;
   }
 
@@ -1989,7 +1993,8 @@
     });
     $('#b-preview').addEventListener('click', () => {
       const html = $('#b-body-ja').value || $('#b-body-ko').value;
-      openDrawer('미리보기 (JA)', `<div class="post-preview">${html}</div>`);
+      // 본문은 Naver 가져오기 등 외부 유래 HTML일 수 있으므로 반드시 살균 후 표시
+      openDrawer('미리보기 (JA)', `<div class="post-preview">${sanitizePreviewHtml(html)}</div>`);
     });
     const doTranslate = async (target, btn) => {
       const prev = btn.textContent; btn.disabled = true; btn.textContent = '번역 중…';
@@ -2047,7 +2052,7 @@
           try {
             await api('/api/posts', { method: 'POST', body: JSON.stringify({ action: 'import', blogId: $('#imp-id').value.trim(), logNo: it.logNo, category: it.category, date: it.date }) });
             ok++;
-          } catch (err) { (err.message && err.message.includes('이미') ? skip++ : fail++); }
+          } catch (err) { (err.status === 409 ? skip++ : fail++); } // 409 = 이미 가져온 글
         }
         toast(`가져오기 완료: ${ok}건${skip ? `, 중복 ${skip}건` : ''}${fail ? `, 실패 ${fail}건` : ''}`, fail ? 'error' : 'ok');
         renderBlog(root);
@@ -2055,6 +2060,51 @@
     };
     $('#imp-load').addEventListener('click', load);
     load();
+  }
+
+  // ════════════════ プレビュー用サニタイズ ════════════════
+  // 서버(api/_lib/blog.js sanitizeHtml)와 같은 허용 목록. 미리보기는 관리 화면
+  // origin에서 렌더링되므로, 외부(Naver) 유래 본문을 그대로 innerHTML에 넣지 않는다.
+  const PREVIEW_ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'H2', 'H3', 'H4', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'A', 'IMG', 'FIGURE', 'FIGCAPTION', 'DIV', 'SPAN']);
+  function previewSafeUrl(u, allowMailto) {
+    u = String(u || '').trim().replace(/[\u0000-\u0020\u007f]/g, '');
+    if (!u) return '';
+    if (/^https?:\/\//i.test(u)) return u;
+    if (u[0] === '/' || u[0] === '#') return u;
+    if (allowMailto && /^mailto:/i.test(u)) return u;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return '';
+    return u;
+  }
+  function sanitizePreviewHtml(html) {
+    const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    doc.body.querySelectorAll('script, style, noscript, template, iframe, object, embed').forEach((el) => el.remove());
+    // 스냅샷을 떠서 순회 (unwrap으로 트리가 변해도 안전)
+    for (const el of Array.from(doc.body.querySelectorAll('*'))) {
+      if (!el.isConnected) continue;
+      if (!PREVIEW_ALLOWED_TAGS.has(el.tagName)) {
+        // 허용 외 태그는 태그만 벗기고 자식은 보존
+        while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
+        el.remove();
+        continue;
+      }
+      // 살릴 속성 값만 백업 후 전체 속성 제거 → 검증된 값만 재적용
+      const src = el.tagName === 'IMG' ? previewSafeUrl(el.getAttribute('src'), false) : '';
+      const alt = el.tagName === 'IMG' ? (el.getAttribute('alt') || '') : '';
+      const href = el.tagName === 'A' ? previewSafeUrl(el.getAttribute('href'), true) : '';
+      el.getAttributeNames().forEach((n) => el.removeAttribute(n));
+      if (el.tagName === 'IMG') {
+        if (!src) { el.remove(); continue; }
+        el.setAttribute('src', src);
+        el.setAttribute('alt', alt);
+        el.setAttribute('loading', 'lazy');
+      }
+      if (el.tagName === 'A' && href) {
+        el.setAttribute('href', href);
+        el.setAttribute('target', '_blank');
+        el.setAttribute('rel', 'noopener');
+      }
+    }
+    return doc.body.innerHTML;
   }
 
   // ════════════════ ドロワー制御 ════════════════

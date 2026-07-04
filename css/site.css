@@ -364,3 +364,16 @@ ul{list-style:none}
 .blog-post-body img{max-width:100%;height:auto;border-radius:10px;display:block;margin:0 auto}
 .blog-post-body h2,.blog-post-body h3{font-family:"Shippori Mincho B1",serif;margin:2rem 0 .8rem;line-height:1.5}
 @media(max-width:640px){.blog-head h1{font-size:2.1rem}.blog-post h1{font-size:1.55rem}}
+
+/* ── FAQ（seo/build_seo.py が seo.json の faq から本文へベイク）───────── */
+.faq-section{background:var(--paper);padding:90px 24px}
+.faq-inner{max-width:860px;margin:0 auto}
+.faq-section h2{font-family:var(--en);font-weight:400;font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:.08em;margin-bottom:2.2rem;text-align:center}
+.faq-list{margin:0}
+.faq-item{border-bottom:1px solid var(--line);padding:22px 4px}
+.faq-item:first-child{border-top:1px solid var(--line)}
+.faq-item dt{font-weight:500;line-height:1.7;position:relative;padding-left:2em}
+.faq-item dt::before{content:"Q";font-family:var(--en);color:var(--gold);position:absolute;left:0;top:0}
+.faq-item dd{margin:.7em 0 0;color:var(--muted);line-height:1.9;position:relative;padding-left:2em}
+.faq-item dd::before{content:"A";font-family:var(--en);color:var(--gold);position:absolute;left:0;top:0}
+@media(max-width:640px){.faq-section{padding:64px 18px}}

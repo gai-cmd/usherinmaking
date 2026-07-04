@@ -41,6 +41,18 @@
     return '' + v;
   }
 
+  // ── URL スキームの許可リスト（javascript: 等の危険スキームを遮断）────
+  //   管理コンテンツ由来の href に使う。http(s) / mailto / 相対 / アンカーのみ許可。
+  function safeHref(url) {
+    var u = ('' + (url == null ? '' : url)).trim();
+    if (!u) return '';
+    if (/^https?:\/\//i.test(u)) return u;
+    if (/^mailto:/i.test(u)) return u;
+    if (u.charAt(0) === '/' || u.charAt(0) === '#') return u;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return ''; // その他スキームは拒否
+    return u; // 相対パス
+  }
+
   // ── 単一フェッチ（Promise キャッシュ）─────────────────────────────
   var contentPromise = null;
   function loadContent() {
@@ -176,12 +188,13 @@
     textEl.className = 'uim-notice-text';
     textEl.textContent = notice.text; // textContent で XSS 安全
 
-    if (notice.link) {
+    var noticeHref = safeHref(notice.link);
+    if (noticeHref) {
       var a = document.createElement('a');
-      a.href = notice.link;
+      a.href = noticeHref;
       a.textContent = '詳しく見る';
       // 外部リンクなら安全属性を付与
-      if (/^https?:\/\//i.test(notice.link)) {
+      if (/^https?:\/\//i.test(noticeHref)) {
         a.target = '_blank';
         a.rel = 'noopener';
       }
@@ -317,7 +330,8 @@
     var img = matches('img') ? node : node.querySelector('img');
     var caption = t(item.caption);
 
-    if (link && item.href) link.setAttribute('href', item.href);
+    var itemHref = safeHref(item.href);
+    if (link && itemHref) link.setAttribute('href', itemHref);
     if (img) {
       if (item.src) img.setAttribute('src', item.src);
       if (caption) img.setAttribute('alt', caption); // caption は表示テキスト＝alt に反映
@@ -403,8 +417,8 @@
     ];
     links.forEach(function (pair) {
       var sel = pair[0];
-      var val = pair[1];
-      if (!val) return; // 空値 = 静的リンクを維持
+      var val = safeHref(pair[1]);
+      if (!val) return; // 空値・不正スキーム = 静的リンクを維持
       Array.prototype.forEach.call(document.querySelectorAll(sel), function (a) {
         a.setAttribute('href', val);
       });

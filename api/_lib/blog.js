@@ -104,6 +104,20 @@ export function postSummary(p) {
 // ─── HTML サニタイズ（抽出本文用：許可タグのみ・属性は src/href/alt のみ） ───────
 const ALLOWED = new Set(['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'h4', 'blockquote', 'ul', 'ol', 'li', 'a', 'img', 'figure', 'figcaption']);
 
+// URL のスキームを許可リストで検証（javascript: / data: / vbscript: 等を遮断）。
+//   img src : http(s) と ルート相対（/…）のみ
+//   a href  : http(s)・mailto・ルート相対・ページ内アンカーのみ
+function safeUrl(url, { allowMailto = false } = {}) {
+  // 制御文字・空白（タブ・改行等）はブラウザがスキーム判定前に無視するため除去して判定する。
+  const u = String(url || '').trim().replace(/[\u0000-\u0020\u007f]/g, '');
+  if (!u) return '';
+  if (/^(?:https?:)?\/\//i.test(u)) return u;          // http(s) / protocol-relative
+  if (u.startsWith('/') || u.startsWith('#')) return u; // ルート相対・アンカー
+  if (allowMailto && /^mailto:/i.test(u)) return u;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return '';        // その他スキームは拒否
+  return u;                                             // 相対パス
+}
+
 export function sanitizeHtml(html) {
   let s = String(html || '');
   s = s.replace(/<!--[\s\S]*?-->/g, '');
@@ -114,13 +128,15 @@ export function sanitizeHtml(html) {
     if (!ALLOWED.has(tag)) return '';
     if (close) return `</${tag}>`;
     if (tag === 'img') {
-      const src = (attrs.match(/\bsrc\s*=\s*"([^"]+)"/i) || attrs.match(/\bdata-lazy-src\s*=\s*"([^"]+)"/i) || [])[1] || '';
+      const raw = (attrs.match(/\bsrc\s*=\s*"([^"]+)"/i) || attrs.match(/\bdata-lazy-src\s*=\s*"([^"]+)"/i) || [])[1] || '';
+      const src = safeUrl(raw);
       const alt = (attrs.match(/\balt\s*=\s*"([^"]*)"/i) || [])[1] || '';
       if (!src) return '';
       return `<img src="${src}" alt="${alt}" loading="lazy" decoding="async">`;
     }
     if (tag === 'a') {
-      const href = (attrs.match(/\bhref\s*=\s*"([^"]+)"/i) || [])[1] || '';
+      const raw = (attrs.match(/\bhref\s*=\s*"([^"]+)"/i) || [])[1] || '';
+      const href = safeUrl(raw, { allowMailto: true });
       return href ? `<a href="${href}" target="_blank" rel="noopener">` : '<a>';
     }
     return `<${tag}>`;

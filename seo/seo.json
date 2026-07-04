@@ -117,7 +117,7 @@
       "description": "沖縄ウェディングフォト usher in making へのご相談・お問い合わせ。前撮り・セルフウェディング・記念日撮影の内容や料金のご質問、撮影日のご相談はLINE（ID: usherinmaking）またはInstagram（@usherinmaking）からお気軽にどうぞ。撮影日のご予約はRESERVEページからも承ります。",
       "keywords": "沖縄ウェディングフォト お問い合わせ, 沖縄 前撮り 相談, 予約, contact, LINE, Instagram, 韓国人女性カメラマン, usherinmaking",
       "ogType": "website",
-      "ogImage": "/images/logo.png",
+      "ogImage": "/images/up/adba32345d8088a3.jpg",
       "breadcrumb": [
         [
           "ホーム",
@@ -477,7 +477,7 @@
       "description": "Contact usher in making, an Okinawa wedding and anniversary photo studio run by a Korean female photographer. Ask about plans, pricing or your shoot date via LINE (ID: usherinmaking) or Instagram (@usherinmaking). English and Korean support available.",
       "keywords": "usher in making, contact, Okinawa wedding photo booking, anniversary photo, Korean female photographer, LINE, Instagram",
       "ogType": "website",
-      "ogImage": "/images/logo.png",
+      "ogImage": "/images/up/adba32345d8088a3.jpg",
       "breadcrumb": [
         [
           "HOME",
@@ -1670,7 +1670,7 @@
       "description": "沖縄ウェディングフォト usher in making のオープニング企画。前撮り・マタニティ・記念撮影の撮影モニター（モデル）を募集中です。特別料金で韓流スタイルの撮影を体験いただけます。応募・お問い合わせはLINEまたはInstagramから。",
       "keywords": "沖縄ウェディングフォト モニター, 撮影モデル募集, 前撮り モニター, マタニティ, 記念撮影, 韓国人女性カメラマン, usherinmaking",
       "ogType": "website",
-      "ogImage": "/images/logo.png",
+      "ogImage": "/images/up/bfc3f2c3212c5669.png",
       "breadcrumb": [
         [
           "ホーム",
@@ -1692,7 +1692,7 @@
       "description": "沖縄ウェディングフォト「11月」ギャラリー。沖縄滞在中の前撮り・結婚式・家族写真を韓国人カメラマンと女性スタイリストが撮影。usher in making。",
       "keywords": "沖縄滞在中、女性スタイリスト、韓流、韓国人カメラマン、結婚式、前撮り、家族写真、恋人",
       "ogType": "article",
-      "ogImage": "https://usherinmaking.jp/wp-content/uploads/2021/05/web_%EC%98%A4%ED%82%A4%EB%82%98%EC%99%80%EC%9B%A8%EB%94%A9%EC%8A%A4%EB%83%85_%EC%96%B4%EC%85%94%EB%A6%B0%EB%A9%94%EC%9D%B4%ED%82%B9-0594.jpg",
+      "ogImage": "/images/up/8546a607e8a1918d.jpg",
       "breadcrumb": [
         [
           "Home",
@@ -2659,6 +2659,44 @@
         [
           "Blog",
           "https://usherinmaking.vercel.app/en/blog.html"
+        ]
+      ]
+    },
+    "privacy.html": {
+      "slug": "privacy.html",
+      "title": "プライバシーポリシー（個人情報保護方針） – usher in making 沖縄ウェディングフォト",
+      "description": "usher in making（沖縄ウェディングフォト）のプライバシーポリシー。お問い合わせ・ご予約フォームで取得する個人情報の利用目的、第三者提供、外部サービスの利用、保有期間、開示・削除請求の窓口についてご案内します。",
+      "keywords": "",
+      "ogType": "website",
+      "ogImage": "/images/up/adba32345d8088a3.jpg",
+      "noAlternate": true,
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "プライバシーポリシー",
+          "https://usherinmaking.vercel.app/privacy.html"
+        ]
+      ]
+    },
+    "tokushoho.html": {
+      "slug": "tokushoho.html",
+      "title": "特定商取引法に基づく表記 – usher in making 沖縄ウェディングフォト",
+      "description": "usher in making（沖縄ウェディングフォト）の特定商取引法に基づく表記。事業者名・所在地・連絡先・役務の対価・支払方法・提供時期・キャンセル/返金ポリシー等をご案内します。",
+      "keywords": "",
+      "ogType": "website",
+      "ogImage": "/images/up/adba32345d8088a3.jpg",
+      "noAlternate": true,
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "特定商取引法に基づく表記",
+          "https://usherinmaking.vercel.app/tokushoho.html"
         ]
       ]
     }

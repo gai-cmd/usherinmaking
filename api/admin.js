@@ -131,7 +131,8 @@ export default async function handler(req, res) {
       }
       const contacts = await readStore('contacts');
       const reservations = await readStore('reservations');
-      const today = new Date().toISOString().slice(0, 10);
+      // 「今後の予定」判定はスタジオ所在地（沖縄 = JST）基準
+      const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
       const inquiries = {
         total: contacts.length,

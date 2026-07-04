@@ -24,7 +24,11 @@ UA = {"User-Agent": "Mozilla/5.0 (localize_images)"}
 DRY = "--dry-run" in sys.argv
 
 def targets():
-    return glob.glob(os.path.join(ROOT, "*.html")) + glob.glob(os.path.join(ROOT, "css", "*.css"))
+    return (
+        glob.glob(os.path.join(ROOT, "*.html"))
+        + glob.glob(os.path.join(ROOT, "en", "*.html"))
+        + glob.glob(os.path.join(ROOT, "css", "*.css"))
+    )
 
 def local_name(url):
     ext = os.path.splitext(url.split("?")[0])[1].lower() or ".jpg"
