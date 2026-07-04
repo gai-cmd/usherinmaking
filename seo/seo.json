@@ -2626,42 +2626,6 @@
         "/images/up/ddb78d75fc3e564b.jpg"
       ]
     },
-    "blog.html": {
-      "slug": "blog.html",
-      "title": "ブログ｜usher in making",
-      "description": "沖縄ウェディング・前撮り・記念日フォトのブログ。撮影の記録やお知らせをお届けします。",
-      "keywords": "",
-      "ogType": "website",
-      "ogImage": "",
-      "breadcrumb": [
-        [
-          "ホーム",
-          "https://usherinmaking.vercel.app/"
-        ],
-        [
-          "ブログ",
-          "https://usherinmaking.vercel.app/blog.html"
-        ]
-      ]
-    },
-    "en/blog.html": {
-      "slug": "en/blog.html",
-      "title": "Blog | usher in making",
-      "description": "Okinawa wedding, pre-wedding and anniversary photo stories and news from usher in making.",
-      "keywords": "",
-      "ogType": "website",
-      "ogImage": "",
-      "breadcrumb": [
-        [
-          "Home",
-          "https://usherinmaking.vercel.app/"
-        ],
-        [
-          "Blog",
-          "https://usherinmaking.vercel.app/en/blog.html"
-        ]
-      ]
-    },
     "privacy.html": {
       "slug": "privacy.html",
       "title": "プライバシーポリシー（個人情報保護方針） – usher in making 沖縄ウェディングフォト",
@@ -2699,6 +2663,458 @@
           "https://usherinmaking.vercel.app/tokushoho.html"
         ]
       ]
+    },
+    "blog.html": {
+      "slug": "blog.html",
+      "title": "ブログ｜usher in making",
+      "description": "沖縄ウェディング・前撮り・記念日フォトのブログ。撮影の記録やお知らせをお届けします。",
+      "keywords": "",
+      "ogType": "website",
+      "ogImage": "",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ]
+      ]
+    },
+    "en/blog.html": {
+      "slug": "en/blog.html",
+      "title": "Blog | usher in making",
+      "description": "Okinawa wedding, pre-wedding and anniversary photo stories and news from usher in making.",
+      "keywords": "",
+      "ogType": "website",
+      "ogImage": "",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ]
+      ]
+    },
+    "blog/okinawa-family-travel-photography-cherished-memories-by-the.html": {
+      "slug": "blog/okinawa-family-travel-photography-cherished-memories-by-the.html",
+      "title": "沖縄家族旅行の思い出を、プロも認める家族スナップで美しく残す。｜usher in making",
+      "description": "沖縄家族旅行の思い出を家族スナップとして残してくださったご家族様。ご両親もフォトグラファーでいらっしゃるとのこと、usher in makingの色味と実力を認めてお選びいただけたこと、大変光栄に思います。撮影プランや見積もりは、ホームページにてご確認いただけます。",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/cf3dd93cb76bc42b.jpeg",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ],
+        [
+          "沖縄家族旅行の思い出を、プロも認める家族スナップで美しく残す。",
+          "https://usherinmaking.vercel.app/blog/okinawa-family-travel-photography-cherished-memories-by-the.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2026-06-15",
+        "author": "usher in making"
+      }
+    },
+    "blog/capturing-cherished-moments-okinawa-family-photography-for-6.html": {
+      "slug": "blog/capturing-cherished-moments-okinawa-family-photography-for-6.html",
+      "title": "沖縄での家族の記念撮影：還暦・古希・1歳のお祝いも usher in makingにお任せください｜usher in making",
+      "description": "最近、沖縄での古希や還暦、お子様の1歳のお祝いを兼ねた大家族旅行の撮影依頼が大変増えています。フライト時間が短く、ご高齢の方からお子様まで、あらゆる世代が楽しめる沖縄は、記念旅行にぴったりの場所です。",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/4c74a375319073d2.jpg",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ],
+        [
+          "沖縄での家族の記念撮影：還暦・古希・1歳のお祝いも usher in makingにお任せください",
+          "https://usherinmaking.vercel.app/blog/capturing-cherished-moments-okinawa-family-photography-for-6.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2026-05-21",
+        "author": "usher in making"
+      }
+    },
+    "blog/embrace-the-japanese-aesthetic-okinawa-street-couple-snaps-w.html": {
+      "slug": "blog/embrace-the-japanese-aesthetic-okinawa-street-couple-snaps-w.html",
+      "title": "沖縄で楽しむ、和レトロな街並みスナップ：特別なカップルフォト by usher in making｜usher in making",
+      "description": "日本の街並みの雰囲気がお好きですか？沖縄でのスナップ撮影といえば、エメラルドグリーンの海や壮大な自然が代表的ですが、和レトロな街並みも魅力です。ヴィンテージ感漂う古き良き町並みで、様々なカルチャーが混在する特別な一枚を撮影しませんか？",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/22149155a9138e88.jpeg",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ],
+        [
+          "沖縄で楽しむ、和レトロな街並みスナップ：特別なカップルフォト by usher in making",
+          "https://usherinmaking.vercel.app/blog/embrace-the-japanese-aesthetic-okinawa-street-couple-snaps-w.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-11-14",
+        "author": "usher in making"
+      }
+    },
+    "blog/miyakojima-your-dream-wedding-travel-photography-in-the-mald.html": {
+      "slug": "blog/miyakojima-your-dream-wedding-travel-photography-in-the-mald.html",
+      "title": "沖縄・宮古島スナップ撮影 | 「東洋のモルディブ」で残す、感動のウェディング＆旅の記憶 | usher in making｜usher in making",
+      "description": "11月18日と12月2日の宮古島スナップ撮影の予約が確定しました！前後日のご相談や、1時間のスタンダード撮影も可能です。沖縄スナップをメインに、これまで日本のお客様のみを対象としていた宮古島出張撮影ですが、韓国からの直行便就航により、韓国のお客様からのご予約も増えています。",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/c3059661b02481e6.jpg",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ],
+        [
+          "沖縄・宮古島スナップ撮影 | 「東洋のモルディブ」で残す、感動のウェディング＆旅の記憶 | usher in making",
+          "https://usherinmaking.vercel.app/blog/miyakojima-your-dream-wedding-travel-photography-in-the-mald.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-11-06",
+        "author": "usher in making"
+      }
+    },
+    "blog/okinawa-wedding-photography-modern-trends-natural-beauty-by.html": {
+      "slug": "blog/okinawa-wedding-photography-modern-trends-natural-beauty-by.html",
+      "title": "沖縄ウェディングスナップ・前撮り撮影 | usher in making｜usher in making",
+      "description": "沖縄旅行と合わせたスナップ撮影。日本人カップルの沖縄ウェディング撮影をご紹介します。トレンドを取り入れたダイナミックな撮影や、沖縄ならではの豊かな自然を活かした感動的なウェディングフォトをusher in makingがご提案します。",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/97897124813dfbe8.jpg",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ],
+        [
+          "沖縄ウェディングスナップ・前撮り撮影 | usher in making",
+          "https://usherinmaking.vercel.app/blog/okinawa-wedding-photography-modern-trends-natural-beauty-by.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-10-19",
+        "author": "usher in making"
+      }
+    },
+    "blog/capture-your-okinawa-journey-essential-family-couple-and-wed.html": {
+      "slug": "blog/capture-your-okinawa-journey-essential-family-couple-and-wed.html",
+      "title": "沖縄旅行の思い出を美しく残すなら！家族・カップル・ウェディングスナップはusher in makingへ｜usher in making",
+      "description": "2014年から沖縄でスナップ撮影を手がける女性フォトグラファー、usher in makingです。今年も10月から11月はスナップ撮影の人気シーズン。沖縄では真夏のような気候が続く10月でも海水浴が楽しめ、美しいサンゴ礁のエメラルドグリーンの海や異国情緒あふれる風景での家族スナップのお問い合わせを多数いただいております。",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/73300d4b8cae813e.jpg",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ],
+        [
+          "沖縄旅行の思い出を美しく残すなら！家族・カップル・ウェディングスナップはusher in makingへ",
+          "https://usherinmaking.vercel.app/blog/capture-your-okinawa-journey-essential-family-couple-and-wed.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-09-26",
+        "author": "usher in making"
+      }
+    },
+    "blog/okinawa-babymoon-maternity-photography-capturing-your-precio.html": {
+      "slug": "blog/okinawa-babymoon-maternity-photography-capturing-your-precio.html",
+      "title": "「東洋のハワイ」沖縄で、マタニティフォトや家族スナップの特別な思い出をusher in makingと。｜usher in making",
+      "description": "沖縄でのマタニティ旅行が今、韓国だけでなく日本の方々にも大人気です。2時間以内のフライトで身体への負担も少なく、リゾートやホテルステイ、妊婦さんに優しい日本食も魅力。沖縄旅行と合わせてのマタニティフォト、マタニティスナップを強くおすすめします。",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/0a57c2427ef40cd5.jpg",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ],
+        [
+          "「東洋のハワイ」沖縄で、マタニティフォトや家族スナップの特別な思い出をusher in makingと。",
+          "https://usherinmaking.vercel.app/blog/okinawa-babymoon-maternity-photography-capturing-your-precio.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-08-26",
+        "author": "usher in making"
+      }
+    },
+    "blog/okinawa-miyakojima-family-photoshoots-celebrating-milestones.html": {
+      "slug": "blog/okinawa-miyakojima-family-photoshoots-celebrating-milestones.html",
+      "title": "沖縄・宮古島で特別な家族の思い出を：200日記念＆2歳バースデーフォト by usher in making｜usher in making",
+      "description": "宮古島での撮影には、沖縄からの出張費が別途発生するため、基本的にウェディングスナップでのご依頼を承っております。200日記念や2歳のお誕生日など、沖縄旅行の特別な思い出を家族スナップで残しませんか？",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/da83bc9fdcef1737.jpeg",
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "ブログ",
+          "https://usherinmaking.vercel.app/blog.html"
+        ],
+        [
+          "沖縄・宮古島で特別な家族の思い出を：200日記念＆2歳バースデーフォト by usher in making",
+          "https://usherinmaking.vercel.app/blog/okinawa-miyakojima-family-photoshoots-celebrating-milestones.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-06-30",
+        "author": "usher in making"
+      }
+    },
+    "en/blog/okinawa-family-travel-photography-cherished-memories-by-the.html": {
+      "slug": "en/blog/okinawa-family-travel-photography-cherished-memories-by-the.html",
+      "title": "Okinawa Family Travel Photography: Cherished Memories by the Sea | usher in making",
+      "description": "We were honored to capture beautiful family snapshots for this lovely family during their Okinawa trip, especially as the parents are fellow photographers who recognized usher in making's unique style and skill. We wish them all the best in their photography journey.",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/cf3dd93cb76bc42b.jpeg",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ],
+        [
+          "Okinawa Family Travel Photography: Cherished Memories by the Sea",
+          "https://usherinmaking.vercel.app/en/blog/okinawa-family-travel-photography-cherished-memories-by-the.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2026-06-15",
+        "author": "usher in making"
+      }
+    },
+    "en/blog/capturing-cherished-moments-okinawa-family-photography-for-6.html": {
+      "slug": "en/blog/capturing-cherished-moments-okinawa-family-photography-for-6.html",
+      "title": "Capturing Cherished Moments: Okinawa Family Photography for 60th, 70th Birthdays & First Anniversaries with usher in making | usher in making",
+      "description": "Okinawa is a popular destination for multi-generational family trips celebrating milestones like 60th and 70th birthdays or a child's first birthday, offering diverse attractions and short flights. usher in making, Okinawa's only Korean female photography team with 12 years of experience, specializes in capturing these precious family moments.",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/4c74a375319073d2.jpg",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ],
+        [
+          "Capturing Cherished Moments: Okinawa Family Photography for 60th, 70th Birthdays & First Anniversaries with usher in making",
+          "https://usherinmaking.vercel.app/en/blog/capturing-cherished-moments-okinawa-family-photography-for-6.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2026-05-21",
+        "author": "usher in making"
+      }
+    },
+    "en/blog/embrace-the-japanese-aesthetic-okinawa-street-couple-snaps-w.html": {
+      "slug": "en/blog/embrace-the-japanese-aesthetic-okinawa-street-couple-snaps-w.html",
+      "title": "Embrace the Japanese Aesthetic: Okinawa Street Couple Snaps with usher in making | usher in making",
+      "description": "Do you love the Japanese street aesthetic? While Okinawa is famous for its natural beauty, its unique blend of vintage Japanese, Southeast Asian, Chinese, and American streetscapes offers a captivating backdrop for your couple snaps. Discover this charming side of Okinawa for your travel photography.",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/22149155a9138e88.jpeg",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ],
+        [
+          "Embrace the Japanese Aesthetic: Okinawa Street Couple Snaps with usher in making",
+          "https://usherinmaking.vercel.app/en/blog/embrace-the-japanese-aesthetic-okinawa-street-couple-snaps-w.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-11-14",
+        "author": "usher in making"
+      }
+    },
+    "en/blog/miyakojima-your-dream-wedding-travel-photography-in-the-mald.html": {
+      "slug": "en/blog/miyakojima-your-dream-wedding-travel-photography-in-the-mald.html",
+      "title": "Miyakojima: Your Dream Wedding & Travel Photography in the 'Maldives of the East' with usher in making | usher in making",
+      "description": "Secure your dream Miyakojima snap shoot on November 18th or December 2nd! With new direct flights from Korea, we're now offering special Miyakojima photography packages, including options to minimize travel costs by sharing expenses with other clients.",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/c3059661b02481e6.jpg",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ],
+        [
+          "Miyakojima: Your Dream Wedding & Travel Photography in the 'Maldives of the East' with usher in making",
+          "https://usherinmaking.vercel.app/en/blog/miyakojima-your-dream-wedding-travel-photography-in-the-mald.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-11-06",
+        "author": "usher in making"
+      }
+    },
+    "en/blog/okinawa-wedding-photography-modern-trends-natural-beauty-by.html": {
+      "slug": "en/blog/okinawa-wedding-photography-modern-trends-natural-beauty-by.html",
+      "title": "Okinawa Wedding Photography: Modern Trends & Natural Beauty by usher in making | usher in making",
+      "description": "This post showcases a recent Okinawa wedding photoshoot for a Japanese couple, blending travel and photography. We embrace modern trends like dynamic long-exposure shots with intentional pin-out subjects, high-angle compositions, and creative use of natural light and shadows, perfect for Okinawa's vibrant summer.",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/97897124813dfbe8.jpg",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ],
+        [
+          "Okinawa Wedding Photography: Modern Trends & Natural Beauty by usher in making",
+          "https://usherinmaking.vercel.app/en/blog/okinawa-wedding-photography-modern-trends-natural-beauty-by.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-10-19",
+        "author": "usher in making"
+      }
+    },
+    "en/blog/capture-your-okinawa-journey-essential-family-couple-and-wed.html": {
+      "slug": "en/blog/capture-your-okinawa-journey-essential-family-couple-and-wed.html",
+      "title": "Capture Your Okinawa Journey: Essential Family, Couple, and Wedding Photography with usher in making | usher in making",
+      "description": "usher in making is a female photography team that has been capturing Okinawa's beauty since 2014. As the popular photo shoot season of October-November arrives, we're receiving many inquiries for family sessions, especially with Okinawa's pleasant October weather perfect for enjoying the coral seas, exotic plants, and unique landscapes.",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/73300d4b8cae813e.jpg",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ],
+        [
+          "Capture Your Okinawa Journey: Essential Family, Couple, and Wedding Photography with usher in making",
+          "https://usherinmaking.vercel.app/en/blog/capture-your-okinawa-journey-essential-family-couple-and-wed.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-09-26",
+        "author": "usher in making"
+      }
+    },
+    "en/blog/okinawa-babymoon-maternity-photography-capturing-your-precio.html": {
+      "slug": "en/blog/okinawa-babymoon-maternity-photography-capturing-your-precio.html",
+      "title": "Okinawa Babymoon & Maternity Photography: Capturing Your Precious Memories with usher in making | usher in making",
+      "description": "Okinawa babymoons are a popular choice for expectant mothers from Korea and Japan, offering a short flight, relaxing resorts, and suitable cuisine. We highly recommend combining your Okinawa trip with a babymoon or maternity photoshoot to capture these precious moments.",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/0a57c2427ef40cd5.jpg",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ],
+        [
+          "Okinawa Babymoon & Maternity Photography: Capturing Your Precious Memories with usher in making",
+          "https://usherinmaking.vercel.app/en/blog/okinawa-babymoon-maternity-photography-capturing-your-precio.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-08-26",
+        "author": "usher in making"
+      }
+    },
+    "en/blog/okinawa-miyakojima-family-photoshoots-celebrating-milestones.html": {
+      "slug": "en/blog/okinawa-miyakojima-family-photoshoots-celebrating-milestones.html",
+      "title": "Okinawa & Miyakojima Family Photoshoots: Celebrating Milestones with usher in making | usher in making",
+      "description": "For Miyakojima photoshoots, additional travel expenses apply, making wedding shoots our primary offering. Standard 1-2 hour family photoshoots may not be feasible, or will require an additional travel fee for sessions longer than two hours. Discover more about our family photoshoots during your Okinawa summer trip below.",
+      "keywords": "",
+      "ogType": "article",
+      "ogImage": "/images/blog/da83bc9fdcef1737.jpeg",
+      "breadcrumb": [
+        [
+          "Home",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "Blog",
+          "https://usherinmaking.vercel.app/en/blog.html"
+        ],
+        [
+          "Okinawa & Miyakojima Family Photoshoots: Celebrating Milestones with usher in making",
+          "https://usherinmaking.vercel.app/en/blog/okinawa-miyakojima-family-photoshoots-celebrating-milestones.html"
+        ]
+      ],
+      "article": {
+        "datePublished": "2025-06-30",
+        "author": "usher in making"
+      }
     }
   }
 }

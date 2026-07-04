@@ -73,10 +73,25 @@ def step_merge_seo(seo):
 
 
 def step_bake_blog(posts):
-    """公開記事からブログ静的ページ・feed・SEO エントリを生成。"""
-    if not isinstance(posts, list):
-        log("no uim:posts data — skip blog bake")
-        return
+    """公開記事からブログ静的ページ・feed・SEO エントリを生成。
+
+    KV の uim:posts が空／未設定なら、リポジトリにコミット済みの
+    blog_posts.json（scripts/import_naver_local.mjs で生成）へフォールバック。
+    管理画面から KV に記事が入り始めたら KV が優先される。
+    """
+    if not isinstance(posts, list) or not posts:
+        local = os.path.join(ROOT, "blog_posts.json")
+        if os.path.exists(local):
+            try:
+                with open(local, encoding="utf-8") as fh:
+                    posts = json.load(fh)
+                log("uim:posts empty — fallback to committed blog_posts.json (%d posts)" % len(posts))
+            except Exception as ex:
+                log("blog_posts.json fallback failed: %s" % ex)
+                return
+        else:
+            log("no uim:posts data — skip blog bake")
+            return
     from bake_blog import bake_blog
     urls = bake_blog(posts, root=ROOT)
     pub = len([p for p in posts if isinstance(p, dict) and p.get("status") == "published"])
