@@ -2661,6 +2661,44 @@
           "https://usherinmaking.vercel.app/en/blog.html"
         ]
       ]
+    },
+    "privacy.html": {
+      "slug": "privacy.html",
+      "title": "プライバシーポリシー（個人情報保護方針） – usher in making 沖縄ウェディングフォト",
+      "description": "usher in making（沖縄ウェディングフォト）のプライバシーポリシー。お問い合わせ・ご予約フォームで取得する個人情報の利用目的、第三者提供、外部サービスの利用、保有期間、開示・削除請求の窓口についてご案内します。",
+      "keywords": "",
+      "ogType": "website",
+      "ogImage": "/images/up/adba32345d8088a3.jpg",
+      "noAlternate": true,
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "プライバシーポリシー",
+          "https://usherinmaking.vercel.app/privacy.html"
+        ]
+      ]
+    },
+    "tokushoho.html": {
+      "slug": "tokushoho.html",
+      "title": "特定商取引法に基づく表記 – usher in making 沖縄ウェディングフォト",
+      "description": "usher in making（沖縄ウェディングフォト）の特定商取引法に基づく表記。事業者名・所在地・連絡先・役務の対価・支払方法・提供時期・キャンセル/返金ポリシー等をご案内します。",
+      "keywords": "",
+      "ogType": "website",
+      "ogImage": "/images/up/adba32345d8088a3.jpg",
+      "noAlternate": true,
+      "breadcrumb": [
+        [
+          "ホーム",
+          "https://usherinmaking.vercel.app/"
+        ],
+        [
+          "特定商取引法に基づく表記",
+          "https://usherinmaking.vercel.app/tokushoho.html"
+        ]
+      ]
     }
   }
 }

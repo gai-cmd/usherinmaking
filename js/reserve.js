@@ -34,7 +34,10 @@
 
   if (!grid) return; // reserve.html 以外では何もしない
 
-  var today = new Date();
+  // 「今日」はスタジオ所在地（沖縄 = JST, UTC+9）基準。海外からの閲覧でも
+  // サーバー側の過去日判定（JST）と同じ日付境界で表示する。
+  var _now = new Date();
+  var today = new Date(_now.getTime() + _now.getTimezoneOffset() * 60000 + 9 * 3600000);
   today.setHours(0, 0, 0, 0);
 
   var viewYear = today.getFullYear();

@@ -33,7 +33,11 @@
       throw new Error('unauthorized');
     }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `오류가 발생했습니다 (${res.status})`);
+    if (!res.ok) {
+      const err = new Error(data.error || `오류가 발생했습니다 (${res.status})`);
+      err.status = res.status; // 호출 측이 메시지 문자열이 아닌 상태 코드로 분기할 수 있게
+      throw err;
+    }
     return data;
   }
 
@@ -2048,7 +2052,7 @@
           try {
             await api('/api/posts', { method: 'POST', body: JSON.stringify({ action: 'import', blogId: $('#imp-id').value.trim(), logNo: it.logNo, category: it.category, date: it.date }) });
             ok++;
-          } catch (err) { (err.message && err.message.includes('이미') ? skip++ : fail++); }
+          } catch (err) { (err.status === 409 ? skip++ : fail++); } // 409 = 이미 가져온 글
         }
         toast(`가져오기 완료: ${ok}건${skip ? `, 중복 ${skip}건` : ''}${fail ? `, 실패 ${fail}건` : ''}`, fail ? 'error' : 'ok');
         renderBlog(root);

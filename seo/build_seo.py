@@ -256,7 +256,8 @@ def build_block(site, f, p):
     L.append(f'<meta property="og:url" content="{attr(url)}" />')
     L.append(f'<meta property="og:image" content="{attr(ogimg)}" />')
     L.append(f'<meta property="og:locale" content="{attr(locale)}" />')
-    L.append(f'<meta property="og:locale:alternate" content="{attr(alt)}" />')
+    if not p.get("noAlternate"):
+        L.append(f'<meta property="og:locale:alternate" content="{attr(alt)}" />')
     L.append('<meta name="twitter:card" content="summary_large_image" />')
     L.append(f'<meta name="twitter:title" content="{attr(title)}" />')
     L.append(f'<meta name="twitter:description" content="{attr(desc)}" />')
@@ -266,9 +267,11 @@ def build_block(site, f, p):
     L.append('<link rel="icon" href="/favicon.png" />')
     L.append('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />')
     L.append(f'<link rel="alternate" type="application/rss+xml" title="{attr(site["name"])} — Blog" href="{attr(rbase + "/feed.xml")}" />')
-    L.append(f'<link rel="alternate" hreflang="ja" href="{attr(base + jpslug)}" />')
-    L.append(f'<link rel="alternate" hreflang="en" href="{attr(base + enslug)}" />')
-    L.append(f'<link rel="alternate" hreflang="x-default" href="{attr(base + jpslug)}" />')
+    # noAlternate: en/ 対訳が存在しないページ（privacy / tokushoho 等）は hreflang を出さない
+    if not p.get("noAlternate"):
+        L.append(f'<link rel="alternate" hreflang="ja" href="{attr(base + jpslug)}" />')
+        L.append(f'<link rel="alternate" hreflang="en" href="{attr(base + enslug)}" />')
+        L.append(f'<link rel="alternate" hreflang="x-default" href="{attr(base + jpslug)}" />')
 
     bizdesc = (site.get("descriptionEn") if is_en else "") or site.get("description", "")
     biz = {
