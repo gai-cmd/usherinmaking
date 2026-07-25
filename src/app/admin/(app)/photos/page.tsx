@@ -1,4 +1,6 @@
+import { notFound } from 'next/navigation';
 import { FilterChip, PageHeader, Toolbar, AdminButton } from '@/components/admin';
+import { checkAdminPageAccess } from '@/server/auth';
 import {
   countPhotos,
   listPhotos,
@@ -36,6 +38,11 @@ function buildHref(base: Record<string, string | undefined>, patch: Record<strin
 }
 
 export default async function PhotosPage({ searchParams }: { searchParams: SearchParams }) {
+  // [보안] 레이아웃의 잠금 화면은 표시만 막고 자식 실행은 막지 못한다 — 미인증 요청에서
+  // 페이지 내용이 RSC 페이로드로 새어 나간다. 데이터를 읽기 전에 페이지에서 직접 차단한다.
+  const access = await checkAdminPageAccess();
+  if (!access.allowed) notFound();
+
   const sp = await searchParams;
   const statusParam = one(sp.status);
   const status: PhotoStatus =

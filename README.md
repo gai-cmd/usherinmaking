@@ -104,11 +104,52 @@ legacy/                  이전 정적 사이트 (보존)
 
 - 배경은 `#FAF8F4` / `#F4F1EA` **두 가지만** 교차합니다
 - 포인트는 브라스 `#8A6A3F`
-- 서체는 `<html lang>` 에 따라 자동 전환 — JA는 Zen Old Mincho, KO는 나눔명조,
-  EN은 명조를 쓰지 않고 Jost. **금액·숫자는 언제나 Jost**
+- 서체는 **애플 시스템 서체** 를 씁니다. 웹폰트를 내려받지 않으므로 렌더 차단 요청이 없습니다
+  - 라틴 본문 · UI — SF Pro (`-apple-system`)
+  - 라틴 대제목 — New York (`ui-serif`). "Location" "Studio" 같은 큰 영문 단어가 여기에 해당합니다
+  - 일본어 — 히라기노 (본문 Hiragino Sans / 제목 Hiragino Mincho ProN)
+  - 한국어 — Apple SD 산돌고딕 Neo. 애플의 한글 명조는 굵기가 하나뿐이라 큰 제목에서 무너져 쓰지 않습니다
+  - **금액·숫자는 언제나 SF의 등폭 숫자** (`u-num`)
+  - 비애플 환경에는 각 스택 뒤의 대체 서체가 적용됩니다
 - 아치가 브랜드 모티프입니다 (`border-radius: 140px 140px 0 0`)
 - **그림자를 쓰지 않습니다.** 구분은 1px 헤어라인으로 합니다
 - 모바일 탭 타겟은 최소 44px
+
+---
+
+## 관리자 로그인 (구글 SSO)
+
+비밀번호를 우리가 보관하지 않습니다. 구글이 신원을 확인하고, **허용 목록** 이 그중 누가
+관리자인지를 정합니다.
+
+### 설정
+
+1. Google Cloud Console → API 및 서비스 → 사용자 인증 정보 → **OAuth 클라이언트 ID (웹 애플리케이션)**
+2. 승인된 리디렉션 URI 에 등록:
+   - `https://<배포도메인>/api/auth/callback/google`
+   - `http://localhost:3000/api/auth/callback/google` (로컬 개발용)
+3. 환경 변수 4개를 채웁니다.
+
+```bash
+AUTH_GOOGLE_ID="...apps.googleusercontent.com"
+AUTH_GOOGLE_SECRET="..."
+AUTH_SECRET="$(openssl rand -base64 32)"
+ADMIN_ALLOWED_EMAILS="owner@gmail.com,staff@gmail.com"
+```
+
+### 멤버 추가·삭제
+
+`ADMIN_ALLOWED_EMAILS` 에 구글 계정을 쉼표로 추가하고 재배포하면 됩니다. 빼면 다음 요청부터
+바로 막힙니다 — 이미 로그인해 둔 세션도 매 요청 목록을 다시 확인합니다.
+
+> 목록을 DB가 아니라 환경 변수에 둔 것은 의도적입니다. DB에 두면 관리자 화면을 통해 목록
+> 자체를 바꿀 수 있게 되어, 세션 하나가 털렸을 때 공격자가 스스로를 멤버로 추가할 수 있습니다.
+> 환경 변수는 배포 권한이 있어야 바꿀 수 있으므로 침해와 권한 부여가 분리됩니다.
+> `prisma/schema.prisma` 의 `AdminMember` 는 명부를 보여주고 마지막 접속을 기록하는
+> 표시·감사용이며, 통과 판정의 근거가 아닙니다.
+
+네 값 중 하나라도 비어 있으면 관리자 화면과 API는 **열리지 않고 닫힙니다.** 프로덕션에서
+미설정은 통과가 아니라 실패입니다.
 
 ---
 
@@ -158,4 +199,4 @@ Vercel 기준입니다. `vercel.json` 이 인스타 수집 크론(6시간 주기
 - 데이터베이스 — 스키마는 있고 Prisma 클라이언트는 아직 설치하지 않았습니다
 - 오브젝트 스토리지 업로드 · AVIF/WebP 실제 인코딩
 - Instagram Graph API 실호출 · AI 분류 실호출 (자격 증명 없음)
-- 정식 관리자 인증 — 현재는 `ADMIN_TOKEN` 기반 임시 가드입니다
+- 관리자 멤버 명부의 DB화 — 로그인은 구글 SSO로 연결되어 있고, 누가 관리자인지는 환경변수 허용 목록이 정합니다

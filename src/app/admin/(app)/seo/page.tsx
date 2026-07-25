@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 import { Badge, FilterChip, PageHeader, Panel } from '@/components/admin';
 import { LOCALE_SHORT, LOCALES, isLocale } from '@/lib/i18n';
 import type { PageKey } from '@/lib/i18n';
+import { checkAdminPageAccess } from '@/server/auth';
 import { countSchemaReadyFaqs, listFaqs, listUnansweredFaqs } from '@/server/faq';
 import { listPhotos, missingAltLocales } from '@/server/photos';
 import { listAllFilterUrls, listUntranslatedTerms } from '@/server/taxonomy';
@@ -21,6 +23,11 @@ export const metadata = {
 type SearchParams = Promise<{ page?: string; locale?: string }>;
 
 export default async function SeoPage({ searchParams }: { searchParams: SearchParams }) {
+  // 레이아웃의 잠금 화면은 "표시"만 막는다. children 은 prop 으로 이미 렌더되어
+  // RSC 페이로드에 그대로 실리므로, 데이터를 읽기 전에 이 화면에서 직접 끊어야 한다.
+  const access = await checkAdminPageAccess();
+  if (!access.allowed) notFound();
+
   const sp = await searchParams;
   const pageKey = (LEAD_REQUIRED_PAGES as string[]).includes(sp.page ?? '')
     ? (sp.page as PageKey)

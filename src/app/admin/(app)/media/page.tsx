@@ -9,7 +9,9 @@ import {
   formatDimensions,
   formatTime,
 } from '@/components/admin';
+import { notFound } from 'next/navigation';
 import { listActivity } from '@/server/activity';
+import { checkAdminPageAccess } from '@/server/auth';
 import { countPhotos, getStorageUsage, listPhotos, missingAltLocales } from '@/server/photos';
 import { LOW_RES_MIN_LONG_EDGE, RENDITION_FORMATS, RENDITION_WIDTHS } from '@/lib/image-pipeline';
 import s from './page.module.css';
@@ -23,6 +25,10 @@ function one(v: string | string[] | undefined): string | undefined {
 // 미디어 라이브러리는 상태(미선별/전시/보관)와 무관하게 원본 자산 전체를 본다.
 // 여기서 걸러야 할 것은 "서빙 품질" — 저해상도와 alt 누락이다.
 export default async function MediaPage({ searchParams }: { searchParams: SearchParams }) {
+  // [보안] 레이아웃 잠금은 표시만 막는다. 데이터를 읽기 전에 페이지에서 직접 차단한다.
+  const access = await checkAdminPageAccess();
+  if (!access.allowed) notFound();
+
   const flag = one((await searchParams).flag);
 
   const [photos, counts, storage, activity] = await Promise.all([

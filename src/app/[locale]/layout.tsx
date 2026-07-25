@@ -27,15 +27,8 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   return (
+    // 서체는 애플 시스템 서체를 쓰므로 외부 폰트 요청이 없다 (globals.css 참조).
     <html lang={HTML_LANG[locale]}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Jost:wght@300;400;500&family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500&display=swap"
-        />
-      </head>
       <body>
         <Header locale={locale} />
         <main>{children}</main>

@@ -4,7 +4,7 @@ import s from './PlanCard.module.css';
 
 const TAX_LABEL: Record<Locale, string> = { ja: '税込', en: 'tax included', ko: '세금 포함' };
 
-/** 금액은 반드시 Jost(--ff-num). 한국어 페이지에서 Cormorant 숫자는 어긋나 보인다. */
+/** 금액은 반드시 --ff-num(SF). 세리프 대제목 서체의 올드스타일 숫자는 표에서 높이가 어긋난다. */
 export function PlanCard({ plan, locale }: { plan: Plan; locale: Locale }) {
   return (
     <article className={s.root}>

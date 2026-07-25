@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 import {
   AdminButton,
@@ -11,6 +12,7 @@ import {
 } from '@/components/admin';
 import { LOCALE_SHORT, LOCALES, isLocale } from '@/lib/i18n';
 import type { Locale } from '@/lib/i18n';
+import { checkAdminPageAccess } from '@/server/auth';
 import {
   INQUIRY_STATUSES,
   INQUIRY_STATUS_LABEL,
@@ -47,6 +49,11 @@ function href(params: { status?: string; id?: string; locale?: string }): string
 }
 
 export default async function InquiriesPage({ searchParams }: { searchParams: SearchParams }) {
+  // 레이아웃의 잠금 화면은 "표시"만 막는다. children 은 prop 으로 이미 렌더되어
+  // RSC 페이로드에 그대로 실리므로, 데이터를 읽기 전에 이 화면에서 직접 끊어야 한다.
+  const access = await checkAdminPageAccess();
+  if (!access.allowed) notFound();
+
   const sp = await searchParams;
   const status = sp.status && isStatus(sp.status) ? sp.status : undefined;
   const locale = sp.locale && isLocale(sp.locale) ? (sp.locale as Locale) : undefined;

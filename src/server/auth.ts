@@ -1,17 +1,18 @@
 import { timingSafeEqual } from 'node:crypto';
-import { cookies } from 'next/headers';
+import { auth, isAllowedAdminEmail, isSsoConfigured } from '@/auth';
 import { UnauthorizedError } from './errors';
 
 /**
- * 관리자 인증 — 임시 방식.
+ * 관리자 인증 — 구글 SSO.
  *
- * 아직 인증 제공자(Auth0 / Clerk / NextAuth)가 붙지 않았다. 그때까지의 게이트로
- * 환경변수 ADMIN_TOKEN 하나를 공유 비밀로 쓴다. 제공자가 붙으면 이 파일만 교체한다.
+ * 비밀번호를 우리가 보관하지 않는다. 구글이 신원을 확인하고,
+ * 허용 목록(ADMIN_ALLOWED_EMAILS)이 그중 누가 관리자인지를 정한다.
+ * 목록과 자격 증명은 `src/auth.ts`가 소유하고, 이 파일은 화면·라우트용 가드만 제공한다.
  *
- * 토큰 값은 소스에 절대 두지 않는다. 미설정 시에는 통과가 아니라 실패로 닫는다.
+ * 통과 조건은 두 곳 모두 같다: 세션이 있고, 그 이메일이 지금도 허용 목록에 있을 것.
+ * 세션 발급 시점에 목록에 있었어도 지금 빠졌다면 막는다.
  */
 
-const ADMIN_COOKIE = 'uim_admin';
 const CRON_HEADER = 'authorization';
 
 /** 길이가 달라도 조기 반환하지 않도록 해시 없이 상수시간 비교. */
@@ -33,64 +34,85 @@ function bearer(req: Request): string | null {
   return token.trim();
 }
 
-/** ADMIN_TOKEN이 배포 환경에 설정되어 있는지. UI가 "가드 미설정" 배너를 띄우는 데 쓴다. */
+/** 구글 자격 증명 + 허용 목록이 배포 환경에 갖춰졌는지. UI 배너가 참조한다. */
 export function isAdminAuthConfigured(): boolean {
-  return Boolean(process.env.ADMIN_TOKEN);
+  return isSsoConfigured();
+}
+
+/** 지금 로그인한 관리자의 이메일. 없으면 null. 활동 로그 기록에 쓴다. */
+export async function currentAdminEmail(): Promise<string | null> {
+  const session = await auth();
+  const email = session?.user?.email ?? null;
+  return isAllowedAdminEmail(email) ? email : null;
 }
 
 /**
  * 관리자 API 가드. 통과하지 못하면 UnauthorizedError를 던진다.
  * 호출측은 errorResponse(err)로 감싸면 401이 나간다.
+ *
+ * req는 시그니처 호환을 위해 남겨 둔다 — 세션은 쿠키에서 읽으므로 본문이 필요하지 않다.
  */
-export async function requireAdmin(req: Request): Promise<void> {
-  const expected = process.env.ADMIN_TOKEN;
-  if (!expected) {
+export async function requireAdmin(_req?: Request): Promise<void> {
+  if (!isSsoConfigured()) {
     // 미설정을 통과로 해석하면 관리자 API가 통째로 공개된다. 닫는다.
-    throw new UnauthorizedError('ADMIN_TOKEN이 설정되지 않아 관리자 API를 사용할 수 없습니다.');
+    throw new UnauthorizedError(
+      '구글 SSO가 설정되지 않아 관리자 API를 사용할 수 없습니다. AUTH_GOOGLE_ID · AUTH_GOOGLE_SECRET · ADMIN_ALLOWED_EMAILS 를 먼저 설정해 주세요.',
+    );
   }
 
-  const headerToken = bearer(req);
-  if (headerToken && safeEqual(headerToken, expected)) return;
-
-  const jar = await cookies();
-  const cookieToken = jar.get(ADMIN_COOKIE)?.value;
-  if (cookieToken && safeEqual(cookieToken, expected)) return;
-
-  throw new UnauthorizedError();
+  const session = await auth();
+  if (!session?.user?.email || !isAllowedAdminEmail(session.user.email)) {
+    throw new UnauthorizedError();
+  }
 }
 
 export type AdminPageAccess =
-  | { allowed: true; guarded: true }
-  /** 개발 환경에서 ADMIN_TOKEN 미설정 — 열어 두되 화면에 경고를 띄운다. */
+  | { allowed: true; guarded: true; email: string }
+  /** 개발 환경에서 SSO 미설정 — 열어 두되 화면에 경고를 띄운다. */
   | { allowed: true; guarded: false; reason: string }
-  | { allowed: false; reason: string };
+  | { allowed: false; reason: string; needsSignIn?: boolean };
 
 /**
  * 화면(서버 컴포넌트)용 접근 판정. 라우트 핸들러의 requireAdmin과 규칙을 맞춘다.
  *
- * - ADMIN_TOKEN 설정 + 쿠키 일치 → 통과
- * - ADMIN_TOKEN 설정 + 불일치 → 차단
- * - ADMIN_TOKEN 미설정 → production이면 차단, 그 외에는 경고를 달고 통과
+ * - SSO 설정 + 허용 목록에 있는 세션 → 통과
+ * - SSO 설정 + 세션 없음/목록 밖 → 차단 (로그인으로 유도)
+ * - SSO 미설정 → production이면 차단, 그 외에는 경고를 달고 통과
  */
 export async function checkAdminPageAccess(): Promise<AdminPageAccess> {
-  const expected = process.env.ADMIN_TOKEN;
-
-  if (!expected) {
+  if (!isSsoConfigured()) {
     if (process.env.NODE_ENV === 'production') {
-      return { allowed: false, reason: 'ADMIN_TOKEN이 설정되지 않았습니다. 배포 환경변수를 먼저 설정해 주세요.' };
+      return {
+        allowed: false,
+        reason:
+          '구글 SSO가 설정되지 않았습니다. AUTH_GOOGLE_ID · AUTH_GOOGLE_SECRET · AUTH_SECRET · ADMIN_ALLOWED_EMAILS 를 배포 환경변수에 먼저 설정해 주세요.',
+      };
     }
     return {
       allowed: true,
       guarded: false,
-      reason: 'ADMIN_TOKEN이 없어 인증 없이 열려 있습니다. 개발 환경에서만 이 상태가 허용됩니다.',
+      reason:
+        '구글 SSO가 설정되지 않아 인증 없이 열려 있습니다. 개발 환경에서만 이 상태가 허용됩니다.',
     };
   }
 
-  const jar = await cookies();
-  const cookieToken = jar.get(ADMIN_COOKIE)?.value;
-  if (cookieToken && safeEqual(cookieToken, expected)) return { allowed: true, guarded: true };
+  const session = await auth();
+  const email = session?.user?.email;
 
-  return { allowed: false, reason: `관리자 인증이 필요합니다. ${ADMIN_COOKIE} 쿠키가 없거나 일치하지 않습니다.` };
+  if (!email) {
+    return { allowed: false, reason: '관리자 로그인이 필요합니다.', needsSignIn: true };
+  }
+
+  if (!isAllowedAdminEmail(email)) {
+    // 어떤 계정으로 들어왔는지는 알려 준다 — 계정을 잘못 고른 경우가 대부분이다.
+    return {
+      allowed: false,
+      reason: `${email} 계정은 관리자 목록에 없습니다. 다른 계정으로 로그인하거나 등록을 요청해 주세요.`,
+      needsSignIn: true,
+    };
+  }
+
+  return { allowed: true, guarded: true, email };
 }
 
 /**
@@ -105,5 +127,3 @@ export async function requireCronSecret(req: Request): Promise<void> {
   const token = bearer(req);
   if (!token || !safeEqual(token, expected)) throw new UnauthorizedError();
 }
-
-export const ADMIN_COOKIE_NAME = ADMIN_COOKIE;

@@ -21,7 +21,7 @@ import s from './dress.module.css';
 
 export const metadata = { title: '드레스 관리 · 관리자' };
 
-/** 금액은 항상 Jost(--ff-num). 추가요금 없음은 0 이 아니라 "없음"이다. */
+/** 금액은 항상 --ff-num(SF). 추가요금 없음은 0 이 아니라 "없음"이다. */
 function surcharge(item: DressItem) {
   if (item.surcharge === null) return <span className={s.dim}>없음</span>;
   return <span className={s.num}>+¥{item.surcharge.toLocaleString('ja-JP')}</span>;

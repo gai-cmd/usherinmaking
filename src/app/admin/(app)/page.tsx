@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import {
   AdminButton,
   formatDateTime,
@@ -8,11 +9,18 @@ import {
   StatTile,
 } from '@/components/admin';
 import { listActivity } from '@/server/activity';
+import { checkAdminPageAccess } from '@/server/auth';
 import { countPhotos, listPhotos } from '@/server/photos';
 import s from './page.module.css';
 
 // 대시보드는 "지금 손을 대야 할 것"만 보여 준다. 각 숫자는 그것을 해소하는 화면으로 직접 간다.
 export default async function AdminDashboard() {
+  // [보안] 레이아웃의 잠금 화면은 "표시"만 막는다. children은 이미 렌더된 뒤 레이아웃 조건이
+  // 평가되므로, 페이지 서버 컴포넌트는 그대로 실행되고 그 결과가 RSC 페이로드에 실려 나간다.
+  // (미인증 요청에서 실제로 데이터가 새는 것을 확인함.) 그래서 데이터를 읽기 전에 여기서 막는다.
+  const access = await checkAdminPageAccess();
+  if (!access.allowed) notFound();
+
   const [counts, unsorted, activity] = await Promise.all([
     countPhotos(),
     listPhotos({ status: 'UNSORTED' }),

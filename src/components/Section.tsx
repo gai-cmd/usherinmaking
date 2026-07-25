@@ -3,7 +3,7 @@ import s from './Section.module.css';
 
 /**
  * 섹션 공통 껍데기. 배경은 --bg / --bg-alt 두 가지만 교차한다.
- * label(브라스 소문자 트래킹) + title(Cormorant) 조합이 시안의 기본 헤딩 형태.
+ * label(브라스 소문자 트래킹) + title(--ff-display) 조합이 시안의 기본 헤딩 형태.
  */
 export function Section({
   label,

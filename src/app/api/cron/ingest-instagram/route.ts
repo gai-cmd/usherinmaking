@@ -15,6 +15,7 @@ import {
   missingPipelineEnv,
   originalKey,
   planRenditions,
+  probeImageDimensions,
   storeOriginal,
   suggestCategories,
   type InstagramMedia,
@@ -31,9 +32,10 @@ export const maxDuration = 300;
  * 흐름: 크론 시크릿 검증 → 환경변수 확인 → 게시물 목록 조회 → 신규만 원본 다운로드
  *      → 스토리지 보관 → AVIF/WebP 재인코딩 → AI 분류·alt 초안 → UNSORTED로 저장.
  *
- * 지금 상태: 인스타 토큰 · 오브젝트 스토리지 · AI 제공자가 모두 없다.
- * 그래서 이 라우트는 절대 성공을 반환하지 않는다. 어디서 막혔는지를 IngestRun에 남기고
- * 503(의존성 없음) 또는 501(구현 없음)로 끝난다. 수집 성공을 가장하지 않는 것이 이 파일의 핵심 계약이다.
+ * 지금 상태: 게시물 조회까지는 연결됐다(IG_ACCESS_TOKEN · IG_USER_ID 필요).
+ * 원본 다운로드 · 오브젝트 스토리지 · 재인코딩 · AI는 아직 없어서, 신규 게시물이 하나라도 있으면
+ * 그 항목에서 막힌다. 어디서 막혔는지를 IngestRun에 남기고 503(의존성 없음) 또는 501(구현 없음)로
+ * 끝난다. 수집 성공을 가장하지 않는 것이 이 파일의 핵심 계약이다.
  */
 export async function GET(req: Request) {
   const run: IngestRun = newIngestRun();
@@ -70,7 +72,11 @@ export async function GET(req: Request) {
         const bytes = await downloadOriginal(m.mediaUrl);
         const original = await storeOriginal(originalKey(m.id, 'jpg'), bytes);
 
-        const plan = planRenditions({ id: m.id, width: m.width, height: m.height });
+        // Graph API는 크기를 주지 않는다. 내려받은 원본에서 직접 재야 파생본 계획과
+        // 저해상도 판정이 실제와 맞는다.
+        const { width, height } = await probeImageDimensions(bytes);
+
+        const plan = planRenditions({ id: m.id, width, height });
         const encoded = await encodeRenditions(bytes, plan);
 
         const [suggestions, alt] = await Promise.all([
@@ -83,8 +89,8 @@ export async function GET(req: Request) {
           originalUrl: original,
           // encodeRenditions가 업로드까지 마친 뒤 buildVariantMap 형태로 돌려준다.
           variants: encoded,
-          width: m.width,
-          height: m.height,
+          width,
+          height,
           caption: m.caption,
           takenAt: new Date(m.timestamp),
           // AI 초안일 뿐이다. 관리자가 확인하기 전에는 UNSORTED이므로 프론트에 나가지 않는다.
@@ -97,9 +103,9 @@ export async function GET(req: Request) {
           })),
         });
 
-        // 저해상도 판정은 순수 함수라 지금도 정확하다.
-        if (isLowRes(m.width, m.height)) {
-          console.warn('[ingest] 저해상도 원본', m.id, `${m.width}x${m.height}`);
+        // 저해상도 판정은 순수 함수라 실측값만 들어오면 정확하다.
+        if (isLowRes(width, height)) {
+          console.warn('[ingest] 저해상도 원본', m.id, `${width}x${height}`);
         }
       } catch (itemErr) {
         run.failed += 1;

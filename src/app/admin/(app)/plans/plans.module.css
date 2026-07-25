@@ -146,7 +146,7 @@
   padding: 8px 10px;
   font: inherit;
   font-size: 13px;
-  /* 금액·숫자는 항상 Jost */
+  /* 금액·숫자는 항상 --ff-num (SF 등폭 숫자) */
   font-family: var(--ff-num);
 }
 

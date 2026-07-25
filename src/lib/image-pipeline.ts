@@ -95,8 +95,29 @@ export function toSrcSet(variants: VariantMap, format: RenditionFormat): string 
 
 /* ============================ 외부 호출 seam ============================ */
 //
-// 아래 함수들은 전부 아직 연결되지 않았다. 각각 "무엇이 붙으면 풀리는지"를 메시지에 적어 둔다.
+// 인스타 조회(fetchInstagramMedia)만 실제로 연결되어 있다. 나머지는 아직 비어 있고,
+// 각각 "무엇이 붙으면 풀리는지"를 메시지에 적어 둔다.
 // 호출측(크론 라우트)은 이 예외를 잡아 IngestRun에 실패로 기록한다.
+
+/** Graph API 호스트. Instagram Login 방식으로 발급한 토큰이면 graph.instagram.com으로 바꾼다. */
+const IG_GRAPH_HOST = process.env.IG_GRAPH_HOST ?? 'graph.facebook.com';
+/** 버전을 고정한다 — 생략하면 앱의 기본 버전을 따라가 어느 날 조용히 깨진다. */
+const IG_API_VERSION = process.env.IG_API_VERSION ?? 'v25.0';
+/** Graph API가 한 페이지에 허용하는 상한. */
+const IG_PAGE_LIMIT = 100;
+/** 폭주 방지용 페이지 상한. 도달하면 조용히 자르지 않고 경고를 남긴다. */
+const IG_MAX_PAGES = 500;
+
+/** width/height는 IG Media 필드 목록에 없다 — 요청해도 오지 않으므로 넣지 않는다. */
+const IG_MEDIA_FIELDS = [
+  'id',
+  'media_type',
+  'media_url',
+  'permalink',
+  'caption',
+  'timestamp',
+  'children{id,media_type,media_url}',
+].join(',');
 
 export type InstagramMedia = {
   id: string;
@@ -104,27 +125,139 @@ export type InstagramMedia = {
   permalink: string;
   caption: string | null;
   timestamp: string;
-  width: number;
-  height: number;
+  /**
+   * Graph API는 미디어 크기를 돌려주지 않는다(IG Media 필드 목록에 width/height 없음).
+   * 그래서 수집 시점에는 null이고, 원본을 내려받은 뒤 probeImageDimensions로 실측한다.
+   * 여기서 임의의 기본값을 채우면 저해상도 판정이 통째로 거짓이 되므로 채우지 않는다.
+   */
+  width: number | null;
+  height: number | null;
 };
 
 export type InstagramCredentials = { accessToken: string; userId: string };
 
+/** Graph API 응답의 필요한 부분만. 나머지 필드는 요청하지 않으므로 정의하지 않는다. */
+export type IgApiChild = { id: string; media_type?: string; media_url?: string };
+export type IgApiItem = {
+  id: string;
+  media_type?: string;
+  media_url?: string;
+  permalink?: string;
+  caption?: string;
+  timestamp?: string;
+  children?: { data?: IgApiChild[] };
+};
+type IgApiPage = { data?: IgApiItem[]; paging?: { next?: string } };
+
 /**
- * 계정의 게시물을 전량 페이지네이션하며 가져온다. 전량 수집이 원칙이므로 상한을 두지 않는다.
- * TODO(pipeline): Instagram Graph API /{ig-user-id}/media 연결.
+ * API 응답 → 수집 단위(순수 함수).
+ * 캐러셀은 자식 사진 각각이 한 장으로 풀린다 — 갤러리의 단위는 게시물이 아니라 사진이기 때문이다.
+ * 캡션·촬영시각·퍼머링크는 부모 것을 물려받는다(Graph API가 자식에 캡션을 주지 않는다).
+ * 동영상은 Photo 파이프라인 대상이 아니므로 제외한다.
  */
-export async function fetchInstagramMedia(_creds: InstagramCredentials): Promise<InstagramMedia[]> {
-  throw new DependencyUnavailableError(
-    'Instagram Graph API가 연결되지 않았습니다.',
-    { seam: 'fetchInstagramMedia' },
+export function flattenInstagramMedia(items: IgApiItem[]): InstagramMedia[] {
+  const out: InstagramMedia[] = [];
+
+  for (const item of items) {
+    const inherited = {
+      permalink: item.permalink ?? '',
+      caption: item.caption ?? null,
+      timestamp: item.timestamp ?? '',
+      width: null,
+      height: null,
+    };
+
+    if (item.media_type === 'CAROUSEL_ALBUM') {
+      for (const child of item.children?.data ?? []) {
+        if (child.media_type !== 'IMAGE' || !child.media_url) continue;
+        out.push({ id: child.id, mediaUrl: child.media_url, ...inherited });
+      }
+      continue;
+    }
+
+    if (item.media_type !== 'IMAGE' || !item.media_url) continue;
+    out.push({ id: item.id, mediaUrl: item.media_url, ...inherited });
+  }
+
+  return out;
+}
+
+/** Graph API 오류 응답 → 원인이 드러나는 예외. 토큰 만료가 압도적으로 흔하므로 따로 짚는다. */
+function instagramApiError(status: number, body: unknown): DependencyUnavailableError {
+  const err = (body as { error?: { message?: string; code?: number; type?: string } } | null)?.error;
+  const hint =
+    err?.code === 190
+      ? ' 액세스 토큰이 만료되었거나 무효합니다 — 장기 토큰을 재발급하세요.'
+      : '';
+
+  return new DependencyUnavailableError(
+    `Instagram Graph API 호출 실패 (HTTP ${status}).${hint}`,
+    {
+      seam: 'fetchInstagramMedia',
+      status,
+      apiCode: err?.code,
+      apiType: err?.type,
+      apiMessage: err?.message,
+    },
   );
+}
+
+/**
+ * 계정의 게시물을 전량 페이지네이션하며 가져온다. 전량 수집이 원칙이므로 건수 상한을 두지 않는다.
+ * (IG_MAX_PAGES는 무한 루프 방어일 뿐이며, 걸리면 경고를 남긴다.)
+ */
+export async function fetchInstagramMedia(creds: InstagramCredentials): Promise<InstagramMedia[]> {
+  const base = `https://${IG_GRAPH_HOST}/${IG_API_VERSION}/${encodeURIComponent(creds.userId)}/media`;
+  const params = new URLSearchParams({
+    fields: IG_MEDIA_FIELDS,
+    limit: String(IG_PAGE_LIMIT),
+    access_token: creds.accessToken,
+  });
+
+  // paging.next는 access_token까지 포함한 완성 URL이므로 그대로 따라가면 된다.
+  let url: string | undefined = `${base}?${params.toString()}`;
+  const out: InstagramMedia[] = [];
+  let pages = 0;
+
+  while (url) {
+    if (pages >= IG_MAX_PAGES) {
+      console.warn('[ingest] 페이지 상한 도달 — 이후 게시물은 조회하지 않았다', {
+        pages,
+        collected: out.length,
+      });
+      break;
+    }
+
+    const res = await fetch(url, { cache: 'no-store' });
+    const body: unknown = await res.json().catch(() => null);
+    if (!res.ok) throw instagramApiError(res.status, body);
+
+    const page = body as IgApiPage;
+    out.push(...flattenInstagramMedia(page.data ?? []));
+    url = page.paging?.next;
+    pages += 1;
+  }
+
+  return out;
 }
 
 /** TODO(pipeline): 최대 해상도 원본 다운로드. */
 export async function downloadOriginal(_mediaUrl: string): Promise<ArrayBuffer> {
   throw new DependencyUnavailableError('원본 다운로드가 연결되지 않았습니다.', {
     seam: 'downloadOriginal',
+  });
+}
+
+/**
+ * 내려받은 바이트에서 실제 픽셀 크기를 잰다.
+ * Graph API가 width/height를 주지 않으므로, 저해상도 판정과 파생본 계획은 이 값에 의존한다.
+ * TODO(pipeline): sharp metadata() 등으로 연결.
+ */
+export async function probeImageDimensions(
+  _bytes: ArrayBuffer,
+): Promise<{ width: number; height: number }> {
+  throw new DependencyUnavailableError('이미지 크기 판독기가 연결되지 않았습니다.', {
+    seam: 'probeImageDimensions',
   });
 }
 

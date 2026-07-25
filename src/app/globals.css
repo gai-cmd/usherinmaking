@@ -17,15 +17,37 @@
   --placeholder: #e6e1d6;
   --dark: #2e2a25;
 
-  /* Type */
-  --ff-ja-serif: 'Zen Old Mincho', serif;
-  --ff-ja-sans: 'Zen Kaku Gothic New', system-ui, sans-serif;
-  --ff-ko-serif: 'Nanum Myeongjo', serif;
-  --ff-ko-sans: 'Noto Sans KR', system-ui, sans-serif;
-  --ff-display: 'Cormorant Garamond', serif;
-  --ff-latin: 'Jost', system-ui, sans-serif;
-  /* 금액·숫자는 항상 Jost — 한국어 페이지에서 Cormorant는 올드스타일 숫자가 어긋난다 */
-  --ff-num: 'Jost', system-ui, sans-serif;
+  /* ---------- Type ----------
+     애플 시스템 서체로 3개 언어를 맞춘다. 웹폰트를 내려받지 않으므로
+     렌더 차단 요청이 사라지고, 각 OS가 자기 최적 힌팅으로 그린다.
+     비애플 환경을 위해 각 스택 뒤에 대체 서체를 둔다. */
+
+  /* 라틴 UI·본문 — SF Pro. -apple-system / system-ui 가 SF로 해석된다. */
+  --ff-latin: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui,
+    'Helvetica Neue', 'Segoe UI', Roboto, Arial, sans-serif;
+
+  /* 라틴 대제목 — New York(애플의 에디토리얼 세리프). ui-serif 가 New York으로 해석된다.
+     "Location" "Studio" 같은 큰 영문 단어는 로케일과 무관하게 이 서체로 놓인다. */
+  --ff-display: ui-serif, 'New York', 'Iowan Old Style', Palatino, Georgia, 'Times New Roman',
+    serif;
+
+  /* 일본어 — 히라기노. 애플이 macOS·iOS에 기본 탑재한다. */
+  --ff-ja-sans: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Hiragino Kaku Gothic Pro',
+    -apple-system, BlinkMacSystemFont, system-ui, 'Yu Gothic Medium', 'Yu Gothic', Meiryo,
+    sans-serif;
+  --ff-ja-serif: 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', ui-serif, YuMincho, 'Yu Mincho',
+    'MS PMincho', serif;
+
+  /* 한국어 — Apple SD 산돌고딕 Neo. 애플이 한국어 UI에 실제로 쓰는 서체다.
+     애플의 한글 명조(AppleMyungjo)는 굵기가 하나뿐이라 큰 제목에서 무너지므로 쓰지 않는다. */
+  --ff-ko-sans: 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, system-ui, Pretendard,
+    'Malgun Gothic', sans-serif;
+  --ff-ko-serif: var(--ff-ko-sans);
+
+  /* 금액·숫자 — SF의 등폭 숫자를 쓴다(u-num 이 tabular-nums 를 켠다).
+     세리프 대제목 서체의 올드스타일 숫자는 금액 표에서 높이가 어긋나 보인다. */
+  --ff-num: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Helvetica Neue',
+    sans-serif;
 
   /* 로케일별 기본 서체. [lang]에서 덮어쓴다. */
   --ff-heading: var(--ff-display);
@@ -47,13 +69,22 @@
   --ff-body: var(--ff-ja-sans);
 }
 
+/* 한국어 제목은 산돌고딕 라이트로 간다 — 애플 한국어 화면의 실제 모습이다 */
 :lang(ko),
 [lang^='ko'] {
-  --ff-heading: var(--ff-ko-serif);
+  --ff-heading: var(--ff-ko-sans);
   --ff-body: var(--ff-ko-sans);
 }
 
-/* EN은 명조를 쓰지 않는다 */
+:lang(ko) .u-lead,
+[lang^='ko'] .u-lead,
+:lang(ko) h1,
+[lang^='ko'] h1 {
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+/* EN은 명조를 쓰지 않는다 — 본문은 SF, 대제목만 New York */
 :lang(en),
 [lang^='en'] {
   --ff-heading: var(--ff-display);

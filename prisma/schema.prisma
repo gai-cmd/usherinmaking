@@ -228,6 +228,26 @@ model JournalPost {
   @@index([locale, publishedAt])
 }
 
+/* ============================ 관리자 ============================ */
+
+/// 관리자 멤버 명부.
+///
+/// 주의: 통과 판정의 근거는 이 테이블이 아니라 환경변수 ADMIN_ALLOWED_EMAILS 다.
+/// 목록을 DB에만 두면 관리자 화면을 통해 목록 자체를 바꿀 수 있게 되어,
+/// 세션 하나가 털렸을 때 공격자가 스스로를 멤버로 추가할 수 있다.
+/// 이 테이블은 "누가 있는지 보여주고 마지막 접속을 기록하는" 표시·감사용이다.
+model AdminMember {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String?
+
+  /// 환경변수 목록과 일치하는지. 불일치는 관리자 화면에서 경고로 띄운다.
+  inAllowlist Boolean @default(false)
+
+  lastSeenAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
 /* ============================ 운영 ============================ */
 
 model ActivityLog {

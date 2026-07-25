@@ -46,8 +46,9 @@ const nextConfig: NextConfig = {
               "form-action 'self'",
               "img-src 'self' data: blob: https:",
               "script-src 'self' 'unsafe-inline'",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              'font-src https://fonts.gstatic.com',
+              // 애플 시스템 서체를 쓰므로 외부 폰트 도메인을 열 필요가 없다
+              "style-src 'self' 'unsafe-inline'",
+              "font-src 'self'",
               // 구글맵 임베드 (아쿠세스 · 문의 페이지)
               'frame-src https://www.google.com https://maps.google.com',
               "connect-src 'self'",

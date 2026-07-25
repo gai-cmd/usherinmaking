@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { AdminButton, Badge, NotWired, PageHeader, Panel } from '@/components/admin';
 import { path } from '@/lib/i18n';
+import { checkAdminPageAccess } from '@/server/auth';
 import { listFaqs } from '@/server/faq';
 import {
   SCOPE_LABEL,
@@ -29,6 +30,11 @@ type SearchParams = Promise<{ code?: string }>;
 const yen = new Intl.NumberFormat('ja-JP');
 
 export default async function PlansPage({ searchParams }: { searchParams: SearchParams }) {
+  // 레이아웃의 잠금 화면은 "표시"만 막는다. children 은 prop 으로 이미 렌더되어
+  // RSC 페이로드에 그대로 실리므로, 데이터를 읽기 전에 이 화면에서 직접 끊어야 한다.
+  const access = await checkAdminPageAccess();
+  if (!access.allowed) notFound();
+
   const sp = await searchParams;
   const [plans, options, issues] = await Promise.all([listPlans(), listOptions(), auditPlans()]);
 

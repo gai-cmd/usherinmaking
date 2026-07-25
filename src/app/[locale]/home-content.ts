@@ -7,7 +7,7 @@ import type { Locale } from '@/lib/i18n';
 
 type HeroPanel = {
   eyebrow: string;
-  /** Cormorant(ja/en) / 명조(ko)로 크게 놓이는 한 단어 */
+  /** --ff-display(New York)로 크게 놓이는 한 단어 */
   display: string;
   lines: [string, string];
   cta: string;

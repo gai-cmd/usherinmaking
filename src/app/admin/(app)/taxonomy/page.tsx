@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 import { Badge, NotWired, PageHeader, Panel } from '@/components/admin';
 import { LOCALE_SHORT, LOCALES } from '@/lib/i18n';
+import { checkAdminPageAccess } from '@/server/auth';
 import {
   countVisibleTerms,
   getTermById,
@@ -25,6 +27,11 @@ export const metadata = {
 type SearchParams = Promise<{ term?: string }>;
 
 export default async function TaxonomyPage({ searchParams }: { searchParams: SearchParams }) {
+  // 레이아웃의 잠금 화면은 "표시"만 막는다. children 은 prop 으로 이미 렌더되어
+  // RSC 페이로드에 그대로 실리므로, 데이터를 읽기 전에 이 화면에서 직접 끊어야 한다.
+  const access = await checkAdminPageAccess();
+  if (!access.allowed) notFound();
+
   const sp = await searchParams;
   const [taxonomies, untranslated, visible, allUrls] = await Promise.all([
     listTaxonomies(),
