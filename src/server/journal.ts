@@ -104,9 +104,12 @@ function normalize(post: ContentPost): JournalPost {
 
 // JOURNAL_POSTS 는 slug + locale 한 행씩의 평면 배열이다 (Prisma @@unique([slug, locale]) 와 같은 모양).
 // 로케일별 정렬은 여기서 신경 쓰지 않는다 — 아래에서 곧바로 slug 로 묶고 다시 정렬한다.
-function seedRows(): JournalPost[] {
+/** 시드 폴백이 보여 주는 목록. prisma/seed.ts 가 DB에 넣는 값도 여기서 나온다. */
+export function seedJournalRows(): JournalPost[] {
   return JOURNAL_POSTS.map(normalize);
 }
+
+const seedRows = seedJournalRows;
 
 type DbPost = {
   id: string;

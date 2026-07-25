@@ -8,7 +8,9 @@ import {
   type PhotoFilter,
   type PhotoStatus,
 } from '@/server/photos';
+import { ALLOWED_UPLOAD_MIME, MAX_UPLOAD_BYTES } from '@/lib/image-contract';
 import { PhotoCurator } from './PhotoCurator';
+import { PhotoUpload } from './PhotoUpload';
 import s from './page.module.css';
 
 // 이 화면의 규칙:
@@ -77,9 +79,8 @@ export default async function PhotosPage({ searchParams }: { searchParams: Searc
             <AdminButton disabled title="인스타 수집 크론이 아직 연결되지 않았습니다">
               지금 동기화
             </AdminButton>
-            <AdminButton variant="primary" disabled title="업로드 저장 경로가 아직 연결되지 않았습니다">
-              ＋ 수동 업로드
-            </AdminButton>
+            {/* 업로드는 실제로 동작한다 — 저장 위치와 한계는 PhotoUpload 안에 적혀 있다. */}
+            <PhotoUpload limits={{ accept: ALLOWED_UPLOAD_MIME, maxBytes: MAX_UPLOAD_BYTES }} />
           </>
         }
       />

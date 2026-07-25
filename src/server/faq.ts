@@ -35,11 +35,13 @@ export type Faq = {
 };
 
 /**
- * 시드. 원래는 src/content/faq.ts 가 맞지만 그 경로는 이 에이전트의 소유가 아니라
- * 모듈 안에 둔다. Prisma 이관 시 통째로 사라진다.
+ * 시드. 두 가지로 쓰인다 — DB가 비었을 때의 폴백이자, prisma/seed.ts 가 넣는 원본이다.
+ * 그래서 지우지 않는다.
+ *
  * 문장은 전부 실제 문의에서 올라온 형태를 가정한 표본이며, 번역본이 아직 없는 칸은 빈 문자열이다.
+ * id 는 손으로 지은 안정된 값이다 — 시드를 두 번 돌려도 같은 행을 갱신해야 하기 때문이다.
  */
-const SEED_FAQS: Faq[] = [
+export const SEED_FAQS: Faq[] = [
   {
     id: 'faq-parking',
     question: {

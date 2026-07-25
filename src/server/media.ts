@@ -14,8 +14,8 @@ import { isDatabaseConfigured, prisma } from '@/server/db';
 import { DependencyUnavailableError, NotFoundError, ValidationError } from '@/server/errors';
 import {
   MAX_UPLOAD_BYTES,
-  buildVariantMap,
   deleteStored,
+  deleteStoredPrefix,
   encodeRenditions,
   extensionForMime,
   isAllowedUploadMime,
@@ -282,7 +282,15 @@ export async function deleteMedia(id: string): Promise<void> {
   const asset = await getMedia(id);
   if (!asset) throw new NotFoundError('미디어를 찾을 수 없습니다.');
 
-  if (asset.url.startsWith('http')) {
+  // pathname이 있으면 photos/<id>/ 묶음을 통째로 지운다 — 파생본까지 함께 사라져야 한다.
+  // MediaAsset에는 variants 칼럼이 없어서 URL 목록만으로는 파생본을 찾을 수 없다.
+  const folder = asset.pathname?.includes('/')
+    ? asset.pathname.slice(0, asset.pathname.lastIndexOf('/') + 1)
+    : null;
+
+  if (folder) {
+    await deleteStoredPrefix(folder);
+  } else if (asset.url.startsWith('http')) {
     await deleteStored([asset.url]);
   }
 

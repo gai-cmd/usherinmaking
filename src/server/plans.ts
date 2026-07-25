@@ -185,7 +185,8 @@ function fromSeed(plan: SeedPlan, order: number): AdminPlan {
   };
 }
 
-function seedPlans(): AdminPlan[] {
+/** 시드 폴백이 보여 주는 목록. prisma/seed.ts 가 DB에 넣는 값도 같은 함수에서 나온다. */
+export function seedPlans(): AdminPlan[] {
   return [...STUDIO_PLANS, ...LOCATION_PLANS, ...ANNIVERSARY_PLANS].map(fromSeed);
 }
 
@@ -194,7 +195,7 @@ function seedPlans(): AdminPlan[] {
  * ("PLAN 01 / 02") 으로만 들고 있어서, 그 문장에서 플랜 코드를 되읽는다.
  * 문장에 플랜 번호가 없으면(공통 옵션) 스튜디오 플랜 전체에 붙는 것으로 본다.
  */
-function seedOptions(): AdminOption[] {
+export function seedOptions(): AdminOption[] {
   const studioCodes = STUDIO_PLANS.map((p) => p.code);
 
   return STUDIO_OPTIONS.map((opt, i) => {

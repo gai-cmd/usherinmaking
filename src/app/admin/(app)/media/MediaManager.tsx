@@ -227,7 +227,9 @@ export function MediaManager({ limits, assets, slots, dbReady, storageReady }: P
                   {/* next/image 는 원격 호스트 허용 설정이 필요하다. 관리자 썸네일이라 img로 둔다. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.url} alt="" loading="lazy" decoding="async" className={s.img} />
-                  <span className={s.meta}>{formatDimensions(a.width ?? 0, a.height ?? 0)}</span>
+                  <span className={s.meta}>
+                    {a.width && a.height ? formatDimensions(a.width, a.height) : '치수 미상'}
+                  </span>
                 </button>
                 <span className={s.flags}>
                   {a.lowRes ? <Badge tone="warn">저해상도</Badge> : null}
@@ -334,7 +336,9 @@ export function MediaManager({ limits, assets, slots, dbReady, storageReady }: P
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={selected.url} alt="" className={s.binderImg} />
                           <span className={s.binderMeta}>
-                            {formatDimensions(selected.width ?? 0, selected.height ?? 0)}
+                            {selected.width && selected.height
+                              ? formatDimensions(selected.width, selected.height)
+                              : '치수 미상'}
                             {selected.lowRes ? ' · 저해상도' : ''}
                           </span>
                         </div>

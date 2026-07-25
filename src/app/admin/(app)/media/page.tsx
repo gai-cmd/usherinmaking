@@ -6,12 +6,8 @@ import { checkAdminPageAccess } from '@/server/auth';
 import { isDatabaseConfigured } from '@/server/db';
 import { countMedia, listMedia } from '@/server/media';
 import { listPageImageBindings } from '@/server/page-images';
-import {
-  ALLOWED_UPLOAD_MIME,
-  LOW_RES_MIN_LONG_EDGE,
-  MAX_UPLOAD_BYTES,
-  isBlobConfigured,
-} from '@/lib/image-pipeline';
+import { ALLOWED_UPLOAD_MIME, LOW_RES_MIN_LONG_EDGE, MAX_UPLOAD_BYTES } from '@/lib/image-contract';
+import { isBlobConfigured } from '@/lib/image-pipeline';
 import { MediaManager, type AssetView, type SlotView } from './MediaManager';
 import s from './page.module.css';
 
