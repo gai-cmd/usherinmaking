@@ -1,144 +1,54 @@
-import { newIngestRun, recordActivity, saveIngestRun, type IngestRun } from '@/server/activity';
 import { requireCronSecret } from '@/server/auth';
-import { AppError, DependencyUnavailableError, errorResponse } from '@/server/errors';
-import {
-  createIngestedPhotos,
-  knownIgMediaIds,
-  type IngestCandidate,
-} from '@/server/photos';
-import {
-  downloadOriginal,
-  draftAltText,
-  encodeRenditions,
-  fetchInstagramMedia,
-  isLowRes,
-  missingPipelineEnv,
-  originalKey,
-  planRenditions,
-  probeImageDimensions,
-  storeOriginal,
-  suggestCategories,
-  type InstagramMedia,
-} from '@/lib/image-pipeline';
+import { errorResponse } from '@/server/errors';
+import { runInstagramIngest } from '@/server/ingest';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// 6시간마다 — vercel.json의 crons 항목이 이 경로를 가리킨다.
+// 6시간마다 — vercel.json 의 crons 항목이 이 경로를 가리킨다.
 export const maxDuration = 300;
 
 /**
- * 인스타그램 전량 수집 크론.
+ * 인스타그램 수집 크론.
  *
- * 흐름: 크론 시크릿 검증 → 환경변수 확인 → 게시물 목록 조회 → 신규만 원본 다운로드
- *      → 스토리지 보관 → AVIF/WebP 재인코딩 → AI 분류·alt 초안 → UNSORTED로 저장.
+ * 흐름은 전부 server/ingest 에 있고 여기는 가드와 응답 매핑만 한다.
+ * 크론 시크릿 검증 → 수집 → 결과를 그대로 내보낸다.
  *
- * 지금 상태: 게시물 조회까지는 연결됐다(IG_ACCESS_TOKEN · IG_USER_ID 필요).
- * 원본 다운로드 · 오브젝트 스토리지 · 재인코딩 · AI는 아직 없어서, 신규 게시물이 하나라도 있으면
- * 그 항목에서 막힌다. 어디서 막혔는지를 IngestRun에 남기고 503(의존성 없음) 또는 501(구현 없음)로
- * 끝난다. 수집 성공을 가장하지 않는 것이 이 파일의 핵심 계약이다.
+ * 응답 규칙:
+ *   - 인증 실패는 실행 기록을 만들지 않는다. 인증 없는 호출은 수집 시도가 아니고,
+ *     기록으로 남기면 남이 이력 테이블을 채울 수 있다.
+ *   - 수집 시도가 실패하면 IngestRun 에 남고 그 run 을 응답에 함께 싣는다.
+ *     자격 증명이 없으면 503 이며, 그 실행도 기록된다.
  */
 export async function GET(req: Request) {
-  const run: IngestRun = newIngestRun();
-
   try {
-    // 1) 가드가 먼저다. 시크릿이 없으면 낯선 사람이 수집을 돌릴 수 있다.
     await requireCronSecret(req);
-
-    // 2) 자격증명 확인. 없으면 여기서 정직하게 끊는다.
-    const missing = missingPipelineEnv();
-    if (missing.length > 0) {
-      throw new DependencyUnavailableError(
-        `인스타그램 수집에 필요한 환경변수가 없습니다: ${missing.join(', ')}`,
-        { missingEnv: missing },
-      );
-    }
-
-    const creds = {
-      accessToken: process.env.IG_ACCESS_TOKEN as string,
-      userId: process.env.IG_USER_ID as string,
-    };
-
-    // 3) 전량 조회. 상한을 두지 않는 것이 수집 원칙이다.
-    const media: InstagramMedia[] = await fetchInstagramMedia(creds);
-    run.fetched = media.length;
-
-    // 4) 신규만 내려받는다 — igMediaId가 중복 방지 키다.
-    const known = await knownIgMediaIds();
-    const fresh = media.filter((m) => !known.has(m.id));
-
-    const candidates: IngestCandidate[] = [];
-    for (const m of fresh) {
-      try {
-        const bytes = await downloadOriginal(m.mediaUrl);
-        const original = await storeOriginal(originalKey(m.id, 'jpg'), bytes);
-
-        // Graph API는 크기를 주지 않는다. 내려받은 원본에서 직접 재야 파생본 계획과
-        // 저해상도 판정이 실제와 맞는다.
-        const { width, height } = await probeImageDimensions(bytes);
-
-        const plan = planRenditions({ id: m.id, width, height });
-        const encoded = await encodeRenditions(bytes, plan);
-
-        const [suggestions, alt] = await Promise.all([
-          suggestCategories(bytes),
-          draftAltText(bytes, m.caption),
-        ]);
-
-        candidates.push({
-          igMediaId: m.id,
-          originalUrl: original,
-          // encodeRenditions가 업로드까지 마친 뒤 buildVariantMap 형태로 돌려준다.
-          variants: encoded,
-          width,
-          height,
-          caption: m.caption,
-          takenAt: new Date(m.timestamp),
-          // AI 초안일 뿐이다. 관리자가 확인하기 전에는 UNSORTED이므로 프론트에 나가지 않는다.
-          alt,
-          aiSuggestion: suggestions.map((sg) => ({
-            taxonomyId: sg.taxonomyKey,
-            termId: sg.termSlug,
-            label: sg.termSlug,
-            score: sg.score,
-          })),
-        });
-
-        // 저해상도 판정은 순수 함수라 실측값만 들어오면 정확하다.
-        if (isLowRes(width, height)) {
-          console.warn('[ingest] 저해상도 원본', m.id, `${width}x${height}`);
-        }
-      } catch (itemErr) {
-        run.failed += 1;
-        console.error('[ingest] 항목 실패', m.id, itemErr);
-      }
-    }
-
-    // 5) 전부 UNSORTED로 저장. 전시는 관리자가 고른 것만.
-    run.created = await createIngestedPhotos(candidates);
-    run.finishedAt = new Date();
-    await saveIngestRun(run);
-    await recordActivity({
-      actor: 'system',
-      action: `Instagram 동기화 — 신규 ${run.created}건 수집`,
-      detail: { fetched: run.fetched, created: run.created, failed: run.failed },
-    });
-
-    return Response.json({ run });
   } catch (err) {
-    // 실패도 실행 기록이다. 중복·누락 판별의 근거이므로 남기고 나간다.
-    run.finishedAt = new Date();
-    run.error = err instanceof Error ? err.message : String(err);
-    await saveIngestRun(run);
-
-    if (err instanceof AppError) {
-      return Response.json(
-        {
-          error: { code: err.code, message: err.message, ...(err.details ? { details: err.details } : {}) },
-          run,
-        },
-        { status: err.status },
-      );
-    }
     return errorResponse(err);
   }
+
+  const result = await runInstagramIngest({ trigger: 'cron' });
+
+  const body = {
+    run: result.run,
+    skipped: result.skipped,
+    // 0 이 아니면 예산에 걸려 남은 것이다. 다음 실행이 이어받는다.
+    remaining: result.remaining,
+    aiUnavailable: result.aiUnavailable,
+  };
+
+  if (!result.ok) {
+    return Response.json(
+      {
+        error: {
+          code: result.error.code,
+          message: result.error.message,
+          ...(result.error.details ? { details: result.error.details } : {}),
+        },
+        ...body,
+      },
+      { status: result.error.status },
+    );
+  }
+
+  return Response.json(body);
 }

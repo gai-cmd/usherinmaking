@@ -89,16 +89,15 @@ export async function PUT(req: Request): Promise<Response> {
       throw new ValidationError('정가는 판매가보다 커야 합니다.');
     }
 
+    // 저장 성공 시 upsertPlan 이 affectedRoutes() 전체를 무효화한다.
+    // 홈 목록과 플랜 상세가 같은 레코드를 읽으므로 둘은 항상 함께 움직인다.
     await upsertPlan(input);
 
-    // TODO(isr): upsertPlan 이 실제로 저장하게 되는 순간, 이 자리에서
-    //   const { revalidatePath } = await import('next/cache');
-    //   for (const route of affectedRoutes(input)) revalidatePath(route);
-    // 를 호출한다. 홈 목록과 플랜 상세가 같은 레코드를 읽으므로 둘은 항상 함께 무효화된다.
-    await revalidatePlanSurfaces(input);
+    // 무효화 결과를 그대로 알린다 — 요청 컨텍스트 밖이면 revalidated 가 false 로 나간다.
+    const { revalidated } = await revalidatePlanSurfaces(input);
 
     return Response.json(
-      { ok: true, routes: affectedRoutes(input) },
+      { ok: true, revalidated, routes: affectedRoutes(input) },
       { headers: { 'cache-control': 'no-store, private' } },
     );
   } catch (err) {

@@ -62,6 +62,15 @@ export async function PUT(req: Request): Promise<Response> {
       );
     }
 
+    // 코드 시드에 없어도 DB 에는 있을 수 있다. 여기서 걸러야 422 로 답할 수 있고,
+    // 놓치면 저장 단계에서 500 이 된다.
+    const dbConflict = await findSlugConflictInDb(input.slug, input.termId);
+    if (dbConflict) {
+      throw new ValidationError(
+        `이미 쓰이는 슬러그입니다 (${dbConflict.taxonomyKey} / ${dbConflict.slug}). 갤러리 주소가 겹칩니다.`,
+      );
+    }
+
     // 기존 용어의 슬러그를 바꾸는 경우 — 끊길 주소를 먼저 알린다.
     if (input.termId) {
       const existing = await getTermById(input.termId);

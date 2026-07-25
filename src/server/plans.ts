@@ -3,7 +3,9 @@ import type { Plan as SeedPlan } from '@/content/site';
 import type { Locale } from '@/lib/i18n';
 import { LOCALES, path } from '@/lib/i18n';
 
-import { NotImplementedError } from '@/server/errors';
+import { logAdminAction } from '@/server/activity';
+import { isDatabaseConfigured, prisma } from '@/server/db';
+import { NotFoundError, NotImplementedError } from '@/server/errors';
 
 /**
  * 플랜 · 옵션 저장소.
@@ -124,18 +126,24 @@ export function affectedRoutes(plan: Pick<AdminPlan, 'code' | 'scope'>): string[
 }
 
 /**
- * 재검증 심(seam). 플랜 저장이 DB에 연결되는 순간 여기서 revalidatePath 가 돈다.
- * 지금은 어떤 경로가 대상인지만 돌려주고 실제 무효화는 하지 않는다.
+ * 저장된 플랜이 걸린 모든 표면을 무효화한다.
+ *
+ * 요청 컨텍스트 밖(크론·스크립트)에서는 revalidatePath 가 던진다. 그 실패로 저장을
+ * 되돌리지는 않되, revalidated: false 를 그대로 돌려준다 — 화면이 "반영됨"이라고
+ * 말하려면 이 값이 true 여야 한다.
  */
 export async function revalidatePlanSurfaces(
   plan: Pick<AdminPlan, 'code' | 'scope'>,
-): Promise<{ revalidated: false; routes: string[] }> {
+): Promise<{ revalidated: boolean; routes: string[] }> {
   const routes = affectedRoutes(plan);
-  // TODO(isr): 저장 성공 후 이 자리에서
-  //   const { revalidatePath } = await import('next/cache');
-  //   for (const r of routes) revalidatePath(r);
-  // 를 호출한다. 쓰기 경로가 없는 지금 호출하면 있지도 않은 변경을 무효화하는 셈이라 두지 않는다.
-  return { revalidated: false, routes };
+  try {
+    const { revalidatePath } = await import('next/cache');
+    for (const r of routes) revalidatePath(r);
+    return { revalidated: true, routes };
+  } catch (err) {
+    console.error('[plans] 재검증 실패', err);
+    return { revalidated: false, routes };
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -208,22 +216,102 @@ function seedOptions(): AdminOption[] {
 }
 
 /* ------------------------------------------------------------------ */
-/* 읽기                                                                */
+/* DB 매핑                                                             */
+/* ------------------------------------------------------------------ */
+
+/** Json 칼럼 → L10n. 빠진 언어는 빈 문자열로 채운다 (undefined 가 새어나가지 않도록). */
+function toL10n(value: unknown): L10n {
+  const src = (value ?? {}) as Record<string, unknown>;
+  return Object.fromEntries(
+    LOCALES.map((l) => [l, typeof src[l] === 'string' ? (src[l] as string) : '']),
+  ) as L10n;
+}
+
+function toL10nList(value: unknown): L10nList {
+  const src = (value ?? {}) as Record<string, unknown>;
+  return Object.fromEntries(
+    LOCALES.map((l) => [
+      l,
+      Array.isArray(src[l]) ? (src[l] as unknown[]).filter((s): s is string => typeof s === 'string') : [],
+    ]),
+  ) as L10nList;
+}
+
+type DbPlan = {
+  id: string;
+  code: string;
+  scope: string;
+  title: unknown;
+  listPrice: number | null;
+  price: number;
+  taxIncluded: boolean;
+  duration: unknown;
+  cuts: number | null;
+  includes: unknown;
+  order: number;
+};
+
+function planFromDb(row: DbPlan): AdminPlan {
+  return {
+    id: row.id,
+    code: row.code,
+    scope: row.scope as Scope,
+    title: toL10n(row.title),
+    listPrice: row.listPrice,
+    price: row.price,
+    taxIncluded: row.taxIncluded,
+    duration: toL10n(row.duration),
+    cuts: row.cuts,
+    includes: toL10nList(row.includes),
+    order: row.order,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* 읽기 — DB 우선, 시드 폴백                                            */
 /* ------------------------------------------------------------------ */
 
 export async function listPlans(scope?: Scope): Promise<AdminPlan[]> {
-  // TODO(prisma): prisma.plan.findMany({ where: scope ? { scope } : {}, orderBy: { order: 'asc' } })
+  if (isDatabaseConfigured()) {
+    const rows = await prisma.plan.findMany({
+      where: scope ? { scope } : {},
+      orderBy: [{ scope: 'asc' }, { order: 'asc' }],
+    });
+    if (rows.length > 0) return rows.map((r) => planFromDb(r as DbPlan));
+  }
+
   const rows = seedPlans();
   return scope ? rows.filter((p) => p.scope === scope) : rows;
 }
 
 export async function getPlan(code: string): Promise<AdminPlan | null> {
-  // TODO(prisma): prisma.plan.findUnique({ where: { code }, include: { options: true } })
+  if (isDatabaseConfigured()) {
+    const row = await prisma.plan.findUnique({ where: { code } });
+    if (row) return planFromDb(row as DbPlan);
+  }
   return seedPlans().find((p) => p.code === code) ?? null;
 }
 
 export async function listOptions(planCode?: string): Promise<AdminOption[]> {
-  // TODO(prisma): prisma.option.findMany({ include: { plans: true }, orderBy: { order: 'asc' } })
+  if (isDatabaseConfigured()) {
+    const rows = await prisma.option.findMany({
+      orderBy: { order: 'asc' },
+      include: { plans: { select: { plan: { select: { code: true } } } } },
+    });
+    if (rows.length > 0) {
+      const mapped: AdminOption[] = rows.map((r) => ({
+        id: r.id,
+        label: toL10n(r.label),
+        // 금액은 "＋¥20,000〜" 처럼 접미사가 붙으므로 숫자가 아니라 언어별 문자열이다.
+        price: toL10n(r.price),
+        note: toL10n(r.note),
+        order: r.order,
+        planCodes: r.plans.map((j) => j.plan.code),
+      }));
+      return planCode ? mapped.filter((o) => o.planCodes.includes(planCode)) : mapped;
+    }
+  }
+
   const rows = seedOptions();
   return planCode ? rows.filter((o) => o.planCodes.includes(planCode)) : rows;
 }
@@ -247,27 +335,127 @@ export async function auditPlans(): Promise<{ code: string; issue: string }[]> {
 }
 
 /* ------------------------------------------------------------------ */
-/* 쓰기 — 미구현                                                        */
+/* 쓰기                                                                */
 /* ------------------------------------------------------------------ */
 
 export type UpsertPlanInput = Omit<AdminPlan, 'id'>;
 
 export async function upsertPlan(input: UpsertPlanInput): Promise<AdminPlan> {
+  // 세금 표기는 scope 가 정한다. 저장 직전에 한 번 더 막는다 — 여기가 마지막 관문이다.
   const conflict = taxFlagConflict(input.scope, input.taxIncluded);
   if (conflict) throw new Error(`upsertPlan: ${conflict}`);
 
-  // TODO(prisma): prisma.plan.upsert({ where: { code }, create: {...}, update: {...} })
-  // TODO(isr): 성공 후 revalidatePlanSurfaces(input) — affectedRoutes() 전체를 무효화한다.
-  throw new NotImplementedError('플랜 저장');
+  if (!isDatabaseConfigured()) throw new NotImplementedError('플랜 저장');
+
+  const data = {
+    scope: input.scope,
+    title: input.title,
+    listPrice: input.listPrice,
+    price: input.price,
+    taxIncluded: input.taxIncluded,
+    duration: input.duration,
+    cuts: input.cuts,
+    includes: input.includes,
+    order: input.order,
+  };
+
+  const row = await prisma.plan.upsert({
+    where: { code: input.code },
+    create: { code: input.code, ...data },
+    update: data,
+  });
+
+  // 가격은 되짚을 수 있어야 한다 — 무엇이 얼마로 바뀌었는지 남긴다.
+  await logAdminAction('플랜 저장', input.code, {
+    price: input.price,
+    listPrice: input.listPrice,
+    taxIncluded: input.taxIncluded,
+  });
+
+  await revalidatePlanSurfaces(input);
+  return planFromDb(row as DbPlan);
 }
 
-export async function upsertOption(_input: Omit<AdminOption, 'id'>): Promise<AdminOption> {
-  // TODO(prisma): prisma.option.upsert(...) + PlanOption 조인 재작성
-  // TODO(isr): 연결된 모든 플랜의 affectedRoutes() 를 무효화한다.
-  throw new NotImplementedError('옵션 저장');
+/** 옵션은 자연 유일키가 없다. 기존 항목을 고칠 때는 id 를 함께 보낸다. */
+export type UpsertOptionInput = Omit<AdminOption, 'id'> & { id?: string };
+
+export async function upsertOption(input: UpsertOptionInput): Promise<AdminOption> {
+  if (!isDatabaseConfigured()) throw new NotImplementedError('옵션 저장');
+
+  const data = {
+    label: input.label,
+    price: input.price,
+    note: input.note,
+    order: input.order,
+  };
+
+  const row = await prisma.$transaction(async (tx) => {
+    const option = input.id
+      ? await tx.option.update({ where: { id: input.id }, data })
+      : await tx.option.create({ data });
+
+    // 조인은 부분 갱신이 아니라 통째로 다시 쓴다 — 뺀 플랜이 남아 있으면
+    // 화면에서 사라진 옵션이 공개 페이지에는 계속 붙는다.
+    await tx.planOption.deleteMany({ where: { optionId: option.id } });
+
+    const plans = await tx.plan.findMany({
+      where: { code: { in: input.planCodes } },
+      select: { id: true, code: true },
+    });
+
+    const unknown = input.planCodes.filter((c) => !plans.some((p) => p.code === c));
+    if (unknown.length > 0) {
+      // 없는 플랜에 옵션을 붙였다고 답하지 않는다.
+      throw new NotFoundError(`플랜을 찾을 수 없습니다: ${unknown.join(', ')}`);
+    }
+
+    if (plans.length > 0) {
+      await tx.planOption.createMany({
+        data: plans.map((p) => ({ optionId: option.id, planId: p.id })),
+      });
+    }
+    return option;
+  });
+
+  await logAdminAction('옵션 저장', row.id, { planCodes: input.planCodes });
+
+  // 옵션은 연결된 플랜 화면 전부에 걸린다.
+  const linked = await prisma.plan.findMany({
+    where: { code: { in: input.planCodes } },
+    select: { code: true, scope: true },
+  });
+  for (const p of linked) {
+    await revalidatePlanSurfaces({ code: p.code, scope: p.scope as Scope });
+  }
+
+  return {
+    id: row.id,
+    label: toL10n(row.label),
+    price: toL10n(row.price),
+    note: toL10n(row.note),
+    order: row.order,
+    planCodes: input.planCodes,
+  };
 }
 
-export async function reorderPlans(_codes: string[]): Promise<void> {
-  // TODO(prisma): prisma.$transaction(codes.map((code, order) => prisma.plan.update(...)))
-  throw new NotImplementedError('플랜 표시순 저장');
+export async function reorderPlans(codes: string[]): Promise<void> {
+  if (!isDatabaseConfigured()) throw new NotImplementedError('플랜 표시순 저장');
+
+  const rows = await prisma.plan.findMany({
+    where: { code: { in: codes } },
+    select: { code: true, scope: true },
+  });
+  const missing = codes.filter((c) => !rows.some((r) => r.code === c));
+  if (missing.length > 0) throw new NotFoundError(`플랜을 찾을 수 없습니다: ${missing.join(', ')}`);
+
+  // 전부 함께 바뀌어야 한다 — 중간에 끊기면 순서가 뒤섞인 채로 공개된다.
+  await prisma.$transaction(
+    codes.map((code, order) => prisma.plan.update({ where: { code }, data: { order } })),
+  );
+
+  await logAdminAction('플랜 표시순 저장', null, { codes });
+
+  for (const r of rows) {
+    await revalidatePlanSurfaces({ code: r.code, scope: r.scope as Scope });
+  }
 }

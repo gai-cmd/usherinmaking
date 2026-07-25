@@ -1,0 +1,156 @@
+/* 페이지 문구 — 목록과 편집 화면이 함께 쓴다. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a-gap);
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--a-muted-2);
+}
+
+.code {
+  font-family: var(--ff-num, inherit);
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+/* ---------- 페이지 목록 ---------- */
+
+.pageList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pageRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--a-line-2);
+}
+
+.pageRow:last-child {
+  border-bottom: 0;
+}
+
+.pageLink {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.pageLink:hover .pageName {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pageName {
+  font-size: 14px;
+  color: var(--a-ink);
+}
+
+.pageNote {
+  font-size: 12px;
+  color: var(--a-muted);
+}
+
+.pageMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: baseline;
+  font-size: 11px;
+  color: var(--a-muted);
+}
+
+.slotCount {
+  color: var(--a-muted-2);
+}
+
+.localeCounts {
+  display: flex;
+  gap: 8px;
+}
+
+.localeCount {
+  font-family: var(--ff-num, inherit);
+  color: var(--a-accent);
+}
+
+.dim .localeCount {
+  color: var(--a-muted-2);
+}
+
+.routes {
+  display: flex;
+  gap: 8px;
+}
+
+.route {
+  font-family: var(--ff-num, inherit);
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.legend {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--a-muted);
+}
+
+/* ---------- 편집 화면 ---------- */
+
+.backLink {
+  padding: 7px 12px;
+  font-size: 12px;
+  color: var(--a-ink);
+  text-decoration: none;
+  border: 1px solid var(--a-line);
+}
+
+.backLink:hover {
+  border-color: var(--a-ink);
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: baseline;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--a-muted);
+  background: var(--a-panel);
+  border: 1px solid var(--a-line);
+}
+
+.summary b {
+  font-family: var(--ff-num, inherit);
+  color: var(--a-ink);
+}
+
+.summaryRoutes {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

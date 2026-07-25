@@ -1,6 +1,9 @@
 import type { Locale } from '@/lib/i18n';
+import { LOCALES } from '@/lib/i18n';
 
-import { NotImplementedError } from '@/server/errors';
+import { logAdminAction } from '@/server/activity';
+import { isDatabaseConfigured, prisma } from '@/server/db';
+import { NotFoundError, NotImplementedError } from '@/server/errors';
 
 /**
  * FAQ 저장소.
@@ -9,7 +12,8 @@ import { NotImplementedError } from '@/server/errors';
  * 관리자가 INBOX(=src/server/inquiries.ts)에서 승격시키며, 승격 시 원문을 다듬지 않는다.
  * 고객이 실제로 쓰는 표현이 그대로 남아야 AI 검색이 우리 답변을 인용할 수 있다.
  *
- * 지금은 시드 배열을 읽는다. Prisma 이관 시 이 파일의 함수 본문만 갈아끼우면 된다.
+ * 읽기는 DB 우선 · 시드 폴백이다. DATABASE_URL 이 없는 환경에서 빈 화면을 보여 주는 것보다
+ * 구조를 보여 주는 편이 낫고, 실데이터가 있으면 언제나 DB가 이긴다.
  */
 
 export type L10n = Record<Locale, string>;
@@ -82,14 +86,63 @@ const SEED_FAQS: Faq[] = [
   },
 ];
 
+/* ------------------------------------------------------------------ */
+/* DB 매핑                                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Json 칼럼을 L10n 으로. 빠진 언어는 빈 문자열이다.
+ * 통째로 캐스팅하면 없는 칸이 런타임에 undefined 로 새어나가므로 여기서 채운다.
+ */
+function toL10n(value: unknown): L10n {
+  const src = (value ?? {}) as Record<string, unknown>;
+  return Object.fromEntries(
+    LOCALES.map((l) => [l, typeof src[l] === 'string' ? (src[l] as string) : '']),
+  ) as L10n;
+}
+
+type DbFaq = {
+  id: string;
+  question: unknown;
+  answer: unknown;
+  order: number;
+  page: string | null;
+  inquiries?: { id: string }[];
+};
+
+function fromDb(row: DbFaq): Faq {
+  return {
+    id: row.id,
+    question: toL10n(row.question),
+    answer: toL10n(row.answer),
+    order: row.order,
+    page: (row.page as FaqPage | null) ?? null,
+    sourceInquiryIds: (row.inquiries ?? []).map((i) => i.id),
+  };
+}
+
+/** 승격 출처는 Inquiry.promotedFaqId 역방향이라 관계를 함께 읽는다. */
+const WITH_SOURCES = { inquiries: { select: { id: true } } } as const;
+
 export async function listFaqs(page?: FaqPage): Promise<Faq[]> {
-  // TODO(prisma): prisma.faq.findMany({ where: page ? { page } : {}, orderBy: { order: 'asc' } })
+  if (isDatabaseConfigured()) {
+    const rows = await prisma.faq.findMany({
+      where: page ? { page } : {},
+      orderBy: { order: 'asc' },
+      include: WITH_SOURCES,
+    });
+    if (rows.length > 0) return rows.map((r) => fromDb(r as DbFaq));
+  }
+
   const rows = page ? SEED_FAQS.filter((f) => f.page === page) : SEED_FAQS;
   return [...rows].sort((a, b) => a.order - b.order);
 }
 
 export async function getFaq(id: string): Promise<Faq | null> {
-  // TODO(prisma): prisma.faq.findUnique({ where: { id } })
+  if (isDatabaseConfigured()) {
+    const row = await prisma.faq.findUnique({ where: { id }, include: WITH_SOURCES });
+    if (row) return fromDb(row as DbFaq);
+  }
   return SEED_FAQS.find((f) => f.id === id) ?? null;
 }
 
@@ -115,15 +168,63 @@ export type CreateFaqInput = {
 };
 
 /**
- * 쓰기 경로는 아직 없다. DB가 붙기 전까지 성공한 척하지 않는다.
+ * FAQ 생성.
+ *
+ * sourceInquiryId 가 있으면 문의의 promotedFaqId 까지 한 트랜잭션에서 잇는다.
+ * 둘이 갈라지면 "승격했는데 출처를 모르는 FAQ" 또는 그 반대가 남는다.
  */
-export async function createFaq(_input: CreateFaqInput): Promise<Faq> {
-  // TODO(prisma): prisma.faq.create({ data: { question, answer, page, order: <max+1> } })
-  //               승격 출처는 Inquiry.promotedFaqId 를 갱신해 연결한다.
-  throw new NotImplementedError('FAQ 생성');
+export async function createFaq(input: CreateFaqInput): Promise<Faq> {
+  if (!isDatabaseConfigured()) throw new NotImplementedError('FAQ 생성');
+
+  const last = await prisma.faq.findFirst({ orderBy: { order: 'desc' }, select: { order: true } });
+  const order = (last?.order ?? -1) + 1;
+
+  const created = await prisma.$transaction(async (tx) => {
+    const faq = await tx.faq.create({
+      data: {
+        question: input.question,
+        answer: input.answer,
+        page: input.page,
+        order,
+      },
+      include: WITH_SOURCES,
+    });
+
+    if (input.sourceInquiryId) {
+      await tx.inquiry.update({
+        where: { id: input.sourceInquiryId },
+        data: { promotedFaqId: faq.id },
+      });
+    }
+    return faq;
+  });
+
+  // 문의 원문은 로그에 넣지 않는다 — 고객 문장이 그대로 다른 화면에 실릴 경로를 만들지 않는다.
+  await logAdminAction('FAQ 생성', created.id, { page: input.page });
+
+  return fromDb({
+    ...(created as DbFaq),
+    // 트랜잭션 안에서 이은 연결은 위 include 스냅샷에 잡히지 않는다.
+    inquiries: input.sourceInquiryId ? [{ id: input.sourceInquiryId }] : [],
+  });
 }
 
-export async function updateFaq(_id: string, _input: Partial<CreateFaqInput>): Promise<Faq> {
-  // TODO(prisma): prisma.faq.update({ where: { id }, data: { ... } })
-  throw new NotImplementedError('FAQ 수정');
+export async function updateFaq(id: string, input: Partial<CreateFaqInput>): Promise<Faq> {
+  if (!isDatabaseConfigured()) throw new NotImplementedError('FAQ 수정');
+
+  const exists = await prisma.faq.findUnique({ where: { id }, select: { id: true } });
+  if (!exists) throw new NotFoundError(`FAQ를 찾을 수 없습니다 (${id}).`);
+
+  const row = await prisma.faq.update({
+    where: { id },
+    data: {
+      ...(input.question ? { question: input.question } : {}),
+      ...(input.answer ? { answer: input.answer } : {}),
+      ...(input.page !== undefined ? { page: input.page } : {}),
+    },
+    include: WITH_SOURCES,
+  });
+
+  await logAdminAction('FAQ 수정', id, { page: row.page });
+  return fromDb(row as DbFaq);
 }

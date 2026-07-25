@@ -1,114 +1,127 @@
-import {
-  Badge,
-  FilterChip,
-  NotWired,
-  PageHeader,
-  Panel,
-  Toolbar,
-  formatCount,
-  formatDimensions,
-  formatTime,
-} from '@/components/admin';
 import { notFound } from 'next/navigation';
+
+import { NotWired, PageHeader, Panel, StatTile, formatCount, formatTime } from '@/components/admin';
 import { listActivity } from '@/server/activity';
 import { checkAdminPageAccess } from '@/server/auth';
-import { countPhotos, getStorageUsage, listPhotos, missingAltLocales } from '@/server/photos';
-import { LOW_RES_MIN_LONG_EDGE, RENDITION_FORMATS, RENDITION_WIDTHS } from '@/lib/image-pipeline';
+import { isDatabaseConfigured } from '@/server/db';
+import { countMedia, listMedia } from '@/server/media';
+import { listPageImageBindings } from '@/server/page-images';
+import {
+  ALLOWED_UPLOAD_MIME,
+  LOW_RES_MIN_LONG_EDGE,
+  MAX_UPLOAD_BYTES,
+  isBlobConfigured,
+} from '@/lib/image-pipeline';
+import { MediaManager, type AssetView, type SlotView } from './MediaManager';
 import s from './page.module.css';
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+// 미디어 라이브러리.
+//
+// 여기서 올린 이미지가 곧 사이트에 나가는 이미지다 — 재배포나 코드 수정 없이.
+// 그래서 이 화면은 두 가지만 한다: 자산을 관리하고, 그 자산을 페이지의 자리에 건다.
+//
+// 업로드 규격(허용 mime · 크기 상한)은 서버(image-pipeline)가 소유하고 여기서 섬으로 내려 준다.
+// 클라이언트 번들은 sharp를 import할 수 없어, 상수를 복사하면 서버 규칙과 조용히 어긋난다.
 
-function one(v: string | string[] | undefined): string | undefined {
-  return Array.isArray(v) ? v[0] : v;
-}
-
-// 미디어 라이브러리는 상태(미선별/전시/보관)와 무관하게 원본 자산 전체를 본다.
-// 여기서 걸러야 할 것은 "서빙 품질" — 저해상도와 alt 누락이다.
-export default async function MediaPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function MediaPage() {
   // [보안] 레이아웃 잠금은 표시만 막는다. 데이터를 읽기 전에 페이지에서 직접 차단한다.
   const access = await checkAdminPageAccess();
   if (!access.allowed) notFound();
 
-  const flag = one((await searchParams).flag);
+  const dbReady = isDatabaseConfigured();
+  const storageReady = isBlobConfigured();
 
-  const [photos, counts, storage, activity] = await Promise.all([
-    listPhotos({
-      lowRes: flag === 'lowres' || undefined,
-      missingAlt: flag === 'missing-alt' || undefined,
-    }),
-    countPhotos(),
-    getStorageUsage(),
+  const [assets, counts, slots, activity] = await Promise.all([
+    listMedia({ limit: 200 }),
+    countMedia(),
+    listPageImageBindings(),
     listActivity(8),
   ]);
 
-  const sizes = RENDITION_WIDTHS.join(' / ');
-  const formats = RENDITION_FORMATS.map((f) => f.toUpperCase()).join(' · ');
+  const assetViews: AssetView[] = assets.map((a) => ({
+    id: a.id,
+    url: a.url,
+    width: a.width,
+    height: a.height,
+    size: a.size,
+    lowRes: a.lowRes,
+    source: a.source,
+    createdAt: a.createdAt.toISOString(),
+  }));
+
+  const slotViews: SlotView[] = slots.map((b) => ({
+    page: b.page,
+    slot: b.slot,
+    label: b.label,
+    group: b.group,
+    hint: b.hint ?? null,
+    bound: b.bound,
+    currentUrl: b.current?.url ?? null,
+    currentAlt: b.current?.alt ?? null,
+    fallbackUrl: b.fallback?.url ?? null,
+    updatedAt: b.updatedAt?.toISOString() ?? null,
+  }));
+
+  const boundCount = slotViews.filter((v) => v.bound).length;
+  // 용량은 MB 단위 정수로 반올림한다. StatTile이 숫자만 받고 단위는 hint로 붙인다.
+  const megabytes = Math.round(counts.bytes / (1024 * 1024));
 
   return (
     <>
       <PageHeader
-        title="미디어 · 로그"
-        description="원본은 자사 스토리지에 보관하고 프론트에는 다중 사이즈로 서빙합니다. 인스타 외부 링크와 임베드는 쓰지 않습니다."
+        title="미디어"
+        description="여기서 올린 사진이 그대로 사이트에 나갑니다. 배포를 다시 하지 않아도 됩니다. 원본은 자사 스토리지에 보관하고 인스타 임베드나 외부 링크는 쓰지 않습니다."
       />
 
-      <Toolbar>
-        <FilterChip href="/admin/media" active={!flag}>
-          전체 {formatCount(counts.total)}
-        </FilterChip>
-        <FilterChip href="/admin/media?flag=lowres" active={flag === 'lowres'} count={counts.lowRes}>
-          저해상도만
-        </FilterChip>
-        <FilterChip
-          href="/admin/media?flag=missing-alt"
-          active={flag === 'missing-alt'}
-          count={counts.missingAlt}
-        >
-          alt 미설정만
-        </FilterChip>
-      </Toolbar>
+      <div className={s.stats}>
+        <StatTile
+          label="업로드된 원본"
+          value={dbReady ? counts.total : null}
+          notWiredReason="DB가 연결되지 않아 셀 수 없습니다."
+        />
+        <StatTile label="용량" value={dbReady ? megabytes : null} hint="MB" notWiredReason="DB 미연결" />
+        <StatTile
+          label="저해상도"
+          value={dbReady ? counts.lowRes : null}
+          hint={`장변 ${formatCount(LOW_RES_MIN_LONG_EDGE)}px 미만`}
+          notWiredReason="DB 미연결"
+        />
+        <StatTile
+          label="교체된 자리"
+          value={boundCount}
+          hint={`전체 ${slotViews.length}자리`}
+          hintTone={boundCount > 0 ? 'accent' : 'muted'}
+        />
+      </div>
 
-      <div className={s.body}>
-        <Panel
-          title="미디어 라이브러리"
-          aside={<>원본 {formatCount(storage.originals)}장</>}
-        >
-          {storage.bytes === null ? (
-            <NotWired
-              what="스토리지 사용량은 아직 집계되지 않습니다."
-              hint="오브젝트 스토리지 연결 후 표시됩니다"
-            />
-          ) : null}
-
-          {photos.length === 0 ? (
-            <p className={s.empty}>조건에 맞는 자산이 없습니다.</p>
-          ) : (
-            <ul className={s.grid}>
-              {photos.map((p) => {
-                const altMissing = missingAltLocales(p.alt).length > 0;
-                return (
-                  <li key={p.id} className={s.cell}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.originalUrl} alt="" loading="lazy" decoding="async" className={s.img} />
-                    <span className={s.flags}>
-                      {p.lowRes ? <Badge tone="warn">저해상도</Badge> : null}
-                      {altMissing ? <Badge tone="dark">alt 없음</Badge> : null}
-                    </span>
-                    <span className={s.dim}>{formatDimensions(p.width, p.height)}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          <p className={s.note}>
-            원본은 자사 스토리지에 보관하고, 프론트에는 {formats} 다중 사이즈({sizes})로 서빙합니다. 장변{' '}
-            {formatCount(LOW_RES_MIN_LONG_EDGE)}px 미만은 저해상도로 표시되니 원본을 다시 올려 주세요.
-          </p>
+      <div className={s.main}>
+        {!dbReady ? (
           <NotWired
-            what="파생본(AVIF / WebP) 생성은 아직 실행되지 않습니다."
-            hint="규격만 확정되어 있고 인코딩 단계가 비어 있습니다"
+            what="DB가 연결되지 않아 업로드 목록을 읽을 수 없습니다."
+            hint="DATABASE_URL 설정 후 표시됩니다"
+            tone="warn"
           />
-        </Panel>
+        ) : null}
+        {!storageReady ? (
+          <NotWired
+            what="스토리지가 연결되지 않아 업로드할 수 없습니다."
+            hint="BLOB_READ_WRITE_TOKEN 설정 후 사용할 수 있습니다"
+            tone="warn"
+          />
+        ) : null}
+
+        <MediaManager
+          limits={{ accept: ALLOWED_UPLOAD_MIME, maxBytes: MAX_UPLOAD_BYTES }}
+          assets={assetViews}
+          slots={slotViews}
+          dbReady={dbReady}
+          storageReady={storageReady}
+        />
+
+        <p className={s.note}>
+          장변 {formatCount(LOW_RES_MIN_LONG_EDGE)}px 미만은 저해상도로 표시됩니다. 인쇄나 큰 화면에서
+          거칠어지니 가능하면 원본을 다시 올려 주세요. 자리에 걸지 않은 이미지는 사이트에 나가지 않습니다.
+        </p>
 
         <Panel title="활동 로그">
           <ul className={s.log}>
@@ -121,7 +134,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Search
           </ul>
           <NotWired
             what="새 활동은 아직 기록되지 않습니다."
-            hint="위 목록은 시드 데이터입니다"
+            hint="위 목록은 시드 데이터이며 ActivityLog 쓰기 경로가 아직 비어 있습니다"
           />
         </Panel>
       </div>

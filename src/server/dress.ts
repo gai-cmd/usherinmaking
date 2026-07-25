@@ -37,7 +37,7 @@ export type ListDressOptions = {
 };
 
 export async function listDressItems(opts: ListDressOptions = {}): Promise<DressItem[]> {
-  // TODO(prisma): Dress 모델 추가 후 prisma.dress.findMany 로 교체
+  // Dress 모델이 없어 DB 우선 경로가 없다. src/content/dress.ts 가 유일한 원본이다.
   let rows = [...DRESS_ITEMS];
   if (opts.collection) rows = rows.filter((d) => d.collection === opts.collection);
   if (opts.tier) rows = rows.filter((d) => d.tier === opts.tier);
@@ -46,7 +46,6 @@ export async function listDressItems(opts: ListDressOptions = {}): Promise<Dress
 }
 
 export async function getDressItem(id: string): Promise<DressItem | null> {
-  // TODO(prisma): prisma.dress.findUnique({ where: { id } })
   return DRESS_ITEMS.find((d) => d.id === id) ?? null;
 }
 
@@ -116,17 +115,21 @@ export type DressItemInput = {
   published: boolean;
 };
 
-export async function upsertDressItem(input: DressItemInput): Promise<DressItem> {
-  // TODO(prisma): Dress 모델 추가 후 upsert
-  throw new NotImplementedError('드레스 저장');
+/*
+ * 아래 쓰기 경로는 DB 연결 여부와 무관하게 막혀 있다.
+ * schema.prisma 에 Dress 모델이 없어서 저장할 곳 자체가 없기 때문이다.
+ * 다른 모델에 끼워 넣는 대신 정직하게 501 을 내보낸다 —
+ * 모델이 추가되면 그때 시드/플랜과 같은 방식으로 붙인다.
+ */
+
+export async function upsertDressItem(_input: DressItemInput): Promise<DressItem> {
+  throw new NotImplementedError('드레스 저장 (schema.prisma 에 Dress 모델이 없습니다)');
 }
 
-export async function setDressPublished(id: string, published: boolean): Promise<DressItem> {
-  // TODO(prisma): prisma.dress.update({ where: { id }, data: { published } })
-  throw new NotImplementedError('드레스 공개 상태 변경');
+export async function setDressPublished(_id: string, _published: boolean): Promise<DressItem> {
+  throw new NotImplementedError('드레스 공개 상태 변경 (schema.prisma 에 Dress 모델이 없습니다)');
 }
 
-export async function reorderDressItems(orderedIds: string[]): Promise<number> {
-  // TODO(prisma): order 컬럼 일괄 갱신
-  throw new NotImplementedError('드레스 순서 변경');
+export async function reorderDressItems(_orderedIds: string[]): Promise<number> {
+  throw new NotImplementedError('드레스 순서 변경 (schema.prisma 에 Dress 모델이 없습니다)');
 }

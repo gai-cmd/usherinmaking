@@ -1,4 +1,6 @@
-import { NotImplementedError } from '@/server/errors';
+import { logAdminAction } from '@/server/activity';
+import { isDatabaseConfigured, prisma } from '@/server/db';
+import { NotFoundError, NotImplementedError } from '@/server/errors';
 import { LOCALES, type Locale } from '@/lib/i18n';
 import {
   CATEGORY_LABEL,
@@ -17,8 +19,7 @@ import {
  * 언어별로 독립된 본문이므로 한 글(slug)이 로케일 수만큼의 레코드로 존재한다
  * (@@unique([slug, locale])). 번역 테이블이 따로 없는 것도 같은 이유다.
  *
- * TODO(prisma): 읽기 함수의 content 접근을 prisma.journalPost 호출로 교체한다.
- * 쓰기 함수는 전부 NotImplementedError 를 던진다 — 성공한 척하지 않는다.
+ * 읽기는 DB 우선 · 시드 폴백이다. DB에 글이 한 건이라도 있으면 DB가 이긴다.
  */
 
 export type JournalSource = 'naver-blog' | 'manual';
@@ -103,8 +104,58 @@ function normalize(post: ContentPost): JournalPost {
 
 // JOURNAL_POSTS 는 slug + locale 한 행씩의 평면 배열이다 (Prisma @@unique([slug, locale]) 와 같은 모양).
 // 로케일별 정렬은 여기서 신경 쓰지 않는다 — 아래에서 곧바로 slug 로 묶고 다시 정렬한다.
-function allRows(): JournalPost[] {
+function seedRows(): JournalPost[] {
   return JOURNAL_POSTS.map(normalize);
+}
+
+type DbPost = {
+  id: string;
+  slug: string;
+  locale: string;
+  category: string;
+  title: string;
+  body: string;
+  cover: string;
+  planCode: string | null;
+  source: string | null;
+  isSample: boolean;
+  publishedAt: Date | null;
+};
+
+/** 화면 표기용 날짜 문자열. DB 는 시각을 들고 있으므로 사이트 기준(JST) 날짜로 자른다. */
+function toRawDate(d: Date): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+}
+
+function fromDb(row: DbPost): JournalPost {
+  return {
+    id: row.id,
+    slug: row.slug,
+    locale: row.locale as Locale,
+    category: row.category as JournalCategory,
+    title: row.title,
+    body: row.body,
+    cover: row.cover,
+    planCode: row.planCode,
+    source: (row.source as JournalSource | null) ?? null,
+    isSample: row.isSample,
+    publishedAt: row.publishedAt,
+    publishedAtRaw: row.publishedAt ? toRawDate(row.publishedAt) : null,
+  };
+}
+
+/** 모든 레코드. DB에 한 건이라도 있으면 DB가 원본이다. */
+async function allRows(): Promise<JournalPost[]> {
+  if (isDatabaseConfigured()) {
+    const rows = await prisma.journalPost.findMany({ orderBy: { publishedAt: 'desc' } });
+    if (rows.length > 0) return rows.map((r) => fromDb(r as DbPost));
+  }
+  return seedRows();
 }
 
 /* -------------------------------------------------------------- 읽기 */
@@ -175,8 +226,9 @@ function toGroups(rows: JournalPost[]): JournalGroup[] {
 
 /** 로케일 단위 목록 */
 export async function listJournalPosts(opts: ListJournalOptions = {}): Promise<JournalPost[]> {
-  // TODO(prisma): prisma.journalPost.findMany({ where, orderBy: { publishedAt: 'desc' } })
-  let rows = allRows();
+  // 필터는 메모리에서 건다. 관리자 목록은 전체를 언어 묶음으로 재구성해야 해서
+  // 어차피 전량을 읽고, 글 수가 WHERE 절을 나눌 만큼 많지 않다.
+  let rows = await allRows();
   if (opts.status) rows = rows.filter((r) => statusOf(r) === opts.status);
   if (opts.locale) rows = rows.filter((r) => r.locale === opts.locale);
   if (opts.category) rows = rows.filter((r) => r.category === opts.category);
@@ -195,12 +247,15 @@ export async function listJournalGroups(opts: ListJournalOptions = {}): Promise<
 }
 
 export async function getJournalPost(slug: string, locale: Locale): Promise<JournalPost | null> {
-  // TODO(prisma): prisma.journalPost.findUnique({ where: { slug_locale: { slug, locale } } })
-  return allRows().find((p) => p.slug === slug && p.locale === locale) ?? null;
+  if (isDatabaseConfigured()) {
+    const row = await prisma.journalPost.findUnique({ where: { slug_locale: { slug, locale } } });
+    if (row) return fromDb(row as DbPost);
+  }
+  return seedRows().find((p) => p.slug === slug && p.locale === locale) ?? null;
 }
 
 export async function getJournalGroup(slug: string): Promise<JournalGroup | null> {
-  const rows = allRows().filter((p) => p.slug === slug);
+  const rows = (await allRows()).filter((p) => p.slug === slug);
   if (rows.length === 0) return null;
   return toGroups(rows)[0] ?? null;
 }
@@ -254,7 +309,9 @@ export function getNaverImportConfig(): NaverImportConfig {
     };
   }
 
-  // TODO(prisma): 마지막 동기화 시각은 IngestRun 에서 읽는다.
+  // 마지막 동기화 시각은 아직 읽을 수 없다. IngestRun 에는 어떤 수집인지 구분하는
+  // 칼럼이 없어서 인스타 수집 기록을 네이버 동기화 시각으로 내보내게 된다.
+  // 없는 값을 지어내느니 null 로 둔다 (스키마 갭 — 인계 보고 참고).
   return { configured: true, blogId, lastSyncedAt: null };
 }
 
@@ -287,31 +344,102 @@ export type JournalPostInput = {
   cover: string;
   planCode: string | null;
   isSample: boolean;
+  /** 어디서 온 글인지. 수집 경로만 채우고, 손으로 쓴 글은 비워 둔다. */
+  source?: JournalSource | null;
 };
 
+/**
+ * 저장. publishedAt 은 여기서 건드리지 않는다 —
+ * 본문을 고쳤다는 이유로 글이 공개되거나 내려가면 안 되기 때문이다.
+ * 공개 여부는 publishJournalPost / unpublishJournalPost 만 바꾼다.
+ */
 export async function upsertJournalPost(input: JournalPostInput): Promise<JournalPost> {
-  // TODO(prisma): prisma.journalPost.upsert({ where: { slug_locale: {...} }, ... })
-  throw new NotImplementedError('촬영후기 저장');
+  if (!isDatabaseConfigured()) throw new NotImplementedError('촬영후기 저장');
+
+  const data = {
+    category: input.category,
+    title: input.title,
+    body: input.body,
+    cover: input.cover,
+    planCode: input.planCode,
+    isSample: input.isSample,
+    ...(input.source !== undefined ? { source: input.source } : {}),
+  };
+
+  const row = await prisma.journalPost.upsert({
+    where: { slug_locale: { slug: input.slug, locale: input.locale } },
+    // 새 글은 임시저장으로 들어간다. 자동 게시는 없다.
+    create: { slug: input.slug, locale: input.locale, ...data },
+    update: data,
+  });
+
+  await logAdminAction('촬영후기 저장', `${input.slug}:${input.locale}`, {
+    category: input.category,
+    isSample: input.isSample,
+  });
+
+  return fromDb(row as DbPost);
 }
 
 /** 게시. 가져온 글은 자동 게시되지 않으므로 반드시 이 경로를 거친다. */
 export async function publishJournalPost(slug: string, locale: Locale): Promise<JournalPost> {
-  // TODO(prisma): publishedAt 을 now() 로 갱신
-  throw new NotImplementedError('촬영후기 게시');
+  if (!isDatabaseConfigured()) throw new NotImplementedError('촬영후기 게시');
+
+  const existing = await prisma.journalPost.findUnique({
+    where: { slug_locale: { slug, locale } },
+    select: { publishedAt: true },
+  });
+  if (!existing) throw new NotFoundError(`글을 찾을 수 없습니다 (${slug} / ${locale}).`);
+
+  const row = await prisma.journalPost.update({
+    where: { slug_locale: { slug, locale } },
+    // 이미 게시된 글을 다시 누르면 최초 게시 시각을 덮어쓰지 않는다.
+    data: { publishedAt: existing.publishedAt ?? new Date() },
+  });
+
+  await logAdminAction('촬영후기 게시', `${slug}:${locale}`);
+  return fromDb(row as DbPost);
 }
 
 export async function unpublishJournalPost(slug: string, locale: Locale): Promise<JournalPost> {
-  // TODO(prisma): publishedAt 을 null 로 되돌린다
-  throw new NotImplementedError('촬영후기 게시 취소');
+  if (!isDatabaseConfigured()) throw new NotImplementedError('촬영후기 게시 취소');
+
+  const exists = await prisma.journalPost.findUnique({
+    where: { slug_locale: { slug, locale } },
+    select: { id: true },
+  });
+  if (!exists) throw new NotFoundError(`글을 찾을 수 없습니다 (${slug} / ${locale}).`);
+
+  const row = await prisma.journalPost.update({
+    where: { slug_locale: { slug, locale } },
+    data: { publishedAt: null },
+  });
+
+  await logAdminAction('촬영후기 게시 취소', `${slug}:${locale}`);
+  return fromDb(row as DbPost);
 }
 
+/** 카테고리는 글 단위 속성이므로 같은 slug 의 모든 언어에 함께 적용한다. */
 export async function setJournalCategory(slug: string, category: JournalCategory): Promise<number> {
-  // TODO(prisma): 같은 slug 의 모든 로케일 레코드에 적용
-  throw new NotImplementedError('카테고리 지정');
+  if (!isDatabaseConfigured()) throw new NotImplementedError('카테고리 지정');
+
+  const { count } = await prisma.journalPost.updateMany({ where: { slug }, data: { category } });
+  if (count === 0) throw new NotFoundError(`글을 찾을 수 없습니다 (${slug}).`);
+
+  await logAdminAction('촬영후기 카테고리 지정', slug, { category, count });
+  return count;
 }
 
 /** 샘플 표시 해제 — 실제 원고로 교체했을 때만 쓴다. */
 export async function clearSampleFlag(slug: string): Promise<number> {
-  // TODO(prisma): isSample 을 false 로
-  throw new NotImplementedError('샘플 표시 해제');
+  if (!isDatabaseConfigured()) throw new NotImplementedError('샘플 표시 해제');
+
+  const { count } = await prisma.journalPost.updateMany({
+    where: { slug },
+    data: { isSample: false },
+  });
+  if (count === 0) throw new NotFoundError(`글을 찾을 수 없습니다 (${slug}).`);
+
+  await logAdminAction('촬영후기 샘플 표시 해제', slug, { count });
+  return count;
 }

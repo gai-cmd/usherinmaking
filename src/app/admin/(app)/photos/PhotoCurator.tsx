@@ -3,7 +3,13 @@
 import { useMemo, useState } from 'react';
 import { Badge, SuggestionBadge, WriteResultNotice, formatDate, formatDimensions } from '@/components/admin';
 import { LOCALES, type Locale } from '@/lib/i18n';
-import { missingAltLocales, type Localized, type Photo, type PhotoStatus, type TaxonomyOption } from '@/server/photos';
+import {
+  missingAltLocales,
+  type Localized,
+  type Photo,
+  type PhotoStatus,
+  type TaxonomyOption,
+} from '@/lib/photo-types';
 import s from './PhotoCurator.module.css';
 
 const LOCALE_LABEL: Record<Locale, string> = { ja: 'JA', en: 'EN', ko: 'KO' };

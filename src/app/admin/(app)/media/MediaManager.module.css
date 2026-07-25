@@ -1,0 +1,360 @@
+/* 미디어 라이브러리 + 슬롯 배선. 좌: 자산, 우: 자리. */
+
+.wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--a-pad);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .wrap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.col {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+}
+
+.h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--a-muted);
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+  color: var(--a-muted-2);
+}
+
+.lead {
+  margin: 0;
+  font-size: 12px;
+  color: var(--a-muted);
+}
+
+.blocked {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--a-danger);
+  background: var(--a-danger-soft);
+  color: var(--a-danger);
+  font-size: 12px;
+}
+
+.empty {
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--a-line-2);
+  background: var(--a-panel);
+  color: var(--a-muted-2);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ---------------- 자산 그리드 ---------------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cell {
+  position: relative;
+  border: 1px solid var(--a-line-2);
+  background: var(--a-panel);
+}
+
+.cellOn {
+  border-color: var(--a-accent);
+  outline: 1px solid var(--a-accent);
+}
+
+.cellPick {
+  display: grid;
+  gap: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--placeholder);
+}
+
+.meta {
+  display: block;
+  padding: 5px 7px;
+  font-size: 10px;
+  color: var(--a-muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.flags {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  display: flex;
+  gap: 3px;
+}
+
+.del {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  min-height: 24px;
+  padding: 2px 7px;
+  border: 1px solid var(--a-line);
+  background: var(--a-panel);
+  color: var(--a-danger);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.del:hover:not(:disabled) {
+  background: var(--a-danger);
+  color: #fff;
+  border-color: var(--a-danger);
+}
+
+.del:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------------- 슬롯 목록 ---------------- */
+
+.group {
+  display: grid;
+  gap: 6px;
+}
+
+.groupName {
+  margin: 6px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--a-muted-2);
+}
+
+.slots {
+  display: grid;
+  gap: 1px;
+  background: var(--a-line-2);
+  border: 1px solid var(--a-line-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.slot {
+  background: var(--a-panel);
+}
+
+.slotHead {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+}
+
+.thumb {
+  display: block;
+  width: 54px;
+  aspect-ratio: 1;
+  background: var(--placeholder);
+  overflow: hidden;
+}
+
+.thumbImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbEmpty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 10px;
+  color: var(--a-muted-2);
+}
+
+.slotText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.slotLabel {
+  font-size: 12.5px;
+  color: var(--a-ink);
+}
+
+.slotKey {
+  font-size: 10.5px;
+  color: var(--a-muted-2);
+  font-family: var(--ff-num, inherit);
+}
+
+.slotHint {
+  font-size: 11px;
+  color: var(--a-muted);
+}
+
+.slotState {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.slotWhen {
+  font-size: 10.5px;
+  color: var(--a-muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.slotActions {
+  display: flex;
+  gap: 5px;
+  flex: none;
+}
+
+.act,
+.actGhost,
+.actPrimary {
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid var(--a-line);
+  background: var(--a-panel);
+  color: var(--a-ink);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.act:hover:not(:disabled) {
+  background: var(--a-ok-soft);
+}
+
+.actGhost {
+  color: var(--a-muted);
+}
+
+.actPrimary {
+  background: var(--dark);
+  border-color: var(--dark);
+  color: #fff;
+}
+
+.act:disabled,
+.actGhost:disabled,
+.actPrimary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------------- alt 입력 ---------------- */
+
+.binder {
+  display: grid;
+  gap: 10px;
+  padding: 12px 10px 14px;
+  border-top: 1px dashed var(--a-line);
+  background: var(--a-bg);
+}
+
+.binderPreview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.binderImg {
+  display: block;
+  width: 92px;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--placeholder);
+}
+
+.binderMeta {
+  font-size: 11px;
+  color: var(--a-muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.altFields {
+  display: grid;
+  gap: 6px;
+}
+
+.altField {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.altLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--a-muted);
+}
+
+.altInput {
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid var(--a-field);
+  background: var(--a-panel);
+  color: var(--a-ink);
+  font: inherit;
+  font-size: 12px;
+}
+
+.altInput:focus-visible {
+  outline: 1px solid var(--a-accent);
+  border-color: var(--a-accent);
+}
+
+.binderFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.binderNote {
+  font-size: 11px;
+  color: var(--a-muted-2);
+}

@@ -113,7 +113,7 @@ function defaultChannels(): Record<Locale, ChannelSetting[]> {
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
-  // TODO(prisma): Settings 모델 추가 후 DB 에서 읽는다.
+  // Settings 모델이 없어 DB 우선 경로가 없다. 환경변수 + src/content/site.ts 가 원본이다.
   const lat = Number(process.env.STUDIO_LAT);
   const lng = Number(process.env.STUDIO_LNG);
 
@@ -242,9 +242,14 @@ export type SiteSettingsInput = {
   naverBlogUrl?: string | null;
 };
 
-export async function updateSiteSettings(input: SiteSettingsInput): Promise<SiteSettings> {
-  // TODO(prisma): Settings 모델 추가 후 갱신
-  throw new NotImplementedError('사이트 정보 저장');
+/*
+ * 아래 두 쓰기 경로는 DB 연결 여부와 무관하게 막혀 있다.
+ * schema.prisma 에 Settings 모델이 없어서 저장할 곳이 없다.
+ * 지금 값들은 배포 환경변수로만 바뀐다 — 화면이 그렇게 안내해야 한다.
+ */
+
+export async function updateSiteSettings(_input: SiteSettingsInput): Promise<SiteSettings> {
+  throw new NotImplementedError('사이트 정보 저장 (schema.prisma 에 Settings 모델이 없습니다)');
 }
 
 export type ChannelUpdateInput = {
@@ -252,7 +257,8 @@ export type ChannelUpdateInput = {
   channels: { id: ChannelId; handle: string | null; url: string | null; order: number }[];
 };
 
-export async function updateChannels(input: ChannelUpdateInput): Promise<ChannelSetting[]> {
-  // TODO(prisma): 저장 전에 validateChannelOrder 의 level:'rule' 경고를 사용자에게 확인시킨다.
-  throw new NotImplementedError('상담 채널 저장');
+export async function updateChannels(_input: ChannelUpdateInput): Promise<ChannelSetting[]> {
+  // 순서 규칙 검사(validateChannelOrder)는 라우트에서 이미 돌지만,
+  // 통과하더라도 저장할 테이블이 없다.
+  throw new NotImplementedError('상담 채널 저장 (schema.prisma 에 Settings 모델이 없습니다)');
 }

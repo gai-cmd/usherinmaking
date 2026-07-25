@@ -381,17 +381,18 @@ export const CHANNELS: Record<Locale, Channel[]> = {
       primary: false,
     },
   ],
+  // 영어권은 Instagram이 1순위다. 이메일 주소는 어느 언어에서도 노출하지 않는다.
   en: [
+    {
+      id: 'instagram',
+      label: { ja: 'Instagram', en: 'Instagram', ko: 'Instagram' },
+      note: { ja: '', en: 'DM @usherinmaking — usually the quickest way to reach us.', ko: '' },
+      primary: true,
+    },
     {
       id: 'form',
       label: { ja: 'お問い合わせフォーム', en: 'Contact form', ko: '문의 폼' },
       note: { ja: '', en: 'We reply in the order messages arrive.', ko: '' },
-      primary: true,
-    },
-    {
-      id: 'instagram',
-      label: { ja: 'Instagram', en: 'Instagram', ko: 'Instagram' },
-      note: { ja: '', en: 'DM @usherinmaking', ko: '' },
       primary: false,
     },
   ],
@@ -405,8 +406,10 @@ export const STUDIO_INFO = {
     en: 'Parking for two cars',
     ko: '주차 2대',
   } satisfies L10n,
-  // 주소·공항 소요시간은 아직 받지 못했다.
+  // 주소는 일본어 표기와 영문 표기 2종이 필요하다(하나를 기계번역하면 안 된다).
+  // 구글맵 단축링크는 받았으나 크롤링이 막혀 좌표를 못 뽑았다 — 관리자 설정에서 직접 입력받는다.
   address: TBC,
+  /** 나하공항 기준 소요시간. 근거가 없어 지어내지 않는다. */
   fromAirport: TBC,
   languages: {
     ja: '日本語 ・ 한국어 ・ English',
