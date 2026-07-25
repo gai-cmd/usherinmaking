@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { AdminButton, Badge, NotWired, PageHeader, Panel } from '@/components/admin';
 import { LOCALES, LOCALE_LABEL, type Locale } from '@/lib/i18n';
 import {
@@ -10,6 +11,7 @@ import {
   type ChannelSetting,
 } from '@/server/settings';
 import s from './settings.module.css';
+import { checkAdminPageAccess } from '@/server/auth';
 
 export const metadata = { title: '설정 · 관리자' };
 
@@ -20,6 +22,12 @@ function orTbc(value: string | null) {
 }
 
 export default async function AdminSettingsPage() {
+  // 레이아웃 가드만으로는 이 컴포넌트의 실행을 막지 못한다.
+  // App Router에서 자식 세그먼트는 부모의 조건과 무관하게 렌더되고, 그 결과가 같은 응답의
+  // RSC 페이로드에 실려 나간다. 그래서 데이터를 읽기 전에 여기서 한 번 더 끊는다.
+  const access = await checkAdminPageAccess();
+  if (!access.allowed) notFound();
+
   const [settings, outstanding] = await Promise.all([getSiteSettings(), listOutstandingItems()]);
 
   const ordered = (locale: Locale): ChannelSetting[] =>
