@@ -196,7 +196,11 @@ Vercel 기준입니다. `vercel.json` 이 인스타 수집 크론(6시간 주기
 설계와 이관 지점은 있으나 실제 연결은 되어 있지 않습니다. 코드에 `TODO(prisma)` /
 `TODO(pipeline)` 로 표시해 두었고, **거짓 성공을 반환하지 않습니다.**
 
-- 데이터베이스 — 스키마는 있고 Prisma 클라이언트는 아직 설치하지 않았습니다
+- 데이터베이스 — 스키마(`prisma/schema.prisma`)는 있고 `prisma` / `@prisma/client` 패키지도
+  설치돼 있습니다. 다만 아직 어디서도 import 하지 않습니다 — `DATABASE_URL` 을 채우고
+  `npx prisma generate` 후 `src/server/*` 의 `TODO(prisma)` 지점을 바꾸면 됩니다
+- `sharp`(AVIF/WebP 인코딩)와 `@vercel/blob`(오브젝트 스토리지)도 같은 상태입니다 —
+  설치만 돼 있고 `src/lib/image-pipeline.ts` 의 seam이 아직 호출하지 않습니다
 - 오브젝트 스토리지 업로드 · AVIF/WebP 실제 인코딩
 - Instagram Graph API 실호출 · AI 분류 실호출 (자격 증명 없음)
 - 관리자 멤버 명부의 DB화 — 로그인은 구글 SSO로 연결되어 있고, 누가 관리자인지는 환경변수 허용 목록이 정합니다
