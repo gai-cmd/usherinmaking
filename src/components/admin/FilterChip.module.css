@@ -1,0 +1,29 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--a-muted);
+  border: 1px solid var(--a-line);
+  transition: border-color var(--t), color var(--t);
+}
+
+.chip:hover {
+  border-color: var(--a-ink);
+  color: var(--a-ink);
+}
+
+.active {
+  background: var(--a-sidebar);
+  border-color: var(--a-sidebar);
+  color: var(--a-panel);
+}
+
+.count {
+  font-family: var(--ff-num);
+  font-size: 11px;
+  font-variant-numeric: lining-nums tabular-nums;
+  opacity: 0.8;
+}

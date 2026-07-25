@@ -1,0 +1,253 @@
+// usherinmaking — 데이터 모델
+//
+// 프론트는 우선 src/content/*.ts 하드코딩으로 동작하고, 이 스키마가 이관 목적지다.
+// content 모듈의 필드 이름을 여기에 맞춰 두었으므로 이관은 드롭인이 된다.
+//
+// 다국어 필드는 Json { ja, en, ko } 로 둔다. 언어별로 독립된 본문을 운영하기 때문에
+// 별도 번역 테이블이 아니라 레코드 하나가 3개 언어를 함께 들고 있는 편이 관리자 화면과 맞는다.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/* ============================ 사진 ============================ */
+
+enum PhotoStatus {
+  UNSORTED // 수집만 된 상태. 프론트에 노출되지 않는다.
+  PUBLISHED // 관리자가 전시로 선택한 것만 노출된다.
+  ARCHIVED // 서버에는 남기고 비공개
+}
+
+model Photo {
+  id String @id @default(cuid())
+
+  // 인스타 원본 id. 수동 업로드는 null.
+  igMediaId String? @unique
+
+  originalUrl String // 자사 스토리지 원본
+  variants    Json // { avif: { 400, 800, 1600 }, webp: {...} }
+  width       Int
+  height      Int
+
+  caption String?
+  takenAt DateTime
+
+  status PhotoStatus @default(UNSORTED)
+
+  // 장변 2000px 미만 등. 관리자 화면에서 경고 배지 + 원본 교체 유도.
+  lowRes Boolean @default(false)
+
+  alt   Json // { ja, en, ko } — 3개 언어 모두 필수
+  story Json? // 작품 상세 1문단 { ja, en, ko }
+
+  // AI 배치가 제안한 분류. 확정은 반드시 관리자가 한다.
+  aiSuggestion Json? // [{ taxonomyId, termId, score }]
+
+  isCover Boolean @default(false)
+
+  terms PhotoTerm[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, takenAt])
+}
+
+/* ======================= 분류 (관리자가 축을 늘릴 수 있다) ======================= */
+
+model Taxonomy {
+  id    String @id @default(cuid())
+  key   String @unique // place / shootType / set / season ...
+  label Json // { ja, en, ko }
+  order Int    @default(0)
+
+  terms Term[]
+}
+
+model Term {
+  id String @id @default(cuid())
+
+  taxonomyId String
+  taxonomy   Taxonomy @relation(fields: [taxonomyId], references: [id], onDelete: Cascade)
+
+  slug  String // URL 세그먼트. 갤러리 필터가 경로이므로 이 값이 곧 주소가 된다.
+  label Json // { ja, en, ko }
+  order Int    @default(0)
+
+  // 세트는 STUDIO 하위처럼 계층을 가진다.
+  parentId String?
+  parent   Term?   @relation("TermTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Term[]  @relation("TermTree")
+
+  photos PhotoTerm[]
+
+  @@unique([taxonomyId, slug])
+}
+
+model PhotoTerm {
+  photoId String
+  termId  String
+
+  photo Photo @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  term  Term  @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  @@id([photoId, termId])
+  @@index([termId])
+}
+
+/* ============================ 플랜 · 옵션 ============================ */
+
+enum Scope {
+  STUDIO
+  LOCATION
+  ANNIVERSARY
+  HAIRMAKE
+}
+
+model Plan {
+  id    String @id @default(cuid())
+  code  String @unique // studio-01, location-simple ...
+  scope Scope
+
+  title Json // { ja, en, ko }
+
+  listPrice Int? // 정가 (모니터 가격 표기용)
+  price     Int
+
+  // 税込 표기는 로케이션·기념사진에만. 스튜디오 플랜은 근거가 없어 false.
+  taxIncluded Boolean @default(false)
+
+  duration Json // { ja, en, ko }
+  cuts     Int?
+  includes Json // { ja: string[], en: string[], ko: string[] }
+
+  order Int @default(0)
+
+  options PlanOption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Option {
+  id    String @id @default(cuid())
+  label Json
+  price Json // { amount, suffix } 또는 범위
+  note  Json
+  order Int    @default(0)
+
+  plans PlanOption[]
+}
+
+model PlanOption {
+  planId   String
+  optionId String
+
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  option Option @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@id([planId, optionId])
+}
+
+/* ============================ 문의 ============================ */
+
+enum InquiryStatus {
+  NEW
+  WAITING
+  DONE
+  HOLD
+  SPAM
+}
+
+/// DB가 원본이다. 메일·LINE 알림은 사본일 뿐이므로 알림 실패가 문의 유실이 되면 안 된다.
+model Inquiry {
+  id String @id @default(cuid())
+
+  name   String
+  email  String
+  locale String // ja | en | ko
+
+  shootType String
+  dates     String?
+  people    String?
+  message   String
+
+  status InquiryStatus @default(NEW)
+  memo   String?
+
+  // 문의 문장을 그대로 FAQ로 승격했을 때의 연결
+  promotedFaqId String?
+  promotedFaq   Faq?    @relation(fields: [promotedFaqId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  repliedAt DateTime?
+
+  @@index([status, createdAt])
+}
+
+/// FAQ는 실제 문의 문장 그대로 쓴다. 관리자가 INBOX에서 승격한다.
+model Faq {
+  id       String  @id @default(cuid())
+  question Json // { ja, en, ko }
+  answer   Json
+  order    Int     @default(0)
+  page     String? // 어느 페이지에 노출할지 (home / studio / contact ...)
+
+  inquiries Inquiry[]
+}
+
+/* ============================ 촬영후기 ============================ */
+
+model JournalPost {
+  id String @id @default(cuid())
+
+  slug   String
+  locale String // 언어별 독립 본문이므로 slug + locale 조합이 유일하다
+
+  category String
+  title    String
+  body     String
+  cover    String
+
+  planCode String? // 글 하단 CTA가 가리킬 플랜
+  source   String? // naver-blog | manual
+
+  // 시안의 글은 전부 샘플이다. 실제 원고로 교체되기 전까지 배지로 표시한다.
+  isSample Boolean @default(false)
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([slug, locale])
+  @@index([locale, publishedAt])
+}
+
+/* ============================ 운영 ============================ */
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  actor     String
+  action    String
+  target    String?
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/// 인스타 수집 크론의 실행 기록. 중복 수집과 누락을 판별하려면 실행 자체가 남아야 한다.
+model IngestRun {
+  id         String    @id @default(cuid())
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  fetched    Int       @default(0)
+  created    Int       @default(0)
+  failed     Int       @default(0)
+  error      String?
+}

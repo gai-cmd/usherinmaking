@@ -1,0 +1,56 @@
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 17px 19px;
+  background: var(--a-panel);
+  border: 1px solid var(--a-line);
+  min-width: 0;
+}
+
+.link {
+  transition: border-color var(--t);
+}
+
+.link:hover {
+  border-color: var(--a-ink);
+}
+
+.label {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  color: var(--a-muted-2);
+  text-transform: uppercase;
+}
+
+.value {
+  font-family: var(--ff-display);
+  font-weight: 300;
+  font-size: 34px;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--a-ink);
+}
+
+/* 셀 수 없는 지표는 숫자 자리에 숫자를 두지 않는다 */
+.notWired {
+  font-family: var(--ff-latin);
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  color: var(--a-muted-2);
+}
+
+.hintMuted {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--a-muted-2);
+}
+
+.hintAccent {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--a-accent);
+}

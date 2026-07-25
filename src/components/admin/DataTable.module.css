@@ -1,0 +1,44 @@
+/* 좁은 화면에서 표가 페이지를 밀지 않도록 컨테이너 안에서만 스크롤한다 */
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.th {
+  padding: 9px 10px;
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  color: var(--a-muted-2);
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--a-line);
+}
+
+.tr {
+  border-bottom: 1px solid var(--a-line-2);
+}
+
+.tr:last-child {
+  border-bottom: 0;
+}
+
+.td {
+  padding: 11px 10px;
+  line-height: 1.7;
+  color: var(--a-body);
+  vertical-align: top;
+}
+
+.empty {
+  padding: 22px 4px;
+  font-size: 12px;
+  color: var(--a-muted-2);
+}

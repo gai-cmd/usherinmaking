@@ -1,0 +1,181 @@
+/* JOURNAL 목록 — 시안 5a / en-2e / ko-sub-2c, 모바일 2h */
+
+.head {
+  padding: 56px 0 40px;
+  text-align: center;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.title {
+  margin-top: 14px;
+}
+
+/* 샘플 원고 배지 — 점선 브라스 테두리 */
+.sampleBadge {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 7px 14px;
+  border: 1px dashed #c9a86a;
+  color: var(--brass);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.lead {
+  margin: 18px auto 0;
+  max-width: 66ch;
+  font-size: 13.5px;
+  line-height: 2.1;
+  color: var(--muted);
+}
+
+.naverNote {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--brass);
+}
+
+/* ---------- 대표 글 ---------- */
+
+.featuredSection {
+  padding: 52px 0 40px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.featured {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 44px;
+  align-items: center;
+}
+
+.featuredImage {
+  position: relative;
+  display: block;
+  height: 420px;
+  overflow: hidden;
+  background: var(--placeholder);
+}
+
+.featuredImage img {
+  object-fit: cover;
+  transition: opacity var(--t);
+}
+
+.featured:hover .featuredImage img {
+  opacity: 0.88;
+}
+
+.featuredBody {
+  display: block;
+}
+
+.featuredMeta {
+  display: block;
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.3em;
+  color: var(--brass);
+}
+
+.featuredDate {
+  letter-spacing: 0.16em;
+}
+
+.featuredTitle {
+  display: block;
+  margin-top: 14px;
+  font-family: var(--ff-heading);
+  font-size: 34px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.featured:hover .featuredTitle {
+  color: var(--brass);
+}
+
+.featuredExcerpt {
+  display: block;
+  margin-top: 16px;
+  font-size: 13px;
+  line-height: 2.1;
+  color: var(--text-body);
+}
+
+.readMore {
+  display: inline-block;
+  margin-top: 24px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--text);
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.24em;
+}
+
+:global([lang^='ko']) .readMore {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+/* ---------- 목록 ---------- */
+
+.listSection {
+  padding-bottom: 60px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* ---------- 모바일 ---------- */
+
+@media (max-width: 1023px) {
+  .featured {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .featuredImage {
+    height: 320px;
+  }
+
+  .featuredTitle {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 767px) {
+  .head {
+    padding: 30px 0 22px;
+  }
+
+  .lead {
+    font-size: 12px;
+    line-height: 2;
+  }
+
+  .featuredSection {
+    padding: 22px 0 26px;
+  }
+
+  .featuredImage {
+    height: 230px;
+  }
+
+  .featuredTitle {
+    font-size: 22px;
+    line-height: 1.6;
+  }
+
+  .featuredExcerpt {
+    margin-top: 8px;
+    font-size: 12.5px;
+    line-height: 2;
+  }
+
+  .listSection {
+    padding-bottom: 26px;
+  }
+}

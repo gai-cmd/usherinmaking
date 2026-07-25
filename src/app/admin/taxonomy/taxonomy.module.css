@@ -1,0 +1,351 @@
+/* 카테고리 관리 — 좌측 축·용어, 우측 선택 용어 상세. */
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: var(--a-gap);
+  padding: 10px 14px;
+  background: var(--a-panel);
+  border: 1px solid var(--a-line);
+  font-size: 12px;
+  color: var(--a-muted);
+}
+
+.summaryWarn {
+  color: var(--a-danger);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--a-gap);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a-gap);
+  min-width: 0;
+}
+
+/* ---------- 축 ---------- */
+
+.axes {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.axis {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--a-line-2);
+}
+
+.axis:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.axisHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.axisLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--a-ink);
+}
+
+.axisKey {
+  margin-left: 5px;
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.axisMeta,
+.axisGroups {
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.axisGroups {
+  margin: 4px 0 0;
+}
+
+.terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.term {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--a-line);
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--a-body);
+  transition: border-color var(--t);
+}
+
+.term:hover {
+  border-color: var(--a-ink);
+}
+
+.termOn {
+  border-color: var(--a-ink);
+  background: var(--a-ok-soft);
+}
+
+.termLabel {
+  white-space: nowrap;
+}
+
+.termSlug {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+/* ---------- 선택 용어 ---------- */
+
+.selHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.selTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.labelList {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  font-size: 12px;
+}
+
+.labelList li {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--a-line-2);
+}
+
+.labelList li:last-child {
+  border-bottom: 0;
+}
+
+.labelLocale {
+  flex: none;
+  width: 28px;
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.labelMissing {
+  color: var(--a-danger);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.urls {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--a-line);
+}
+
+.urlList {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  font-size: 11px;
+  color: var(--a-muted);
+}
+
+.urlList li {
+  padding: 3px 0;
+}
+
+.urlList code,
+.breakingList code {
+  font-family: var(--ff-latin);
+}
+
+.fieldLabel {
+  margin: 0;
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+/* ---------- 편집 ---------- */
+
+.editor {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--a-line);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--a-field);
+  background: var(--a-panel);
+  color: var(--a-body);
+  padding: 8px 10px;
+  font-family: var(--ff-latin);
+  font-size: 13px;
+}
+
+.input:focus {
+  outline: 2px solid var(--a-accent);
+  outline-offset: -1px;
+}
+
+.inputBad {
+  border-color: var(--a-danger);
+}
+
+.slugError {
+  margin: 7px 0 0;
+  font-size: 12px;
+  color: var(--a-danger);
+}
+
+.slugWarn {
+  margin: 7px 0 0;
+  padding: 8px 10px;
+  border: 1px dashed var(--a-accent);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--a-muted);
+}
+
+.slugWarn code {
+  font-family: var(--ff-latin);
+  color: var(--a-ink);
+}
+
+.confirmBox {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--a-danger);
+  background: var(--a-danger-soft);
+}
+
+.confirmMsg {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--a-danger);
+}
+
+.breakingList {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 11px;
+  color: var(--a-muted);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.breakingMore {
+  color: var(--a-muted-2);
+}
+
+/* ---------- 번역 누락 ---------- */
+
+.missingList {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  font-size: 12px;
+}
+
+.missingList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--a-line-2);
+}
+
+.missingList li:last-child {
+  border-bottom: 0;
+}
+
+.missingList code {
+  font-family: var(--ff-latin);
+  border-bottom: 1px solid transparent;
+}
+
+.missingList a:hover code {
+  border-bottom-color: var(--a-ink);
+}
+
+.missingLocales {
+  color: var(--a-danger);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* ---------- 공통 ---------- */
+
+.num {
+  font-family: var(--ff-num);
+}
+
+.note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--a-muted-2);
+}
+
+.rowActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* 카테고리 관리 ↔ SEO 점검 상호 이동.
+   사이드바에는 두 항목으로 나뉘어 있지만 시안 1e 기준 하나의 작업 흐름이라 서로 오갈 수 있게 둔다. */
+.crossLink {
+  border: 1px solid var(--a-line);
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--a-muted);
+  white-space: nowrap;
+  transition: border-color var(--t);
+}
+
+.crossLink:hover {
+  border-color: var(--a-ink);
+}

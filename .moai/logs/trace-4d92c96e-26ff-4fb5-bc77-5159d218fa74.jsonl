@@ -1,0 +1,16 @@
+{"ts":"2026-07-26T01:39:18.957414625+09:00","event":"SessionStart","handler":"*hook.sessionStartHandler","duration_ms":7,"session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T01:39:19.325560042+09:00","event":"InstructionsLoaded","handler":"*hook.instructionsLoadedHandler","duration_ms":0,"session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T01:39:18.9650825+09:00","event":"SessionStart","handler":"*hook.autoUpdateHandler","duration_ms":1857,"session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T01:42:23.333486084+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Bash","duration_ms":0,"decision":"allow","session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T01:43:08.390696291+09:00","event":"InstructionsLoaded","handler":"*hook.instructionsLoadedHandler","duration_ms":0,"session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T01:44:23.134609459+09:00","event":"CwdChanged","handler":"*hook.cwdChangedHandler","duration_ms":0,"session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T01:47:54.537895417+09:00","event":"PostToolUse","handler":"*hook.postToolHandler","tool":"Write","duration_ms":0,"session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T02:02:00.236470625+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Write","duration_ms":0,"decision":"allow","session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T02:03:37.87860575+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Write","duration_ms":0,"decision":"allow","session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T02:07:16.966732708+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Write","duration_ms":0,"decision":"allow","session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T02:07:53.476333542+09:00","event":"PostToolUse","handler":"*hook.postToolHandler","tool":"Edit","duration_ms":0,"session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T02:09:53.135467583+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Edit","duration_ms":0,"decision":"allow","session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T02:12:25.399619292+09:00","event":"PostToolUse","handler":"*hook.postToolHandler","tool":"Edit","duration_ms":0,"session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T02:15:13.591012625+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Write","duration_ms":0,"decision":"allow","session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T02:16:25.449581625+09:00","event":"SubagentStop","handler":"*hook.subagentStopHandler","duration_ms":0,"session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}
+{"ts":"2026-07-26T02:24:46.833762583+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Bash","duration_ms":96,"decision":"deny","reason":"quality gate failed: npm test\n\nnpm error Missing script: \"test\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: /Users/gai/.npm/_logs/2026-07-25T17_24_46_898Z-debug-0.log","session_id":"4d92c96e-26ff-4fb5-bc77-5159d218fa74"}

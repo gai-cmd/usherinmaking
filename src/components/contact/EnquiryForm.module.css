@@ -1,0 +1,166 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.triple {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+
+.field {
+  display: block;
+}
+
+.label {
+  display: block;
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  color: var(--muted-2);
+}
+
+/* 입력은 밑줄 한 줄. 상자를 그리지 않는다. */
+.line {
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid #cfc7b7;
+  border-radius: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  transition: border-color var(--t);
+}
+
+.line:focus {
+  border-bottom-color: var(--text);
+}
+
+.line::placeholder {
+  color: #a9a196;
+}
+
+select.line {
+  appearance: none;
+  min-height: 44px;
+}
+
+.area {
+  width: 100%;
+  min-height: 120px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #cfc7b7;
+  border-radius: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text);
+  resize: vertical;
+  transition: border-color var(--t);
+}
+
+.area:focus {
+  border-color: var(--text);
+}
+
+.area::placeholder {
+  color: #a9a196;
+}
+
+.fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 13px 20px;
+  border: 1px solid #cfc7b7;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color var(--t), background var(--t), color var(--t);
+}
+
+.chip:hover {
+  border-color: var(--text);
+}
+
+.chip[data-selected] {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.chip:focus-within {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+.privacy {
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.submitRow :global(.u-btn-dark) {
+  padding: 17px 44px;
+}
+
+.submitRow :global(.u-btn-dark):disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.status:empty {
+  display: none;
+}
+
+.status {
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.status[data-tone='invalid'],
+.status[data-tone='failed'] {
+  color: var(--brass);
+}
+
+@media (max-width: 767px) {
+  .pair,
+  .triple {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .submitRow :global(.u-btn-dark) {
+    display: flex;
+    width: 100%;
+  }
+}

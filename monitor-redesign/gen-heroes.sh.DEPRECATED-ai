@@ -1,0 +1,27 @@
+#!/bin/zsh
+# Imagen 4 히어로 3장 생성 (daerachoen 유료 키 사용 — 오너 승인 2026-07-11 usherinmaking 모니터 리디자인 건)
+# 사전 조건: ~/personal/works/daerachoen/.env.local 의 GEMINI_API_KEY 재기입
+set -e
+DIR="$(cd "$(dirname "$0")" && pwd)"
+mkdir -p "$DIR/heroes"
+cd ~/personal/works/daerachoen
+
+SUFFIX=", photorealistic editorial photography, warm dusty pink and cream color grading, soft natural window light, film-like grain, elegant minimal luxury mood, shallow depth of field, absolutely no text, no letters, no numbers, no logos, no watermark"
+
+npx tsx scripts/imagen.ts --aspect 4:3 --count 1 \
+  --prompt "Korean style studio wedding photo: a bride in a minimal elegant white dress holding a small white and blush bouquet, groom in a black suit beside her, both seen from behind in a bright airy photo studio with cream walls$SUFFIX" \
+  --out "$DIR/heroes" --name hero-wedding-raw
+
+npx tsx scripts/imagen.ts --aspect 4:3 --count 1 \
+  --prompt "Serene maternity portrait: an expecting mother in a flowing white chiffon dress standing beside a large bright window, gentle back-profile silhouette, hands resting on her belly, sheer curtains glowing with soft light$SUFFIX" \
+  --out "$DIR/heroes" --name hero-maternity-raw
+
+npx tsx scripts/imagen.ts --aspect 4:3 --count 1 \
+  --prompt "Warm family memorial photo moment: parents and a young child holding hands seen from behind, walking in a bright minimal studio with cream and dusty pink backdrop, gentle laughter mood$SUFFIX" \
+  --out "$DIR/heroes" --name hero-memorial-raw
+
+cd "$DIR/heroes"
+mv hero-wedding-raw-1.png hero-wedding.png
+mv hero-maternity-raw-1.png hero-maternity.png
+mv hero-memorial-raw-1.png hero-memorial.png
+echo "DONE: $DIR/heroes"

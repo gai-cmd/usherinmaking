@@ -1,0 +1,165 @@
+/* JOURNAL 목록 그리드 — 시안 5a / en-2e / ko-sub-2c, 모바일 2h */
+
+.filter {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px var(--gutter);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.chip {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  color: var(--muted-2);
+  padding-bottom: 5px;
+  border-bottom: 1px solid transparent;
+  transition: color var(--t), border-color var(--t);
+}
+
+.chip:hover {
+  color: var(--text);
+}
+
+.chip[data-active] {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+/* 한국어·일본어 칩은 라틴 트래킹이 과해서 본문 서체로 되돌린다 */
+:global([lang^='ko']) .chip,
+:global([lang^='ja']) .chip {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+}
+
+.card {
+  display: block;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  height: 260px;
+  overflow: hidden;
+  background: var(--placeholder);
+}
+
+.thumb img {
+  object-fit: cover;
+  transition: opacity var(--t);
+}
+
+.card:hover .thumb img {
+  opacity: 0.88;
+}
+
+.cardBody {
+  display: block;
+}
+
+.meta {
+  display: block;
+  margin-top: 16px;
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.3em;
+  color: var(--brass);
+}
+
+.date {
+  letter-spacing: 0.16em;
+}
+
+.cardTitle {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--ff-heading);
+  font-size: 20px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.card:hover .cardTitle {
+  color: var(--brass);
+}
+
+.excerpt {
+  display: block;
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 2;
+  color: var(--muted);
+}
+
+/* ---------- 모바일: 좌측 120px 썸네일 가로 카드 ---------- */
+
+@media (max-width: 1023px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .filter {
+    justify-content: flex-start;
+    gap: 7px;
+    padding: 14px var(--gutter);
+    overflow-x: auto;
+  }
+
+  .chip {
+    flex: none;
+    white-space: nowrap;
+    padding: 12px 16px;
+    border: 1px solid var(--hairline);
+  }
+
+  .chip[data-active] {
+    border-color: var(--text);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+
+  .card {
+    display: flex;
+    gap: 14px;
+  }
+
+  .thumb {
+    width: 120px;
+    height: 120px;
+    flex: none;
+  }
+
+  .meta {
+    margin-top: 0;
+    font-size: 9px;
+    letter-spacing: 0.28em;
+  }
+
+  .cardTitle {
+    margin-top: 6px;
+    font-size: 16px;
+  }
+
+  .excerpt {
+    margin-top: 4px;
+    font-size: 11.5px;
+    line-height: 1.9;
+  }
+}

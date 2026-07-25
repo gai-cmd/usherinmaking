@@ -1,0 +1,281 @@
+/* SEO / AEO 점검 — 요약 + 리드문 편집 + 누락 목록. */
+
+/* ---------- 점검 요약 ---------- */
+
+.checkList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+}
+
+.checkList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--a-line-2);
+  color: var(--a-body);
+}
+
+.checkList li:last-child {
+  border-bottom: 0;
+}
+
+.ok {
+  color: var(--a-accent);
+  white-space: nowrap;
+}
+
+.bad {
+  color: var(--a-danger);
+  white-space: nowrap;
+}
+
+/** 근거가 없어 판정하지 않는 항목. 통과로 보이면 안 된다. */
+.unknown {
+  color: var(--a-muted-2);
+  font-size: 11px;
+  text-align: right;
+}
+
+/* ---------- 레이아웃 ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--a-gap);
+  align-items: start;
+  margin-top: var(--a-gap);
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a-gap);
+  min-width: 0;
+}
+
+/* ---------- 탭 ---------- */
+
+.pageTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.localeTabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.miniTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--a-line);
+  padding: 4px 11px;
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--a-muted);
+}
+
+.miniTabOn {
+  border-color: var(--a-ink);
+  color: var(--a-ink);
+}
+
+/** 비어 있는 언어 표시 */
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--a-danger);
+}
+
+.urlLine {
+  margin: 12px 0 0;
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+/* ---------- 리드문 편집 ---------- */
+
+.leadEditor {
+  margin-top: 10px;
+}
+
+.textarea {
+  width: 100%;
+  border: 1px solid var(--a-field);
+  background: var(--a-panel);
+  color: var(--a-body);
+  padding: 11px 12px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+.textarea:focus {
+  outline: 2px solid var(--a-accent);
+  outline-offset: -1px;
+}
+
+/** 빈 리드문은 조용히 넘어가면 안 된다. */
+.textareaEmpty {
+  border-color: var(--a-danger);
+  background: var(--a-danger-soft);
+}
+
+.leadFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.leadHint {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--a-muted-2);
+}
+
+/* ---------- 누락 목록 ---------- */
+
+.panelAside {
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.missList,
+.altList,
+.faqList {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  font-size: 12px;
+}
+
+.missList li,
+.altList li,
+.faqList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--a-line-2);
+}
+
+.missList li:last-child,
+.altList li:last-child,
+.faqList li:last-child {
+  border-bottom: 0;
+}
+
+.missList a {
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--t);
+}
+
+.missList a:hover {
+  border-bottom-color: var(--a-ink);
+}
+
+.miniLocale {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.missUrl,
+.altId {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  color: var(--a-muted-2);
+  overflow-wrap: anywhere;
+}
+
+.altMissing {
+  color: var(--a-danger);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.faqQ {
+  color: var(--a-body);
+  overflow-wrap: anywhere;
+}
+
+.faqOk {
+  color: var(--a-accent);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.faqBad {
+  color: var(--a-danger);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* ---------- 공통 ---------- */
+
+.num {
+  font-family: var(--ff-num);
+}
+
+.link {
+  border-bottom: 1px solid var(--a-line);
+  transition: border-color var(--t);
+}
+
+.link:hover {
+  border-bottom-color: var(--a-ink);
+}
+
+.note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--a-muted-2);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 카테고리 관리 ↔ SEO 점검 상호 이동.
+   사이드바에는 두 항목으로 나뉘어 있지만 시안 1e 기준 하나의 작업 흐름이라 서로 오갈 수 있게 둔다. */
+.crossLink {
+  border: 1px solid var(--a-line);
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--a-muted);
+  white-space: nowrap;
+  transition: border-color var(--t);
+}
+
+.crossLink:hover {
+  border-color: var(--a-ink);
+}

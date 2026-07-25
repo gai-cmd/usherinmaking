@@ -1,0 +1,31 @@
+/* 데스크톱에는 이미 섹션마다 CTA가 있어 하단 고정 바를 띄우지 않는다 */
+.root {
+  display: none;
+}
+
+.btn {
+  min-height: 44px;
+  padding: 14px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}
+
+:lang(ko) .btn {
+  font-family: var(--ff-ko-sans);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 767px) {
+  .root {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 12px var(--gutter);
+    border-top: 1px solid var(--text);
+    background: var(--bg);
+  }
+}

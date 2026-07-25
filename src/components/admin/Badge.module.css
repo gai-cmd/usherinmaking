@@ -1,0 +1,41 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.default {
+  border: 1px solid var(--a-line);
+  color: var(--a-muted);
+}
+
+.dark {
+  background: var(--a-sidebar);
+  color: var(--a-panel);
+}
+
+.brass {
+  background: var(--a-ok-soft);
+  color: var(--a-accent);
+}
+
+.warn {
+  background: var(--a-danger-soft);
+  color: var(--a-danger);
+}
+
+.muted {
+  background: var(--a-line-2);
+  color: var(--a-muted-2);
+}
+
+.score {
+  font-variant-numeric: lining-nums tabular-nums;
+  opacity: 0.85;
+}

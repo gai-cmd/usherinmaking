@@ -1,0 +1,155 @@
+.hero {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.heroImg {
+  position: relative;
+  height: 520px;
+  overflow: hidden;
+  background: var(--placeholder);
+}
+
+.heroImgInner {
+  object-fit: cover;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-inline: var(--gutter);
+  padding-block: 40px;
+  background: var(--bg-alt);
+}
+
+.h1 {
+  margin-top: 14px;
+  line-height: 1.05;
+}
+
+.lead {
+  margin-top: 22px;
+  max-width: 46ch;
+  font-family: var(--ff-heading);
+  font-size: 14px;
+  line-height: 2.1;
+  color: var(--text-body);
+}
+
+/* EN 은 본문에 명조를 쓰지 않는다 */
+:global([lang^='en']) .lead {
+  font-family: var(--ff-latin);
+}
+
+.collHead {
+  margin-bottom: 26px;
+}
+
+.collTitle {
+  margin-top: 8px;
+  margin-bottom: 18px;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+/* ---------- 대여 조건 ---------- */
+
+.rental {
+  display: flex;
+  flex-direction: column;
+}
+
+.rentalRow {
+  display: flex;
+  gap: 18px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.rentalRow:last-child {
+  border-bottom: 0;
+}
+
+.rentalHead {
+  flex: none;
+  width: 124px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--muted-2);
+}
+
+.rentalBody {
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--text-body);
+}
+
+/* ---------- 고르는 순서 ---------- */
+
+.flow {
+  display: flex;
+  flex-direction: column;
+}
+
+.flowStep {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--text-body);
+}
+
+.flowStep:last-child {
+  border-bottom: 0;
+}
+
+.flowNo {
+  flex: none;
+  width: 28px;
+  font-size: 20px;
+  line-height: 1.9;
+  color: var(--brass);
+}
+
+@media (max-width: 767px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .heroImg {
+    height: 280px;
+  }
+
+  .heroText {
+    padding-block: 30px;
+  }
+
+  .lead {
+    margin-top: 16px;
+    max-width: none;
+    font-size: 13px;
+    line-height: 2;
+  }
+
+  .two {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .rentalHead {
+    width: 88px;
+    font-size: 12.5px;
+  }
+
+  .rentalBody {
+    font-size: 12.5px;
+  }
+}

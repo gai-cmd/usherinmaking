@@ -1,0 +1,235 @@
+import type { Locale } from '@/lib/i18n';
+
+type L10n = Record<Locale, string>;
+type L10nList = Record<Locale, string[]>;
+
+/** 문의 페이지 전용 문안. 시안 카드의 확정 카피를 언어별로 그대로 옮긴다. */
+
+export const CONTACT = {
+  eyebrow: 'GET IN TOUCH',
+
+  title: { ja: 'Contact', en: 'Contact', ko: '문의하기' } satisfies L10n,
+
+  /** 정의형 리드 — AEO 인용 대상 */
+  definition: {
+    ja: 'usherinmaking への問い合わせとは？ 撮影日と撮影内容をフォームまたはメッセージでお送りいただき、空き状況を確認したうえでご返信する流れです。',
+    en: 'How do you get in touch with usherinmaking? You send us your dates and what you would like photographed, by form or by message, and we reply once we have checked availability.',
+    ko: 'usherinmaking 문의는 어떻게 하나요? 촬영 날짜와 촬영 내용을 폼이나 메신저로 보내주시면, 일정을 확인한 뒤 답변드리는 방식입니다.',
+  } satisfies L10n,
+
+  lead: {
+    ja: [
+      'ご希望の日程・撮影内容をお知らせください。空き状況を確認のうえ、通常 1〜2日以内にご返信します。',
+      'オンラインの自動予約はありません。すべてご相談のうえで確定します。',
+    ],
+    en: [
+      'Send us your dates and what you would like to photograph. We check availability and usually reply within 1–2 days.',
+      'There is no automatic online booking — every session is arranged by message.',
+    ],
+    ko: [
+      '희망하시는 날짜와 촬영 내용을 남겨주세요. 일정 확인 후 보통 1~2일 이내에 답변드립니다.',
+      '온라인 자동 예약은 제공하지 않으며, 모든 촬영은 상담 후 확정됩니다.',
+    ],
+  } satisfies L10nList,
+
+  /* ---------- 폼 ---------- */
+  formLabel: 'FORM',
+
+  formTitle: {
+    ja: 'お問い合わせフォーム',
+    en: 'Enquiry form',
+    ko: '문의 폼',
+  } satisfies L10n,
+
+  fields: {
+    name: { ja: 'お名前 *', en: 'NAME *', ko: '이름 *' } satisfies L10n,
+    email: { ja: 'メールアドレス *', en: 'EMAIL *', ko: '이메일 *' } satisfies L10n,
+    sessionType: { ja: '撮影の種類 *', en: 'TYPE OF SESSION *', ko: '촬영 종류 *' } satisfies L10n,
+    dates: { ja: 'ご希望の日程', en: 'PREFERRED DATES', ko: '희망 날짜' } satisfies L10n,
+    people: { ja: '人数', en: 'PEOPLE', ko: '인원' } satisfies L10n,
+    replyIn: { ja: 'ご連絡の言語', en: 'REPLY IN', ko: '답변 언어' } satisfies L10n,
+    message: { ja: 'ご相談内容', en: 'MESSAGE', ko: '상담 내용' } satisfies L10n,
+  },
+
+  placeholders: {
+    name: { ja: '山田 花子', en: 'Emma Clarke', ko: '김서연' } satisfies L10n,
+    email: {
+      ja: 'hanako@example.com',
+      en: 'emma@example.com',
+      ko: 'seoyeon@example.com',
+    } satisfies L10n,
+    dates: {
+      ja: '2026 / 08 上旬',
+      en: 'Early August 2026',
+      ko: '2026년 8월 초',
+    } satisfies L10n,
+    people: { ja: '2名', en: '2', ko: '2명' } satisfies L10n,
+    message: {
+      ja: 'ドレスの雰囲気、撮影したい場所、滞在スケジュールなど',
+      en: 'The look you have in mind, where you are staying, and your schedule in Okinawa',
+      ko: '원하는 드레스 분위기, 촬영하고 싶은 장소, 오키나와 체류 일정 등',
+    } satisfies L10n,
+  },
+
+  privacyNote: {
+    ja: 'お預かりした内容は撮影のご相談のみに使用します',
+    en: 'Your details are used only to answer your enquiry',
+    ko: '보내주신 내용은 촬영 상담에만 사용합니다',
+  } satisfies L10n,
+
+  privacyLink: {
+    ja: 'プライバシーポリシー',
+    en: 'privacy policy',
+    ko: '개인정보 처리방침',
+  } satisfies L10n,
+
+  submit: { ja: '送信する', en: 'SEND', ko: '보내기' } satisfies L10n,
+
+  sending: { ja: '送信中…', en: 'SENDING…', ko: '보내는 중…' } satisfies L10n,
+
+  sent: {
+    ja: 'お問い合わせを受け付けました。1〜2日以内にご返信します。',
+    en: 'Your enquiry has arrived. We will reply within 1–2 days.',
+    ko: '문의가 접수되었습니다. 1~2일 이내에 답변드립니다.',
+  } satisfies L10n,
+
+  invalid: {
+    ja: '入力内容をご確認ください。',
+    en: 'Please check the form.',
+    ko: '입력 내용을 확인해 주세요.',
+  } satisfies L10n,
+
+  failed: {
+    ja: '送信できませんでした。しばらくしてからもう一度お試しください。',
+    en: 'We could not send that. Please try again in a moment.',
+    ko: '보내지 못했습니다. 잠시 후 다시 시도해 주세요.',
+  } satisfies L10n,
+
+  /* ---------- 상담 채널 ---------- */
+  directLabel: 'DIRECT',
+
+  directTitle: {
+    ja: 'メッセージで相談',
+    en: 'Message us',
+    ko: '메시지로 상담',
+  } satisfies L10n,
+
+  /** 한국어 페이지에만 노출하는 네이버 블로그 안내 */
+  naverBlog: {
+    label: { ja: '', en: '', ko: '네이버 블로그' } satisfies L10n,
+    note: { ja: '', en: '', ko: '촬영 후기와 준비 이야기' } satisfies L10n,
+  },
+
+  /* ---------- FAQ ---------- */
+  faqLabel: 'BEFORE YOU ASK',
+
+  /** 답변은 확정된 요금·설비 정보만으로 쓴다. 우천 시 스튜디오 대체 안내는 하지 않는다. */
+  faq: [
+    {
+      q: {
+        ja: '料金はいくらからですか？',
+        en: 'How much does a session cost?',
+        ko: '촬영 비용은 얼마부터인가요?',
+      } satisfies L10n,
+      a: {
+        ja: 'スタジオ撮影は ¥25,000 から、ロケーション撮影は ¥76,000（税込）から承っています。プランごとの内容は料金ページに載せています。',
+        en: 'Studio sessions start at ¥25,000 and location sessions at ¥76,000 including tax. Each plan is listed in full on the plans page.',
+        ko: '스튜디오 촬영은 ¥25,000부터, 로케이션 촬영은 ¥76,000(세금 포함)부터입니다. 플랜별 내용은 요금 페이지에 있습니다.',
+      } satisfies L10n,
+    },
+    {
+      q: {
+        ja: '駐車場はありますか？',
+        en: 'Is there parking?',
+        ko: '주차가 되나요?',
+      } satisfies L10n,
+      a: {
+        ja: 'スタジオに駐車場が2台分あります。',
+        en: 'There is parking for two cars at the studio.',
+        ko: '스튜디오에 주차 2대가 가능합니다.',
+      } satisfies L10n,
+    },
+    {
+      q: {
+        ja: '雨の日はどうなりますか？',
+        en: 'What happens if it rains?',
+        ko: '비가 오면 어떻게 되나요?',
+      } satisfies L10n,
+      a: {
+        ja: '雨天でもロケーション撮影を行うことがあります。当日の状況によっては、日程の変更をご相談いただけます。',
+        en: 'We do photograph location sessions in the rain. Depending on the day, the date can also be re-arranged by conversation.',
+        ko: '비가 와도 로케이션 촬영을 진행하는 경우가 있습니다. 당일 상황에 따라 날짜 변경을 상담하실 수 있습니다.',
+      } satisfies L10n,
+    },
+    {
+      q: {
+        ja: '日本語以外でも相談できますか？',
+        en: 'Which languages do you speak?',
+        ko: '일본어를 못해도 괜찮나요?',
+      } satisfies L10n,
+      a: {
+        ja: '日本語・한국어・English でご相談いただけます。',
+        en: 'We answer in English, Japanese and Korean.',
+        ko: '한국어 · 일본어 · 영어로 상담하실 수 있습니다.',
+      } satisfies L10n,
+    },
+  ],
+
+  /* ---------- 스튜디오 ---------- */
+  studioTitle: { ja: 'スタジオ', en: 'Studio', ko: '스튜디오' } satisfies L10n,
+
+  studioRegion: { ja: '沖縄県', en: 'Okinawa', ko: '오키나와현' } satisfies L10n,
+
+  landmark: {
+    ja: '白い壁とアーチの一軒家が目印',
+    en: 'look for the white house with the arch',
+    ko: '흰 벽과 아치가 있는 단독주택 건물입니다',
+  } satisfies L10n,
+
+  mapCaption: {
+    ja: 'Google マップの埋め込みは住所の確定後に入ります。',
+    en: 'The Google Maps embed will appear once the address is confirmed.',
+    ko: 'Google 지도 임베드는 주소 확정 후 들어갑니다.',
+  } satisfies L10n,
+
+  /* ---------- 하단 ---------- */
+  footnote: {
+    ja: 'ご返信の目安 1〜2日 ・ 撮影日はご相談のうえ確定します（自動予約・カレンダー予約はありません）',
+    en: 'Replies usually within 1–2 days · dates are confirmed by message (no automatic or calendar booking)',
+    ko: '답변까지 보통 1~2일 · 촬영일은 상담으로 확정됩니다 (자동 예약 · 캘린더 예약 없음)',
+  } satisfies L10n,
+} as const;
+
+/** 폼의 촬영 종류 칩. value는 API가 받는 값이고 라벨만 언어별로 다르다. */
+export const SESSION_TYPES = [
+  {
+    value: 'studio',
+    label: { ja: 'スタジオ', en: 'Studio', ko: '스튜디오' } satisfies L10n,
+  },
+  {
+    value: 'location',
+    label: { ja: 'ロケーション', en: 'Location', ko: '로케이션' } satisfies L10n,
+  },
+  {
+    value: 'studio-location',
+    label: {
+      ja: 'スタジオ + ロケーション',
+      en: 'Studio + Location',
+      ko: '스튜디오 + 로케이션',
+    } satisfies L10n,
+  },
+  {
+    value: 'maternity',
+    label: { ja: 'マタニティ', en: 'Maternity', ko: '만삭' } satisfies L10n,
+  },
+  {
+    value: 'anniversary-family',
+    label: {
+      ja: '記念日・家族',
+      en: 'Anniversary / family',
+      ko: '기념일 · 가족',
+    } satisfies L10n,
+  },
+] as const;
+
+export type SessionTypeValue = (typeof SESSION_TYPES)[number]['value'];

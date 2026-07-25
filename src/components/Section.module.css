@@ -1,0 +1,41 @@
+.root {
+  /* 그림자는 쓰지 않는다. 구분은 1px hairline으로. */
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 34px;
+}
+
+.title {
+  margin-top: 10px;
+}
+
+.lead {
+  margin-top: 14px;
+  max-width: 64ch;
+  font-size: 13.5px;
+  line-height: 2.1;
+  color: var(--muted);
+}
+
+.aside {
+  flex: none;
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted-2);
+  text-transform: uppercase;
+}
+
+@media (max-width: 767px) {
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+}

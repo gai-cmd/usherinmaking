@@ -1,0 +1,56 @@
+/* =========================================================
+   관리자 전용 토큰.
+   globals.css의 브랜드 토큰을 그대로 참조하되, 관리자는 마케팅 페이지보다 조밀한
+   작업 화면이라 여기서 한 단계 얇은 간격·작은 타입 스케일을 따로 정의한다.
+   아치 모티프는 쓰지 않는다.
+
+   .uim-admin 은 admin/layout.tsx 의 <body>에 붙는다. src/components/admin/** 의
+   모듈 CSS는 모두 이 변수들을 참조하므로, 관리자 레이아웃 밖에서 쓰면 색이 빠진다.
+   ========================================================= */
+
+.uim-admin {
+  /* 표면 */
+  --a-bg: var(--bg-alt);
+  --a-panel: #fff; /* 작업 패널 — 마케팅 토큰에 없는 관리자 전용 값 */
+  --a-line: var(--hairline);
+  --a-line-2: var(--hairline-2);
+  --a-field: var(--hairline);
+
+  /* 글자 */
+  --a-ink: var(--text);
+  --a-body: var(--text-body);
+  --a-muted: var(--muted);
+  --a-muted-2: var(--muted-2);
+  --a-accent: var(--brass);
+
+  /* 사이드바 */
+  --a-sidebar: #1f1d1a;
+  --a-sidebar-active: #2f2c28;
+  --a-sidebar-ink: #e9e7e2;
+  --a-sidebar-muted: #b6b1a7;
+  --a-sidebar-line: #34312d;
+
+  /* 상태 */
+  --a-danger: #a83c28;
+  --a-danger-soft: #f6ebe8;
+  --a-ok-soft: #f1ece2;
+
+  /* 간격 */
+  --a-pad: 26px;
+  --a-pad-y: 18px;
+  --a-gap: 14px;
+
+  background: var(--a-bg);
+  color: var(--a-ink);
+  /* 관리자 UI는 한국어. 본문 서체를 고정한다. */
+  font-family: var(--ff-ko-sans);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+  .uim-admin {
+    --a-pad: 16px;
+    --a-pad-y: 14px;
+  }
+}

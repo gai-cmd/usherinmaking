@@ -1,0 +1,381 @@
+/* 플랜 · 옵션 편집 — 좌측 편집 + 우측 옵션/미리보기. */
+
+.issues {
+  margin: 0 0 var(--a-gap);
+  padding: 12px 14px;
+  border: 1px solid var(--a-danger);
+  background: var(--a-danger-soft);
+  color: var(--a-danger);
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+.issues ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.issuesTitle {
+  margin: 0;
+  font-weight: 500;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: var(--a-gap);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.left,
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* ---------- 목록 행 ---------- */
+
+.planRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: var(--a-panel);
+  border: 1px solid var(--a-line);
+  padding: 16px 20px;
+  transition: border-color var(--t);
+}
+
+.planRow:hover {
+  border-color: var(--a-ink);
+}
+
+.planRowTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--a-ink);
+}
+
+.planRowMeta {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.planRowGo {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--a-muted-2);
+  white-space: nowrap;
+}
+
+/* ---------- 편집 ---------- */
+
+.editHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.badgeLine {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.editTitle {
+  margin: 8px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.editing {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--a-accent);
+  white-space: nowrap;
+}
+
+.taxNote {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+@media (max-width: 700px) {
+  .fieldGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--a-field);
+  background: var(--a-panel);
+  color: var(--a-body);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  /* 금액·숫자는 항상 Jost */
+  font-family: var(--ff-num);
+}
+
+.input:focus {
+  outline: 2px solid var(--a-accent);
+  outline-offset: -1px;
+}
+
+.inputStrong {
+  border-color: var(--a-ink);
+}
+
+/* ---------- 세금 표기 ---------- */
+
+.taxRow {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border: 1px solid var(--a-line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.taxRowConflict {
+  border-color: var(--a-danger);
+  background: var(--a-danger-soft);
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--a-body);
+  cursor: pointer;
+}
+
+.taxExpected {
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.taxConflict {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--a-danger);
+}
+
+/* ---------- 영향 범위 ---------- */
+
+.affected {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border: 1px solid var(--a-line-2);
+  background: var(--a-ok-soft);
+}
+
+.affectedTitle {
+  margin: 0;
+  font-size: 11px;
+  color: var(--a-muted);
+}
+
+.affectedList {
+  list-style: none;
+  margin: 7px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.affectedList code {
+  font-family: var(--ff-latin);
+}
+
+/* ---------- 포함 내역 ---------- */
+
+.includes {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--a-line);
+}
+
+.includesList {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 11px 12px;
+  border: 1px solid var(--a-line);
+  font-size: 13px;
+  line-height: 2;
+  color: var(--a-muted);
+}
+
+.emptyLine {
+  color: var(--a-muted-2);
+}
+
+/* ---------- 옵션 ---------- */
+
+.panelAside {
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.optionList {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.optionItem {
+  border: 1px solid var(--a-line);
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.optionTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.optionMeta {
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+/* ---------- 미리보기 ---------- */
+
+.preview {
+  border: 1px solid var(--a-line);
+  padding: 14px;
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--a-muted);
+}
+
+.previewBadge {
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--a-accent);
+}
+
+.previewTitle {
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--a-ink);
+}
+
+.previewMeta {
+  color: var(--a-muted-2);
+}
+
+.previewRule {
+  border: 0;
+  border-top: 1px solid var(--a-line);
+  margin: 10px 0;
+}
+
+.previewUrl {
+  margin-top: 4px;
+  color: var(--a-accent);
+  font-family: var(--ff-latin);
+  font-size: 11px;
+}
+
+.previewFacts {
+  color: var(--a-muted);
+}
+
+/* ---------- 영향 화면 목록 ---------- */
+
+.surfaceList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+}
+
+.surfaceList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--a-line-2);
+}
+
+.surfaceList li:last-child {
+  border-bottom: 0;
+}
+
+.surfaceLabel {
+  color: var(--a-body);
+}
+
+.surfaceRoutes {
+  color: var(--a-muted-2);
+  font-size: 11px;
+}
+
+/* ---------- 공통 ---------- */
+
+.num {
+  font-family: var(--ff-num);
+}
+
+.note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--a-muted-2);
+}
+
+.rowActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+

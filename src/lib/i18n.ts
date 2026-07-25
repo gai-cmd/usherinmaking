@@ -1,0 +1,90 @@
+// 3개 언어를 각각 독립된 본문으로 운영한다. ja 기본, en, ko.
+// 번역이 아니라 언어권별 본문이므로 여기서는 "구조"만 공유한다.
+
+export const LOCALES = ['ja', 'en', 'ko'] as const;
+export type Locale = (typeof LOCALES)[number];
+export const DEFAULT_LOCALE: Locale = 'ja';
+
+export function isLocale(v: string): v is Locale {
+  return (LOCALES as readonly string[]).includes(v);
+}
+
+/** <html lang> 속성값 */
+export const HTML_LANG: Record<Locale, string> = {
+  ja: 'ja-JP',
+  en: 'en',
+  ko: 'ko-KR',
+};
+
+/** 페이지 키 → 로케일별 URL 세그먼트. 요금 페이지만 en에서 'plans'. */
+export const ROUTE_SEGMENT = {
+  home: { ja: '', en: '', ko: '' },
+  studio: { ja: 'studio', en: 'studio', ko: 'studio' },
+  location: { ja: 'location', en: 'location', ko: 'location' },
+  dress: { ja: 'dress', en: 'dress', ko: 'dress' },
+  plan: { ja: 'plan', en: 'plans', ko: 'plan' },
+  photographer: { ja: 'photographer', en: 'photographer', ko: 'photographer' },
+  journal: { ja: 'journal', en: 'journal', ko: 'journal' },
+  gallery: { ja: 'gallery', en: 'gallery', ko: 'gallery' },
+  contact: { ja: 'contact', en: 'contact', ko: 'contact' },
+  privacy: { ja: 'privacy', en: 'privacy', ko: 'privacy' },
+  tokushoho: { ja: 'tokushoho', en: 'tokushoho', ko: 'tokushoho' },
+} as const satisfies Record<string, Record<Locale, string>>;
+
+export type PageKey = keyof typeof ROUTE_SEGMENT;
+
+/**
+ * 로케일 + 페이지 키 → 절대 경로. 갤러리/저널 하위 세그먼트는 rest로 이어붙인다.
+ * 선행 슬래시는 join 밖에서 붙인다 — 배열 안에 빈 문자열로 넣으면 filter(Boolean)이
+ * 그것마저 걸러내어 상대 경로가 되고, canonical·hreflang까지 전부 어긋난다.
+ */
+export function path(locale: Locale, page: PageKey, ...rest: string[]): string {
+  const seg = ROUTE_SEGMENT[page][locale];
+  return `/${[locale, seg, ...rest].filter(Boolean).join('/')}`;
+}
+
+/** 헤더 내비게이션 — 순서 고정, 라벨만 언어별 */
+export const NAV: { key: PageKey; label: Record<Locale, string> }[] = [
+  { key: 'studio', label: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' } },
+  { key: 'location', label: { ja: 'LOCATION', en: 'LOCATION', ko: '로케이션' } },
+  { key: 'dress', label: { ja: 'DRESS', en: 'DRESS', ko: '드레스' } },
+  { key: 'plan', label: { ja: 'PLAN', en: 'PLANS', ko: '요금' } },
+  { key: 'photographer', label: { ja: 'PHOTOGRAPHER', en: 'PHOTOGRAPHER', ko: '작가 소개' } },
+  { key: 'journal', label: { ja: 'JOURNAL', en: 'JOURNAL', ko: '촬영후기' } },
+  { key: 'contact', label: { ja: 'CONTACT', en: 'CONTACT', ko: '문의' } },
+];
+
+/** 언어 전환 버튼 표기 */
+export const LOCALE_LABEL: Record<Locale, string> = {
+  ja: '日本語',
+  en: 'English',
+  ko: '한국어',
+};
+
+/** 언어 전환 버튼 축약 표기 (헤더 우측) */
+export const LOCALE_SHORT: Record<Locale, string> = { ja: 'JA', en: 'EN', ko: 'KO' };
+
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://usherinmaking.vercel.app';
+
+/** hreflang 상호 지정용 alternates 맵 */
+export function alternates(page: PageKey, ...rest: string[]) {
+  const languages: Record<string, string> = {};
+  for (const l of LOCALES) languages[HTML_LANG[l]] = `${SITE_URL}${path(l, page, ...rest)}`;
+  languages['x-default'] = `${SITE_URL}${path(DEFAULT_LOCALE, page, ...rest)}`;
+  return languages;
+}
+
+/** 공통 UI 문자열 — 페이지 본문이 아니라 버튼/라벨 수준만 공유한다. */
+export const UI = {
+  contactCta: { ja: 'お問い合わせ', en: 'CONTACT', ko: '문의하기' },
+  viewMore: { ja: 'MORE', en: 'MORE', ko: '더 보기' },
+  viewAll: { ja: 'VIEW ALL', en: 'VIEW ALL', ko: '전체 보기' },
+  backHome: { ja: 'ホームへ', en: 'BACK TO HOME', ko: '홈으로' },
+  menu: { ja: 'MENU', en: 'MENU', ko: '메뉴' },
+  close: { ja: '閉じる', en: 'CLOSE', ko: '닫기' },
+  noAutoBooking: {
+    ja: '自動予約・カレンダー予約はありません。お問い合わせいただいたあと、ご相談のうえで確定します。',
+    en: 'There is no automatic or calendar booking. Everything is confirmed through a conversation after you get in touch.',
+    ko: '자동 예약·캘린더 예약은 없습니다. 문의를 주시면 상담을 통해 확정합니다.',
+  },
+} as const satisfies Record<string, Record<Locale, string>>;

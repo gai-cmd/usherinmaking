@@ -1,0 +1,17 @@
+/* 툴바 안의 구분선 · 여백 채움 */
+.divider {
+  width: 1px;
+  height: 22px;
+  background: var(--a-line);
+  margin: 0 4px;
+}
+
+.spacer {
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .spacer {
+    margin-left: 0;
+  }
+}

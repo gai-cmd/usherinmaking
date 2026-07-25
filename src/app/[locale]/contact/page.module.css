@@ -1,0 +1,239 @@
+.hero {
+  padding-block: 56px 44px;
+}
+
+.title {
+  margin-top: 14px;
+}
+
+.definition {
+  max-width: 46em;
+  margin: 18px auto 0;
+}
+
+.lead {
+  max-width: 660px;
+  margin: 12px auto 0;
+}
+
+/* 데스크톱: 폼이 왼쪽 한 칸을 세로로 차지하고, 오른쪽에 채널·FAQ·스튜디오가 쌓인다.
+   모바일: DOM 순서 그대로 흘러 메신저 카드가 폼 위에 온다. */
+.layout {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+}
+
+.formCol {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  padding: 52px var(--gutter) 60px;
+  border-right: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.direct {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 52px 44px 30px;
+  background: var(--bg-alt);
+}
+
+.faq {
+  grid-column: 2;
+  grid-row: 2;
+  padding: 0 44px 22px;
+  background: var(--bg-alt);
+}
+
+.studio {
+  grid-column: 2;
+  grid-row: 3;
+  padding: 0 44px 60px;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.blockTitle {
+  margin: 10px 0 22px;
+}
+
+/* ---- 채널 ---- */
+.channels {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 1순위 채널만 검은 블록이다 */
+.channel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 16px 18px;
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  font-size: 13px;
+}
+
+.channel[data-primary] {
+  background: var(--dark);
+  border-color: var(--dark);
+  color: var(--bg);
+}
+
+.channelName {
+  display: block;
+  line-height: 1.4;
+}
+
+.channelNote {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.channel[data-primary] .channelNote {
+  color: #cfc7b7;
+}
+
+.channelOpen {
+  flex: none;
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--brass);
+}
+
+.noBooking {
+  margin-top: 18px;
+  color: var(--muted);
+}
+
+/* ---- FAQ ---- */
+.faqList {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+}
+
+.faqItem {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.faqQuestion {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 12px;
+  font-size: 13px;
+  line-height: 1.8;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faqQuestion::-webkit-details-marker {
+  display: none;
+}
+
+.faqMark {
+  color: var(--muted-2);
+  transition: transform var(--t);
+}
+
+.faqItem[open] .faqMark {
+  transform: rotate(45deg);
+}
+
+.faqAnswer {
+  padding-bottom: 14px;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+/* ---- 스튜디오 ---- */
+.studio {
+  padding-top: 22px;
+  border-top: 1px solid var(--hairline);
+}
+
+.studioTitle {
+  margin-bottom: 8px;
+  font-family: var(--ff-heading);
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.studioBody {
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--text-body);
+}
+
+.tbc {
+  color: var(--brass);
+}
+
+.map {
+  margin-top: 14px;
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+}
+
+.mapCanvas {
+  height: 170px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--placeholder) 0 14px,
+    #e2dbcd 14px 28px
+  );
+}
+
+.mapCaption {
+  padding: 9px 12px;
+  border-top: 1px solid var(--hairline);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.footnote {
+  padding-block: 26px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+@media (max-width: 767px) {
+  .hero {
+    padding-block: 30px 24px;
+  }
+
+  .layout {
+    display: block;
+  }
+
+  .formCol,
+  .direct,
+  .faq,
+  .studio {
+    padding: 26px var(--gutter) 30px;
+    border-right: 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .faq {
+    border-top: 0;
+  }
+
+  .studio {
+    background: var(--bg);
+    border-top: 0;
+  }
+}

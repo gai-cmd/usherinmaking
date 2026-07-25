@@ -1,0 +1,207 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a-gap);
+  padding: 22px var(--a-pad);
+}
+
+/* ---------- 미확인 항목 ---------- */
+
+.outstanding {
+  padding: 14px 18px;
+  border: 1px dashed var(--a-accent);
+  background: var(--a-ok-soft);
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--a-body);
+}
+
+.outstanding b {
+  font-weight: 500;
+  color: var(--a-ink);
+}
+
+.outstandingList {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.outstandingNote {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--a-muted-2);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--a-gap);
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.eyebrow {
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--a-muted-2);
+}
+
+/* ---------- 사이트 정보 ---------- */
+
+.fields {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--a-line-2);
+}
+
+.field:last-child {
+  border-bottom: 0;
+}
+
+.field dt {
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.field dd {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--a-body);
+}
+
+/* ---------- 채널 ---------- */
+
+.channels {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.channelBox,
+.channelBoxWarn {
+  border: 1px solid var(--a-line);
+  padding: 12px 14px;
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+
+/* 업무 규칙을 어긴 구성은 눈에 보이게 남긴다 */
+.channelBoxWarn {
+  border-color: var(--a-danger);
+  background: var(--a-danger-soft);
+}
+
+.channelHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.channelHead b {
+  font-weight: 500;
+}
+
+.channelRule {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--a-muted-2);
+}
+
+.channelRule b {
+  font-weight: 500;
+  color: var(--a-accent);
+}
+
+.channelList {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.channelItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.channelOrder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-family: var(--ff-num);
+  font-size: 10.5px;
+  color: var(--a-muted-2);
+  border: 1px solid var(--a-line);
+}
+
+.warnList {
+  margin: 10px 0 0;
+  padding-left: 16px;
+  font-size: 11.5px;
+  line-height: 1.8;
+}
+
+.warnRule {
+  color: var(--a-danger);
+}
+
+.warnNotice {
+  color: var(--a-muted-2);
+}
+
+.channelCommon {
+  padding: 10px 14px;
+  background: var(--a-bg);
+  border: 1px solid var(--a-line-2);
+  font-size: 11.5px;
+  color: var(--a-muted-2);
+}
+
+/* ---------- 공통 ---------- */
+
+.dim {
+  color: var(--a-muted-2);
+}
+
+/* 아직 못 받은 값 */
+.tbc {
+  color: var(--a-accent);
+}
+
+.num,
+.code {
+  font-family: var(--ff-num);
+}
+
+.num {
+  font-size: 12.5px;
+}
+
+.code {
+  font-size: 11.5px;
+  color: var(--a-muted);
+}
+

@@ -1,0 +1,42 @@
+import { z } from 'zod';
+import { requireAdmin } from '@/server/auth';
+import { errorResponse, ValidationError } from '@/server/errors';
+import { bulkUpdatePhotoStatus, type PhotoStatus } from '@/server/photos';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const BulkSchema = z.object({
+  // 한 번에 다루는 건수 상한. 실수로 전체를 공개하는 사고를 막는다.
+  ids: z.array(z.string().min(1).max(64)).min(1).max(200),
+  action: z.enum(['publish', 'archive', 'unsort']),
+});
+
+const ACTION_TO_STATUS: Record<z.infer<typeof BulkSchema>['action'], PhotoStatus> = {
+  publish: 'PUBLISHED',
+  archive: 'ARCHIVED',
+  unsort: 'UNSORTED',
+};
+
+/** 일괄 상태 변경. publish는 대상 전체가 alt 3개 언어를 갖췄을 때만 통과한다. */
+export async function POST(req: Request) {
+  try {
+    await requireAdmin(req);
+
+    const parsed = BulkSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      throw new ValidationError('ids(1~200건)와 action이 필요합니다.', {
+        fields: parsed.error.issues.map((i) => i.path.join('.') || '(body)'),
+      });
+    }
+
+    const { ids, action } = parsed.data;
+    // 중복 id는 여기서 정리한다 — 아래 계층이 건수를 잘못 세지 않도록.
+    const unique = [...new Set(ids)];
+
+    await bulkUpdatePhotoStatus(unique, ACTION_TO_STATUS[action]);
+    return Response.json({ ok: true, count: unique.length });
+  } catch (err) {
+    return errorResponse(err);
+  }
+}

@@ -1,0 +1,289 @@
+/* PHOTOGRAPHER — 시안 4a / en-2c / ko-sub-2b (데스크톱), 2g / ko-mobile-1f (모바일) */
+
+.intro {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* 작가 포트레이트 미제공 — 대체 사진 대신 빈 자리로 정직하게 둔다 */
+.portrait {
+  min-height: 600px;
+  background: var(--placeholder);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portraitLabel {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: #8f8271;
+}
+
+.introBody {
+  padding: 48px 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.title {
+  margin-top: 16px;
+  font-family: var(--ff-display);
+}
+
+.lead {
+  margin-top: 24px;
+  font-family: var(--ff-heading);
+  font-size: 15px;
+  line-height: 2.2;
+  color: var(--text-body);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px;
+  margin: 34px 0 0;
+  border-top: 1px solid var(--hairline);
+  padding-top: 24px;
+}
+
+.fact {
+  min-width: 0;
+}
+
+.factLabel {
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.24em;
+  color: var(--brass);
+}
+
+.factValue {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+/* ---------- 이름의 유래 ---------- */
+
+.name {
+  text-align: center;
+}
+
+.nameLead {
+  margin-top: 20px;
+}
+
+.nameNote {
+  margin-top: 24px;
+  font-size: 13px;
+  line-height: 2.2;
+  color: var(--muted);
+}
+
+/* ---------- 촬영 방식 ---------- */
+
+.howHead {
+  text-align: center;
+  margin-bottom: 34px;
+}
+
+.howTitle {
+  margin-top: 8px;
+}
+
+.points {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.point {
+  border-top: 1px solid var(--text);
+  padding-top: 20px;
+}
+
+.pointTitle {
+  font-family: var(--ff-heading);
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.pointBody {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 2.1;
+  color: var(--text-body);
+}
+
+/* ---------- 3분할 이미지 ---------- */
+
+.split {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.splitCell {
+  position: relative;
+  height: 360px;
+  overflow: hidden;
+}
+
+.splitCell img {
+  object-fit: cover;
+}
+
+/* ---------- 상담 언어 + SNS ---------- */
+
+.guestGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 44px;
+}
+
+.guestTitle {
+  margin: 10px 0 18px;
+}
+
+.guestBody {
+  font-size: 13.5px;
+  line-height: 2.1;
+  color: var(--text-body);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+}
+
+.rowLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 16px 18px;
+  font-size: 13px;
+  transition: border-color var(--t), color var(--t);
+}
+
+a.rowLink:hover {
+  color: var(--brass);
+}
+
+.rowLabel {
+  min-width: 0;
+}
+
+.rowNote {
+  color: var(--muted);
+}
+
+.rowOpen {
+  flex: none;
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--brass);
+}
+
+.rowsNote {
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+/* ---------- 모바일 ---------- */
+
+@media (max-width: 1023px) {
+  .points {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .guestGrid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
+
+@media (max-width: 767px) {
+  .intro {
+    grid-template-columns: 1fr;
+  }
+
+  .portrait {
+    min-height: 360px;
+  }
+
+  .introBody {
+    padding: 28px var(--gutter) 30px;
+  }
+
+  .lead {
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 2.1;
+  }
+
+  /* 모바일에서는 라벨/값을 한 줄씩 나열한다 */
+  .facts {
+    flex-direction: column;
+    gap: 0;
+    margin-top: 20px;
+    padding-top: 0;
+  }
+
+  .fact {
+    display: flex;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .fact:last-child {
+    border-bottom: 0;
+  }
+
+  .factLabel {
+    width: 80px;
+    flex: none;
+    color: var(--muted-2);
+  }
+
+  .factValue {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--text-body);
+  }
+
+  /* 3분할은 2컷만 보여준다 (시안 모바일 2g) */
+  .split {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 18px var(--gutter);
+  }
+
+  .split > :nth-child(3) {
+    display: none;
+  }
+
+  .splitCell {
+    height: 180px;
+  }
+}

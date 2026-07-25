@@ -1,0 +1,74 @@
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 22px;
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  color: var(--muted-2);
+}
+
+:lang(ko) .chips {
+  font-family: var(--ff-ko-sans);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.chip {
+  padding-bottom: 5px;
+}
+
+.chipCurrent {
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--text);
+  color: var(--text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.cell {
+  position: relative;
+  height: 240px;
+  overflow: hidden;
+  background: var(--placeholder);
+}
+
+.image {
+  object-fit: cover;
+}
+
+.more {
+  margin-top: 30px;
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .cell {
+    height: 170px;
+  }
+
+  /* 다섯 번째는 모바일에서 홀로 남으므로 가로 전체를 쓴다 */
+  .cell:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .more {
+    margin-top: 18px;
+  }
+
+  .more > * {
+    display: flex;
+    width: 100%;
+  }
+}

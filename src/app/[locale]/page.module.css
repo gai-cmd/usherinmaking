@@ -1,0 +1,298 @@
+/* ---------- 정의형 리드 ---------- */
+.lead {
+  padding-block: 74px;
+  text-align: center;
+}
+
+.leadSub {
+  margin-top: 26px;
+}
+
+/* ---------- 플랜 그리드 ----------
+   카드끼리 맞붙여 1px 헤어라인 한 줄만 남긴다. PlanCard 자체 테두리는 여기서 끈다. */
+.planGrid,
+.locGrid,
+.optionGrid {
+  display: grid;
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+}
+
+/* li가 셀, 그 안의 PlanCard가 내용 — 테두리는 껍데기끼리 맞붙어 생긴 gap이 대신한다 */
+.planGrid > li,
+.locGrid > li {
+  display: flex;
+}
+
+.planGrid > li > *,
+.locGrid > li > *,
+.optionGrid > * {
+  flex: 1;
+  border: 0;
+}
+
+.planGrid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* 시안에서 PLAN 02만 배경을 한 톤 눕힌다 */
+.planGrid > li:nth-child(2) > * {
+  background: var(--bg-alt);
+}
+
+.locGrid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* ---------- 옵션 ---------- */
+.optionBox {
+  margin-top: 22px;
+  padding: 32px 36px;
+  border: 1px solid var(--hairline);
+  background: var(--bg-alt);
+}
+
+.optionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.optionGrid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px;
+  background: var(--bg);
+}
+
+.optionLabel {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-body);
+}
+
+.optionPrice {
+  font-size: 19px;
+  line-height: 1;
+  color: var(--text);
+}
+
+.optionFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.footNote {
+  flex: 1 1 320px;
+  font-size: 13px;
+  line-height: 2;
+  color: var(--muted);
+}
+
+.footActions {
+  flex: none;
+}
+
+/* ---------- 스튜디오 세트 ---------- */
+.setGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.setGrid > li {
+  display: flex;
+  flex-direction: column;
+}
+
+.setImage {
+  position: relative;
+  display: block;
+  height: 280px;
+  background: var(--placeholder);
+}
+
+.cover {
+  object-fit: cover;
+}
+
+.setTitle {
+  margin-top: 14px;
+  font-family: var(--ff-heading);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.setNote {
+  font-size: 11.5px;
+  line-height: 1.9;
+  color: var(--muted-2);
+}
+
+/* ---------- 로케이션 주의사항 ---------- */
+.noteBox {
+  margin-top: 22px;
+  padding: 26px 28px;
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+}
+
+.noteList {
+  margin-top: 16px;
+  font-size: 12.5px;
+  line-height: 2;
+  color: var(--muted);
+}
+
+.anniversaryLabel {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline-2);
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.34em;
+  color: var(--brass);
+}
+
+:lang(ko) .anniversaryLabel {
+  font-family: var(--ff-ko-sans);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.anniversary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 28px;
+  margin-top: 14px;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.anniversary > li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--hairline-2);
+}
+
+.anniversary > li > :last-child {
+  font-size: 20px;
+  color: var(--text);
+}
+
+.locActions {
+  margin-top: 28px;
+}
+
+/* ---------- PHOTOGRAPHER ---------- */
+.photographer {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.photographerImage {
+  position: relative;
+  height: 420px;
+  background: var(--placeholder);
+}
+
+.photographerBody {
+  padding: 0 60px;
+}
+
+.photographerName {
+  margin: 12px 0 18px;
+}
+
+.photographerText {
+  font-family: var(--ff-heading);
+  font-size: 14px;
+  line-height: 2.1;
+  color: var(--text-body);
+}
+
+/* EN 본문은 명조를 쓰지 않는다 */
+:lang(en) .photographerText {
+  font-family: var(--ff-latin);
+}
+
+.photographerCta {
+  margin-top: 26px;
+}
+
+/* ---------- 모바일 ---------- */
+@media (max-width: 767px) {
+  .lead {
+    padding-block: 34px;
+  }
+
+  .leadSub {
+    margin-top: 16px;
+  }
+
+  .planGrid,
+  .locGrid,
+  .optionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .optionBox {
+    padding: 20px 18px 22px;
+  }
+
+  .footActions > *,
+  .locActions > * {
+    display: flex;
+    width: 100%;
+  }
+
+  .setGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .setImage {
+    height: 150px;
+  }
+
+  .noteBox {
+    padding: 18px 18px 20px;
+  }
+
+  .anniversary {
+    grid-template-columns: 1fr;
+  }
+
+  .photographer {
+    grid-template-columns: 1fr;
+  }
+
+  .photographerImage {
+    height: 260px;
+  }
+
+  .photographerBody {
+    padding: var(--section-y) var(--gutter);
+  }
+}

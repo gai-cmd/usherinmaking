@@ -1,0 +1,172 @@
+<!-- ============================================================
+  usherinmaking モニター募集 — V2 텍스트 기반 (WP 커스텀 HTML 블록용)
+  붙여넣기: WP 편집기 → ブロック追加 → 「カスタムHTML」 → 아래 전체 붙여넣기
+  타이틀 이미지: monitor-title.png 를 메ディア에 업로드 후 아래 IMG src 교체
+  (기간·가격개정 문구는 의도적으로 미포함 — 2026-07-11 오너 지시)
+============================================================ -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Zen+Old+Mincho:wght@400;500&display=swap');
+.uim-monitor{font-family:'Zen Old Mincho','Yu Mincho',serif;color:#43302A;background:#F2DBD3;background-image:repeating-linear-gradient(115deg,rgba(255,255,255,.28) 0 1px,rgba(255,255,255,0) 1px 8px);padding:0 0 56px;margin:0 auto;max-width:880px}
+.uim-monitor *{box-sizing:border-box}
+.uim-monitor .uim-title-img{width:100%;display:block;margin:0 0 8px}
+.uim-monitor .uim-inner{padding:32px 40px 0}
+.uim-monitor .uim-plan{margin-top:48px;padding-top:36px;border-top:1px solid rgba(122,90,72,.35)}
+.uim-monitor .uim-plan:first-of-type{margin-top:8px;border-top:none}
+.uim-monitor .uim-eyebrow{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;letter-spacing:.3em;color:#9C6A50}
+.uim-monitor h3.uim-en{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:400;color:#3E2C24;margin:6px 0 2px;line-height:1.1}
+.uim-monitor h3.uim-en i{color:#9C6A50}
+.uim-monitor .uim-ja{font-size:15px;letter-spacing:.45em;color:#5C4237;margin-bottom:26px}
+.uim-monitor .uim-grid{display:flex;gap:44px;flex-wrap:wrap}
+.uim-monitor .uim-col{flex:1 1 320px}
+.uim-monitor .uim-plan-label{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;letter-spacing:.14em;color:#9C6A50}
+.uim-monitor h4{font-size:24px;font-weight:500;letter-spacing:.1em;margin:8px 0 10px;line-height:1.6;color:#43302A}
+.uim-monitor .uim-time{font-size:14px;letter-spacing:.08em;color:#5C4237}
+.uim-monitor .uim-regular{font-size:14px;color:#8A6A58;margin-top:16px}
+.uim-monitor .uim-regular s{opacity:.85}
+.uim-monitor .uim-price{font-family:'Cormorant Garamond',serif;font-size:46px;color:#4A332A;line-height:1.15}
+.uim-monitor .uim-price-note{font-size:13px;letter-spacing:.35em;color:#7A5A48;margin-bottom:14px}
+.uim-monitor ul.uim-items{list-style:none;margin:14px 0 0;padding:14px 0 0;border-top:1px dotted rgba(122,90,72,.45)}
+.uim-monitor ul.uim-items li{font-size:14.5px;line-height:2.05;letter-spacing:.06em;color:#4E3931;padding:0}
+.uim-monitor ul.uim-items li::before{content:'˚ ';color:#9C6A50}
+.uim-monitor .uim-sec{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;letter-spacing:.3em;color:#9C6A50;margin:22px 0 4px}
+.uim-monitor .uim-opt-row{display:flex;justify-content:space-between;align-items:baseline;font-size:14.5px;letter-spacing:.06em;color:#4E3931;padding:9px 0;border-bottom:1px dotted rgba(122,90,72,.3)}
+.uim-monitor .uim-opt-row b{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500}
+.uim-monitor .uim-copy{font-size:15px;line-height:2.1;letter-spacing:.12em;color:#5C4237;margin-top:18px}
+.uim-monitor .uim-note{font-size:13px;line-height:1.9;color:#6B4F41;margin-top:16px}
+.uim-monitor .uim-footer{text-align:center;margin-top:56px;padding-top:30px;border-top:1px solid rgba(122,90,72,.35)}
+.uim-monitor .uim-footer .b{font-family:'Cormorant Garamond',serif;font-size:19px;letter-spacing:.5em;color:#7A5A48}
+.uim-monitor .uim-footer .l{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;letter-spacing:.35em;color:#A0806C;margin-top:6px}
+.uim-monitor .uim-cta{display:inline-block;margin-top:22px;padding:13px 46px;border:1px solid #7A5A48;color:#5C4237;font-size:14px;letter-spacing:.3em;text-decoration:none;transition:.3s}
+.uim-monitor .uim-cta:hover{background:#7A5A48;color:#F2DBD3}
+@media (max-width:640px){
+  .uim-monitor .uim-inner{padding:24px 20px 0}
+  .uim-monitor h3.uim-en{font-size:34px}
+  .uim-monitor .uim-grid{gap:8px}
+}
+</style>
+
+<div class="uim-monitor">
+  <!-- 타이틀 이미지: 업로드 후 src 교체 -->
+  <img class="uim-title-img" src="https://usherinmaking.jp/wp-content/uploads/2026/07/monitor-title.png" alt="モニター募集 — usherin making 撮影プラン">
+
+  <div class="uim-inner">
+
+    <!-- PLAN 01–02 : Wedding Photo -->
+    <div class="uim-plan">
+      <div class="uim-eyebrow">Korean Style Wedding</div>
+      <h3 class="uim-en">Wedding <i>Photo</i></h3>
+      <div class="uim-ja">ウェディングフォト プラン</div>
+      <div class="uim-grid">
+        <div class="uim-col">
+          <div class="uim-plan-label">Plan.01</div>
+          <h4>スタジオ ウェディングフォト</h4>
+          <div class="uim-time">ヘアメイク + 撮影　約 3.5H</div>
+          <div class="uim-regular"><s>定価 ¥140,000</s> →</div>
+          <div class="uim-price">¥99,000</div>
+          <div class="uim-price-note">モニター価格</div>
+          <ul class="uim-items">
+            <li>韓国風リタッチ写真データ 30カット</li>
+            <li>新婦 フルメイク + ヘアセット</li>
+            <li>新郎 シンプルメイク + ヘアセット</li>
+            <li>ドレス 1着 ・ ヘア飾り・アクセサリー込み</li>
+            <li>造花ブーケ / ベール 込み</li>
+          </ul>
+        </div>
+        <div class="uim-col">
+          <div class="uim-plan-label">Plan.02</div>
+          <h4>スタジオ + ロケーションフォト</h4>
+          <div class="uim-time">ヘアメイク + 撮影　約 4.5H</div>
+          <div class="uim-regular"><s>定価 ¥200,000</s> →</div>
+          <div class="uim-price">¥150,000</div>
+          <div class="uim-price-note">モニター価格</div>
+          <ul class="uim-items">
+            <li>韓国風リタッチ写真データ 40カット</li>
+            <li>新婦 フルメイク + ヘアセット</li>
+            <li>新郎 シンプルメイク + ヘアセット</li>
+            <li>ドレス 2着 ・ ヘア飾り・アクセサリー込み</li>
+            <li>造花ブーケ / ベール 込み</li>
+          </ul>
+        </div>
+      </div>
+      <div class="uim-sec">— OPTION ( PLAN.01 / 02 共通 ) —</div>
+      <div class="uim-grid">
+        <div class="uim-col">
+          <div class="uim-opt-row"><span>+　新郎衣装（Mサイズ）選択</span><b>¥20,000</b></div>
+          <div class="uim-opt-row"><span>+　原本データ JPEG</span><b>¥5,500</b></div>
+        </div>
+        <div class="uim-col">
+          <div class="uim-opt-row"><span>+　プレミアムドレス</span><b>¥20,000~</b></div>
+          <div class="uim-opt-row"><span>+　休日料金</span><b>¥18,000</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAN 03 : Maternity Photo -->
+    <div class="uim-plan">
+      <div class="uim-eyebrow">Wedding Style Maternity</div>
+      <h3 class="uim-en"><i>Maternity</i> Photo</h3>
+      <div class="uim-ja">マタニティフォト プラン</div>
+      <div class="uim-grid">
+        <div class="uim-col">
+          <div class="uim-plan-label">Plan.03</div>
+          <h4>ウェディング風 マタニティフォト</h4>
+          <div class="uim-time">ヘアメイク + 撮影　約 3H</div>
+          <div class="uim-regular"><s>定価 ¥85,000</s> →</div>
+          <div class="uim-price">¥66,000</div>
+          <div class="uim-price-note">モニター価格</div>
+          <div class="uim-copy">新しい命を迎える、<br>特別な瞬間を ウェディングムードで。</div>
+        </div>
+        <div class="uim-col">
+          <div class="uim-sec">— INCLUDED —</div>
+          <ul class="uim-items" style="border-top:none;padding-top:4px">
+            <li>カラーリタッチ写真データ 20カット</li>
+            <li>男女 メイクアップ + ヘアセット</li>
+            <li>マタニティ専用衣装 1着</li>
+            <li>アクセサリー込み</li>
+          </ul>
+          <div class="uim-sec">OPTION</div>
+          <div class="uim-opt-row"><span>+　原本データ JPEG</span><b>¥5,500</b></div>
+          <div class="uim-opt-row"><span>+　休日料金</span><b>¥11,000</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAN 04 : Memorial Photo -->
+    <div class="uim-plan">
+      <div class="uim-eyebrow">Anniversary · Family · Profile</div>
+      <h3 class="uim-en"><i>Memorial</i> Photo</h3>
+      <div class="uim-ja">記念日フォト プラン</div>
+      <div class="uim-grid">
+        <div class="uim-col">
+          <div class="uim-plan-label">Plan.04</div>
+          <h4>記念日・家族・プロフィール撮影</h4>
+          <div class="uim-time">撮影　約 50分</div>
+          <div class="uim-regular"><s>定価 ¥38,000</s> →</div>
+          <div class="uim-price">¥25,000</div>
+          <div class="uim-price-note">モニター価格</div>
+          <div class="uim-sec">— FOR —</div>
+          <div class="uim-copy" style="margin-top:6px">カップル ・ 記念日 ・ 入学 ・ 誕生日<br>家族写真 ・ プロフィール写真<br>( 1名様 〜 4名様まで )</div>
+        </div>
+        <div class="uim-col">
+          <div class="uim-sec">— INCLUDED —</div>
+          <ul class="uim-items" style="border-top:none;padding-top:4px">
+            <li>カラーリタッチ写真データ 20カット</li>
+          </ul>
+          <div class="uim-sec">OPTION</div>
+          <div class="uim-opt-row"><span>+　1名様 追加</span><b>¥3,300</b></div>
+          <div class="uim-opt-row"><span>+　ヘアメイク 追加</span><b>¥22,000</b></div>
+          <div class="uim-opt-row"><span>+　原本データ JPEG</span><b>¥5,500</b></div>
+          <div class="uim-opt-row"><span>+　休日料金</span><b>¥11,000</b></div>
+          <div class="uim-note">※ ドレス撮影をご希望の方は ウェディングフォトプランへお問い合わせください。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="uim-footer">
+      <div class="b">USHERIN MAKING</div>
+      <div class="l">Okinawa Wedding · Photo Studio</div>
+      <a class="uim-cta" href="https://usherinmaking.jp/contact/">ご予約・お問い合わせ</a>
+    </div>
+
+  </div>
+</div>

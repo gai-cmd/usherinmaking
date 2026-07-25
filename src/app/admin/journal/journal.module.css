@@ -1,0 +1,83 @@
+/* 촬영후기 관리 화면. admin-tokens.css 의 --a-* 변수를 쓴다. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a-gap);
+  padding: 22px var(--a-pad);
+}
+
+/* ---------- 연동 상태 알림 ---------- */
+
+.noticeInfo,
+.noticeWarn {
+  padding: 14px 18px;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--a-body);
+  border: 1px solid var(--a-line);
+  background: var(--a-panel);
+}
+
+.noticeInfo b,
+.noticeWarn b {
+  font-weight: 500;
+}
+
+/* 미설정은 사실이므로 눈에 띄게 둔다 */
+.noticeWarn {
+  border: 1px dashed var(--a-accent);
+  background: var(--a-ok-soft);
+}
+
+/* ---------- 표 셀 ---------- */
+
+.titleCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.titleLink {
+  color: var(--a-ink);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 180ms ease;
+}
+
+.titleLink:hover {
+  border-bottom-color: var(--a-ink);
+}
+
+.locales {
+  display: inline-flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.dim {
+  color: var(--a-muted-2);
+}
+
+.code {
+  font-family: var(--ff-num);
+  font-size: 11.5px;
+  color: var(--a-muted);
+}
+
+.syncState {
+  font-size: 11px;
+  color: var(--a-muted-2);
+  white-space: nowrap;
+}
+
+/* ---------- 각주 ---------- */
+
+.sampleNote {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.9;
+  color: var(--a-muted-2);
+}
+

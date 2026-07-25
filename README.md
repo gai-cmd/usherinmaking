@@ -1,90 +1,161 @@
-# usher in making — 沖縄ウェディングフォト (static site + Vercel)
+# usherinmaking — 오키나와 웨딩 포토 스튜디오
 
-워드프레스에서 이전한 **정적 사이트**입니다. GitHub → **Vercel** 배포 기준으로 구성돼 있습니다.
-(나중에 Cafe24 웹호스팅으로 보완 예정.)
+오키나와에서 활동하는 한국인 여성 사진작가 **usherinmaking** 의 웹사이트입니다.
+**Next.js 15 App Router + TypeScript** 로 재구축했습니다.
 
-## 로컬 미리보기
+기존 정적 HTML 사이트는 `legacy/` 에 그대로 보존되어 있습니다.
+
+---
+
+## 무엇이 바뀌었나
+
+기존 사이트는 **LOCATION(야외 로케이션 촬영) 단일 사업** 을 전제로 만들어졌습니다.
+**STUDIO(실내 스튜디오)** 가 새로 생기면서, 한 축을 다른 축 아래에 두는 구조로는 두 사업을
+동등하게 보여줄 수 없게 되어 정보 구조부터 다시 짰습니다.
+
+1. **LOCATION / STUDIO 2대 축** — 완전히 분리된 두 사업. 서로를 대체하지 않습니다.
+2. **3개 언어 독립 본문** — 日本語(기본) / English / 한국어. 서로의 번역이 아닙니다.
+3. **인스타그램 파이프라인** — 전량 자동 수집 → 관리자가 전시할 것만 선택 → 자사 도메인에서 서빙.
+   임베드·아웃링크를 쓰지 않아 검색·AI 인용 노출을 잃지 않습니다.
+
+---
+
+## 시작하기
+
 ```bash
-python3 -m http.server 8080
-# http://localhost:8080/index.html
+npm install
+cp .env.example .env.local   # 값을 채운 뒤
+npm run dev                  # http://localhost:3000
 ```
+
+`/` 로 들어가면 브라우저 언어를 감지해 `/ja` `/en` `/ko` 중 하나로 보냅니다.
+
+| 명령 | 하는 일 |
+|---|---|
+| `npm run dev` | 개발 서버 |
+| `npm run build` | 프로덕션 빌드 |
+| `npm run typecheck` | 타입 검사 (`tsc --noEmit`) |
+| `npm run lint` | ESLint |
+
+---
 
 ## 구조
+
 ```
-*.html                  페이지 (메인 8 + 갤러리 22 + 드레스 8)  ※ siano.html은 디자인 데모
-css/site.css            전 페이지 공용 스타일 (애플식 다이나믹 + 반응형)
-js/site.js              헤더/모바일메뉴/스크롤 연출
-images/                 로고 + images/up/ (원본에서 내려받은 사진 281장)
-api/contact.js          Vercel 서버리스 문의폼 (지금은 미사용 스캐폴드)
-seo/                    SEO/AEO 중앙 관리 (seo.json + build_seo.py) — seo/README.md 참고
-scripts/localize_images.py   원격 이미지 → images/up/ 다운로드+치환
-vercel.json             Vercel 설정 (보안 헤더, 이미지 캐시)
-sitemap.xml / robots.txt
+src/
+  app/
+    [locale]/            공개 페이지 — ja | en | ko
+      page.tsx             HOME (좌우 반반 스플릿 게이트)
+      studio/              STUDIO — 세트 4개 · 촬영 당일 스케줄 · 아쿠세스
+      location/            LOCATION — WEDDING / ANNIVERSARY 카테고리 · 월별 아카이브
+      dress/               DRESS — 컬렉션만 (브랜드명 없음)
+      plan/ plans/         요금 — en 만 /plans, ja·ko 는 /plan
+      photographer/        작가 소개 (구 RESERVE 자리)
+      journal/             촬영후기 목록 · 상세
+      gallery/             갤러리 — 필터가 경로다 (/gallery/studio/self-wedding)
+      contact/             문의 폼 + 언어별 메신저
+      privacy/ tokushoho/  법적 고지
+    admin/               관리자 (UI 한국어, noindex)
+    api/                 문의 · 관리자 · 인스타 수집 크론
+    sitemap.ts robots.ts
+  components/            공용 UI + 페이지별 컴포넌트
+  content/               콘텐츠 모듈 (DB 이관 전 단일 출처)
+  server/                레포지토리 계층 — Prisma 이관 지점
+  lib/i18n.ts            로케일 · 경로 · hreflang
+  middleware.ts          언어 감지 리다이렉트
+prisma/schema.prisma     데이터 모델
+legacy/                  이전 정적 사이트 (보존)
+.moai/specs/             SPEC · 인수 조건
 ```
 
-## Vercel 배포 (GitHub 연동)
-1. GitHub에 새 repo 생성 후 push:
-   ```bash
-   git remote add origin https://github.com/<계정>/usherinmaking.git
-   git branch -M main
-   git push -u origin main
-   ```
-2. [vercel.com](https://vercel.com) → **Add New… → Project** → 이 repo import.
-   - Framework Preset: **Other** (정적). Build Command 비움. Output Directory 비움(루트).
-3. Deploy. `*.vercel.app` URL이 바로 생깁니다.
+### 콘텐츠는 지금 어디에 있나
 
-### Cafe24 도메인 연결 (나중에)
-Vercel 프로젝트 → **Settings → Domains** 에 도메인 추가 → 안내되는 값으로
-Cafe24 DNS의 A/CNAME 레코드를 변경. (또는 네임서버를 Vercel로 변경)
+플랜·가격·세트·상담 채널 같은 확정 사실은 `src/content/site.ts` 한 곳에 있습니다.
+페이지는 이 모듈에서 읽어 쓰며, **가격을 페이지에 직접 적지 않습니다.**
 
-## 문의폼 (선택 — 나중에 폼 추가 시)
-현재 CONTACT는 원본처럼 **LINE / Instagram** 안내 방식이라 폼이 없습니다.
-폼을 추가하면 `api/contact.js`(서버리스)가 바로 처리합니다. Vercel **Environment Variables**:
-| 변수 | 설명 |
+`prisma/schema.prisma` 의 필드 이름을 이 모듈들과 맞춰 두었으므로, DB를 붙일 때는
+`src/server/*` 의 읽기 함수만 Prisma 호출로 바꾸면 됩니다.
+
+---
+
+## 지켜야 하는 사업 규칙
+
+코드 리뷰에서 이 항목들은 취향이 아니라 **결함 판정 기준** 입니다.
+
+| 규칙 | |
 |---|---|
-| `RESEND_API_KEY` | [resend.com](https://resend.com) 무료 키 |
-| `CONTACT_TO` | 문의 수신 이메일 |
-| `CONTACT_FROM` | (선택) 인증된 발신 주소 |
-프런트: `fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,message})})`
+| 브랜드 | 한 단어 `usherinmaking`. 헤더·푸터·OG는 텍스트가 아니라 로고 이미지 |
+| 두 축 | LOCATION과 STUDIO는 완전 분리. "우천 시 스튜디오로 대체" 같은 문구를 쓰지 않습니다 |
+| LOCATION | 지역이 아니라 **촬영 카테고리** 기준 (WEDDING / ANNIVERSARY) |
+| 예약 | **자동 예약·캘린더 예약이 없습니다.** 문의 → 상담으로만 확정합니다 |
+| 사진 | 인스타 임베드·아웃링크 사용 안 함. 전부 자사 도메인에서 서빙 |
+| 드레스 | 브랜드명 없음. 컬렉션만 |
+| 가격 | 스튜디오는 모니터 가격(税込 표기 없음), 로케이션·기념사진만 税込 |
+| 상담 채널 | KO = 카카오톡 / JA = LINE / EN = 폼·이메일. **이메일 주소는 노출하지 않습니다** |
+| 네이버 블로그 | 한국어 페이지에만 안내합니다 |
+| 문의 | **DB가 원본이고 메일은 알림입니다.** 알림 실패가 문의 유실이 되면 안 됩니다 |
+| 미확정 사실 | 근거 없는 수치를 쓰지 않고 `（要確認）`/`(to be confirmed)`/`(확인 필요)` 로 표기합니다 |
 
-## SEO / AEO 편집
-`seo/seo.json` 수정 → `python3 seo/build_seo.py apply` (자세히는 `seo/README.md`).
+---
 
-## 이미지 로컬화
-`python3 scripts/localize_images.py` — 원격(usherinmaking.jp) 이미지를 `images/up/`로 받아
-`src`/`url()`을 `/images/up/...`로 치환. 새 원격 이미지를 추가했을 때 다시 실행하면 됩니다.
+## 디자인
 
-## 신규 기능 (문의 / 예약 / 관리자 / 영문 / 법무)
-2026-06 추가된 동적·법무 기능과 도달 경로입니다.
+확정안은 **Classic Editorial** 입니다. 토큰은 `src/app/globals.css` 한 곳에 있습니다.
 
-| 기능 | 공개 페이지 | API (서버리스) | 프런트 JS | 도달 경로 |
-|---|---|---|---|---|
-| **문의 폼** | `contact.html` | `api/contact.js` | `js/contact-form.js` | 헤더/푸터 `CONTACT` |
-| **예약(撮影日カレンダー)** | `reserve.html`, `en/reserve.html` | `api/reservations.js` | `js/reserve.js` | 헤더/푸터 `RESERVE` |
-| **관리자(예약 관리, noindex)** | `admin.html` | `api/admin.js` | `js/admin.js` | 직접 URL만 (메뉴/사이트맵 비노출) |
-| **콘텐츠 API** | — | `api/content.js` | — | 예약 가용일/콘텐츠 제공 |
-| **영문(EN)** | `en/*.html` (`en/reserve.html` 포함) | — | — | 각 페이지 우상단 `JP / EN` 전환 |
-| **법무 표기** | `privacy.html`(プライバシーポリシー), `tokushoho.html`(特定商取引法に基づく表記) | — | — | 공용 푸터 링크 |
+- 배경은 `#FAF8F4` / `#F4F1EA` **두 가지만** 교차합니다
+- 포인트는 브라스 `#8A6A3F`
+- 서체는 `<html lang>` 에 따라 자동 전환 — JA는 Zen Old Mincho, KO는 나눔명조,
+  EN은 명조를 쓰지 않고 Jost. **금액·숫자는 언제나 Jost**
+- 아치가 브랜드 모티프입니다 (`border-radius: 140px 140px 0 0`)
+- **그림자를 쓰지 않습니다.** 구분은 1px 헤어라인으로 합니다
+- 모바일 탭 타겟은 최소 44px
 
-- **내비/푸터**: 공개 메인 페이지(헤더 nav)에 `RESERVE` 추가, 공용 푸터에 `RESERVE` + 법무 2종 링크 추가.
-- **언어 전환**: `reserve.html` ↔ `en/reserve.html` 의 `JP / EN` 링크로 상호 연결(hreflang 반영).
-- **admin 비공개**: `admin.html` 은 `robots.txt` 에서 `Disallow`, `<meta robots noindex>`, 사이트맵 제외.
+---
 
-### 예약/관리자 운영 절차
-1. 방문자가 `reserve.html` 캘린더에서 빈 날짜·플랜 선택 → 폼 전송 (`api/reservations.js`).
-2. 관리자가 `admin.html` 에서 들어온 예약을 확인·승인/마감 처리 (`api/admin.js`).
-3. 가용일 변경은 콘텐츠/예약 API(`api/content.js`, `api/reservations.js`)를 통해 캘린더에 반영.
-4. 정식 예약은 LINE 상담 + 촬영료 50% 입금으로 확정 (페이지 안내 문구 기준).
-> 환경변수·서비스 계정 등 운영 상세는 `docs/OPERATIONS.md` 참고.
+## SEO / AEO
 
-## 알아둘 점 (다음 보완 후보)
-- **og:image / JSON-LD image** 와 일부 메타는 아직 `usherinmaking.jp` 절대경로를 가리킵니다.
-  실제 도메인 확정 후 새 도메인 절대경로로 바꾸는 게 좋습니다 (구 WP 종료 대비).
-- **placeholder 이미지**: 원본에 사진이 없던 일부 칸은 `picsum.photos` 임시 이미지입니다.
-- 다운로드 실패 1건: `…/2021/07/셔리드레스2-300x300.jpg` (원본 404) — 해당 썸네일만 원격 유지.
-- **canonical**은 구 WP URL 구조(`/about/`, `/portfolio/…/`)를 가리킵니다. 정적 파일명은
-  `about.html` 등 평면 구조라, 실도메인 URL 구조 확정 시 정렬을 권장합니다.
-- `en/`(영문) 페이지는 주요 페이지가 생성됨(`en/reserve.html` 포함). 나머지 하위 상세 페이지는 순차 보완 예정.
-- **법무 본문**(`privacy.html`·`tokushoho.html`)의 사업자명·주소·연락처 등 실제 값 확인/갱신 필요.
-```
-```
+AI 검색 노출은 특별한 파일이 아니라 **크롤 가능·색인 가능·신뢰 가능** 이라는 기본기에서 나옵니다.
+그래서 별도의 AI 전용 스키마를 두지 않고 다음을 지킵니다.
+
+- 페이지마다 본문 최상단에 **정의형 1문단** (질문 → 답 형태). 이미지 안의 글자는 인용되지 않습니다
+- 3개 언어 `hreflang` 상호 지정 + `x-default`
+- 갤러리 필터가 쿼리스트링이 아니라 **경로** 이므로 각 조합이 독립 색인 대상입니다
+- 구조화 데이터: `LocalBusiness` · `Service` · `ImageObject` · `FAQPage` · `BreadcrumbList`
+- FAQ는 **실제 문의 문장 그대로** 씁니다 (관리자 INBOX에서 승격)
+- 서드파티 JS를 거의 두지 않습니다 (인스타 임베드 스크립트 없음)
+
+---
+
+## 배포
+
+Vercel 기준입니다. `vercel.json` 이 인스타 수집 크론(6시간 주기)을 등록합니다.
+보안 헤더와 CSP는 `next.config.ts` 의 `headers()` 에 있습니다.
+
+> CSP의 `script-src` 에 `'unsafe-inline'` 이 남아 있습니다. Next.js 부트스트랩 인라인
+> 스크립트 때문이며, nonce 방식으로 올리려면 전 페이지가 동적 렌더링이 되어 정적 캐시 이득을
+> 잃습니다. `next.config.ts` 에 `@MX:DEBT` 로 표시해 두었습니다.
+
+---
+
+## 아직 받지 못한 것
+
+값이 도착하면 해당 콘텐츠 모듈만 교체하면 됩니다. 지금은 전부 미확정 토큰으로 표시됩니다.
+
+- 스튜디오 주소 · 공항에서 소요시간
+- 대표 이메일 주소
+- 로고 SVG (투명 배경) — 현재 원본이 195×48 저해상도라 인쇄·대형 표시에 쓸 수 없습니다
+- 작가 포트레이트 · 드레스 개별 컷
+- 테라스 · 메이크업룸 사진 (세트를 6개로 확장 예정)
+- 촬영후기 실제 원고 — **현재 글은 전부 샘플이며 배지로 표시됩니다**
+
+---
+
+## 아직 연결되지 않은 것
+
+설계와 이관 지점은 있으나 실제 연결은 되어 있지 않습니다. 코드에 `TODO(prisma)` /
+`TODO(pipeline)` 로 표시해 두었고, **거짓 성공을 반환하지 않습니다.**
+
+- 데이터베이스 — 스키마는 있고 Prisma 클라이언트는 아직 설치하지 않았습니다
+- 오브젝트 스토리지 업로드 · AVIF/WebP 실제 인코딩
+- Instagram Graph API 실호출 · AI 분류 실호출 (자격 증명 없음)
+- 정식 관리자 인증 — 현재는 `ADMIN_TOKEN` 기반 임시 가드입니다

@@ -1,0 +1,57 @@
+.strip {
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tab {
+  padding: 14px 40px;
+  font-family: var(--ff-body);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.24em;
+  color: var(--muted-2);
+  border-bottom: 2px solid transparent;
+  transition: color var(--t), border-color var(--t);
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.on {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+.panel {
+  padding-block: var(--section-y);
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* 한국어 라벨은 트래킹이 넓으면 읽기 어렵다 */
+:global([lang^='ko']) .tab {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 767px) {
+  .strip {
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex: none;
+    min-height: 44px;
+    padding: 15px 13px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    white-space: nowrap;
+  }
+}

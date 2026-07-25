@@ -1,0 +1,162 @@
+.root {
+  border-bottom: 1px solid var(--hairline);
+  background: var(--bg);
+  position: relative;
+  z-index: 40;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26px var(--gutter) 0;
+}
+
+.logo {
+  display: block;
+}
+
+.logoImg {
+  height: 24px;
+  width: auto;
+}
+
+.burger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+.burgerBar,
+.burgerBar::before,
+.burgerBar::after {
+  display: block;
+  width: 20px;
+  height: 1px;
+  background: var(--text);
+  transition: transform var(--t), opacity var(--t);
+}
+
+.burgerBar::before,
+.burgerBar::after {
+  content: '';
+  position: absolute;
+}
+
+.burgerBar::before {
+  transform: translateY(-6px);
+}
+
+.burgerBar::after {
+  transform: translateY(6px);
+}
+
+.burgerBar[data-open] {
+  background: transparent;
+}
+
+.burgerBar[data-open]::before {
+  transform: rotate(45deg);
+}
+
+.burgerBar[data-open]::after {
+  transform: rotate(-45deg);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 14px var(--gutter) 20px;
+}
+
+.navList {
+  display: flex;
+  gap: 30px;
+}
+
+.navLink {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  color: var(--muted);
+  transition: color var(--t);
+}
+
+.navLink:hover,
+.navLink[aria-current='page'] {
+  color: var(--text);
+}
+
+.langList {
+  display: flex;
+  gap: 12px;
+  padding-left: 22px;
+  border-left: 1px solid var(--hairline);
+}
+
+.langLink {
+  font-family: var(--ff-latin);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--muted-2);
+  transition: color var(--t);
+}
+
+.langLink[data-active] {
+  color: var(--text);
+  border-bottom: 1px solid var(--brass);
+}
+
+.langLink:hover {
+  color: var(--text);
+}
+
+/* 데스크톱: 로고 중앙 / 모바일: 로고 좌측 + 햄버거 */
+@media (min-width: 1024px) {
+  .bar {
+    justify-content: center;
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width: 1023px) {
+  .burger {
+    display: flex;
+  }
+
+  .nav {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding-bottom: 12px;
+  }
+
+  .nav[data-open] {
+    display: flex;
+  }
+
+  .navList {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .navLink {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--hairline-2);
+  }
+
+  .langList {
+    padding: 12px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+}
