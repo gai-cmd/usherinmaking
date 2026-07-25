@@ -6,6 +6,7 @@ import { requireAdmin } from '@/server/auth';
 import { ValidationError, errorResponse } from '@/server/errors';
 import {
   findSlugConflict,
+  findSlugConflictInDb,
   getTermById,
   slugChangeWarning,
   slugError,
@@ -91,10 +92,10 @@ export async function PUT(req: Request): Promise<Response> {
       }
     }
 
+    // upsertTerm 이 저장 후 옛 주소와 새 주소를 모두 무효화한다.
+    // TODO(redirect): 옛 주소용 리디렉션은 아직 없다 — 색인된 옛 주소는 404 로 남는다.
     await upsertTerm(input);
 
-    // TODO(isr): 저장이 실제로 되는 순간, 옛 주소와 새 주소를 모두 revalidatePath 하고
-    //            옛 주소용 리디렉션을 등록한다. 없으면 색인된 주소가 404 로 남는다.
     return Response.json(
       { ok: true, urls: termUrlsIncludingCombinations(input.slug).map((u) => u.url) },
       { headers: { 'cache-control': 'no-store, private' } },

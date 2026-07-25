@@ -225,13 +225,11 @@ export async function uploadMedia(input: UploadInput): Promise<UploadResult> {
   const url = await storeOriginal(key, input.bytes);
 
   let variants: VariantMap | null = null;
-  const uploaded: string[] = [url];
 
   try {
     if (input.withRenditions) {
       const plan = planRenditions({ id: assetId, width, height });
       variants = await encodeRenditions(input.bytes, plan);
-      uploaded.push(...plan.map((r) => r.key));
     }
 
     const row = await prisma.mediaAsset.create({
@@ -249,16 +247,19 @@ export async function uploadMedia(input: UploadInput): Promise<UploadResult> {
 
     return { asset: fromDb(row), variants };
   } catch (err) {
-    // 기록에 실패했으면 방금 올린 파일을 되돌린다. 되돌리기가 또 실패해도 원래 오류를 덮지 않는다.
-    await deleteStored([url]).catch((cleanupErr) => {
-      console.error('[media] 업로드 롤백 실패 — 스토리지에 고아 파일이 남았습니다', url, cleanupErr);
+    // 기록에 실패했으면 방금 올린 것을 되돌린다. 원본만이 아니라 파생본까지 —
+    // photos/<id>/ 접두사 아래를 통째로 지워야 고아 파일이 남지 않는다.
+    // 되돌리기가 또 실패해도 원래 오류를 덮지 않는다.
+    await deleteStoredPrefix(`photos/${assetId}/`).catch((cleanupErr) => {
+      console.error(
+        '[media] 업로드 롤백 실패 — 스토리지에 고아 파일이 남았습니다',
+        `photos/${assetId}/`,
+        cleanupErr,
+      );
     });
     throw err;
   }
 }
-
-/** buildVariantMap 재수출 — 호출측이 image-pipeline을 따로 import하지 않도록. */
-export { buildVariantMap };
 
 /* ============================ 삭제 ============================ */
 

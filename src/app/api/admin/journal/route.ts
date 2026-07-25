@@ -4,8 +4,12 @@ import { errorResponse, ValidationError } from '@/server/errors';
 import { LOCALES } from '@/lib/i18n';
 import {
   JOURNAL_CATEGORIES,
+  clearSampleFlag,
   countJournal,
   listJournalGroups,
+  publishJournalPost,
+  setJournalCategory,
+  unpublishJournalPost,
   upsertJournalPost,
   type JournalStatus,
 } from '@/server/journal';
@@ -18,6 +22,34 @@ const QuerySchema = z.object({
   category: z.enum(JOURNAL_CATEGORIES as unknown as [string, ...string[]]).optional(),
   untranslated: z.enum(['0', '1']).optional(),
 });
+
+/**
+ * 본문 저장과 분리된 상태 변경.
+ *
+ * 게시/게시취소는 언어별(한 레코드)이고, 카테고리와 샘플 표시는 글 단위(같은 slug 전체)다.
+ * 그 차이가 곧 요청 모양의 차이라 액션마다 필요한 필드를 다르게 받는다.
+ */
+const PatchSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('publish'),
+    slug: z.string().min(1).max(120),
+    locale: z.enum(LOCALES),
+  }),
+  z.object({
+    action: z.literal('unpublish'),
+    slug: z.string().min(1).max(120),
+    locale: z.enum(LOCALES),
+  }),
+  z.object({
+    action: z.literal('category'),
+    slug: z.string().min(1).max(120),
+    category: z.enum(JOURNAL_CATEGORIES as unknown as [string, ...string[]]),
+  }),
+  z.object({
+    action: z.literal('clear-sample'),
+    slug: z.string().min(1).max(120),
+  }),
+]);
 
 const UpsertSchema = z.object({
   slug: z
@@ -86,9 +118,49 @@ export async function POST(req: Request) {
       });
     }
 
-    // 저장 경로가 없으므로 여기서 501 이 나간다. 성공을 흉내내지 않는다.
+    // DB 가 없으면 여기서 501 이 나간다. 성공을 흉내내지 않는다.
+    // 저장은 본문만 바꾼다 — 공개 여부는 PATCH 쪽 경로가 따로 다룬다.
     const saved = await upsertJournalPost(parsed.data as never);
-    return Response.json({ slug: saved.slug, locale: saved.locale }, { status: 200 });
+    return Response.json(
+      { slug: saved.slug, locale: saved.locale, status: saved.publishedAt ? 'published' : 'draft' },
+      { status: 200 },
+    );
+  } catch (err) {
+    return errorResponse(err);
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    await requireAdmin(req);
+
+    const parsed = PatchSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      throw new ValidationError('입력값이 올바르지 않습니다.', {
+        fields: parsed.error.issues.map((i) => i.path.join('.')),
+      });
+    }
+
+    const input = parsed.data;
+
+    switch (input.action) {
+      case 'publish': {
+        const post = await publishJournalPost(input.slug, input.locale);
+        return Response.json({ slug: post.slug, locale: post.locale, status: 'published' });
+      }
+      case 'unpublish': {
+        const post = await unpublishJournalPost(input.slug, input.locale);
+        return Response.json({ slug: post.slug, locale: post.locale, status: 'draft' });
+      }
+      case 'category': {
+        const count = await setJournalCategory(input.slug, input.category as never);
+        return Response.json({ slug: input.slug, category: input.category, updated: count });
+      }
+      case 'clear-sample': {
+        const count = await clearSampleFlag(input.slug);
+        return Response.json({ slug: input.slug, isSample: false, updated: count });
+      }
+    }
   } catch (err) {
     return errorResponse(err);
   }

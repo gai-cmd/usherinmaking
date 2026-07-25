@@ -5,7 +5,7 @@
 // "실제로 네트워크를 타는 부분"만 TODO(pipeline) seam으로 비워 둔다.
 // seam은 성공을 흉내내지 않고 DependencyUnavailableError를 던진다.
 
-import { del, put } from '@vercel/blob';
+import { del, list, put } from '@vercel/blob';
 import sharp from 'sharp';
 import {
   ALLOWED_UPLOAD_MIME,
@@ -382,6 +382,23 @@ export async function deleteStored(urls: string[]): Promise<void> {
   if (urls.length === 0) return;
   const token = requireBlobToken('deleteStored');
   await del(urls, { token });
+}
+
+/**
+ * 접두사 아래의 모든 파일 삭제. photos/<id>/ 한 묶음(원본 + 파생본)을 통째로 지울 때 쓴다.
+ *
+ * 파생본 URL을 따로 들고 있지 않아도 되는 것이 이 방식의 이유다 — MediaAsset에는
+ * variants 칼럼이 없어서, URL 목록으로 지우면 파생본이 스토리지에 남는다.
+ */
+export async function deleteStoredPrefix(prefix: string): Promise<number> {
+  const token = requireBlobToken('deleteStoredPrefix');
+  const { blobs } = await list({ prefix, token });
+  if (blobs.length === 0) return 0;
+  await del(
+    blobs.map((b) => b.url),
+    { token },
+  );
+  return blobs.length;
 }
 
 /** VariantMap 안의 모든 파생본 URL. 삭제할 때 쓴다. */
