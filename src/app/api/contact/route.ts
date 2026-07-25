@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { LOCALES } from '@/lib/i18n';
 import { SESSION_TYPES, type SessionTypeValue } from '@/app/[locale]/contact/content';
+import { isDatabaseConfigured, prisma } from '@/server/db';
 
 /**
  * 문의 수신 경로.
@@ -32,17 +33,33 @@ const EnquirySchema = z
 export type Enquiry = z.infer<typeof EnquirySchema>;
 
 /**
- * TODO(persistence): Prisma 연결 지점.
- * `await prisma.enquiry.create({ data: enquiry })` 가 들어갈 자리이며,
- * 연결되면 PERSISTENCE_READY를 true로 바꾼다.
- * 그 전까지는 아무것도 쓰지 않고 저장 불가로 응답한다 — 받은 척하지 않는다.
+ * DB 저장. 여기가 원본이고 알림은 사본이다.
+ * 저장에 실패하면 접수되지 않은 것이므로 성공으로 응답하지 않는다.
  */
-const PERSISTENCE_READY = false;
+async function persistEnquiry(enquiry: Enquiry): Promise<string | null> {
+  if (!isDatabaseConfigured()) return null;
 
-async function persistEnquiry(_enquiry: Enquiry): Promise<boolean> {
-  if (!PERSISTENCE_READY) return false;
-  // TODO(persistence): prisma.enquiry.create(...)
-  return false;
+  try {
+    const row = await prisma.inquiry.create({
+      data: {
+        name: enquiry.name,
+        email: enquiry.email,
+        locale: enquiry.locale,
+        shootType: enquiry.sessionType,
+        dates: enquiry.preferredDates || null,
+        people: enquiry.people || null,
+        message: enquiry.message,
+        // 답변 언어는 문의가 들어온 페이지 언어와 다를 수 있어 메모에 남긴다.
+        memo: enquiry.replyIn !== enquiry.locale ? `답변 희망 언어: ${enquiry.replyIn}` : null,
+      },
+      select: { id: true },
+    });
+    return row.id;
+  } catch (err) {
+    // 저장 실패는 삼키지 않는다 — 삼키면 문의가 조용히 사라진다.
+    console.error('[contact] 저장 실패', err);
+    return null;
+  }
 }
 
 /**
@@ -79,12 +96,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_input', fields }, { status: 400 });
   }
 
-  const stored = await persistEnquiry(parsed.data);
-  if (!stored) {
+  const id = await persistEnquiry(parsed.data);
+  if (!id) {
     return NextResponse.json({ error: 'storage_unavailable' }, { status: 503 });
   }
 
-  await notifyEnquiry(parsed.data);
+  // 알림은 저장 다음이다. 알림이 실패해도 문의는 이미 남아 있으므로 접수는 성공이다.
+  try {
+    await notifyEnquiry(parsed.data);
+  } catch (err) {
+    console.error('[contact] 알림 실패 (접수는 정상)', err);
+  }
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

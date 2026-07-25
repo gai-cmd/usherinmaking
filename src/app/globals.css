@@ -49,6 +49,13 @@
   --ff-num: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Helvetica Neue',
     sans-serif;
 
+  /* 작은 글자 크기는 토큰으로 둔다 — 컴포넌트에 px 를 박으면 로케일별 조정이 안 먹는다.
+     기본값은 시안 그대로. 한국어에서만 아래 :lang(ko) 블록이 한 단계 올린다. */
+  --fs-body: 13.5px;
+  --fs-small: 12.5px;
+  --fs-meta: 11.5px;
+  --lh-body: 2.1;
+
   /* 로케일별 기본 서체. [lang]에서 덮어쓴다. */
   --ff-heading: var(--ff-display);
   --ff-body: var(--ff-latin);
@@ -74,14 +81,48 @@
 [lang^='ko'] {
   --ff-heading: var(--ff-ko-sans);
   --ff-body: var(--ff-ko-sans);
+
+  /* 시안의 13.5px / 2.1 은 Noto Sans KR 기준으로 잡힌 값이다.
+     산돌고딕 Neo 는 같은 px 에서 글자가 더 작아 보여 본문이 잠기고,
+     그 상태로 행간 2.1 을 유지하면 글자는 작은데 줄만 떠 있는 느낌이 된다.
+     한국어에서만 본문을 한 단계 올리고 행간을 조인다. */
+  font-size: 15px;
+  line-height: 1.95;
+
+  --fs-body: 14.5px;
+  --fs-small: 13.5px;
+  --fs-meta: 12.5px;
+  --lh-body: 1.95;
 }
 
+:lang(ko) .u-body,
+[lang^='ko'] .u-body {
+  font-size: 14.5px;
+  line-height: 1.95;
+}
+
+:lang(ko) .u-meta,
+[lang^='ko'] .u-meta {
+  font-size: 12.5px;
+  line-height: 1.85;
+}
+
+/* 리드문 — 크기는 유지하되 행간을 조여 문단으로 뭉치게 한다.
+   2.1 은 세 줄이 각각 떠 보였다. */
 :lang(ko) .u-lead,
 [lang^='ko'] .u-lead,
 :lang(ko) h1,
 [lang^='ko'] h1 {
   font-weight: 300;
-  letter-spacing: -0.01em;
+  line-height: 1.75;
+  letter-spacing: -0.015em;
+}
+
+/* 라틴용 트래킹(.4em)을 한글에 그대로 쓰면 글자가 흩어진다. 한국어에서만 줄인다.
+   단 u-label 은 영문 대문자 라벨(STUDIO PLAN)이라 원래 트래킹을 유지한다. */
+:lang(ko) .u-h2,
+[lang^='ko'] .u-h2 {
+  letter-spacing: -0.02em;
 }
 
 /* EN은 명조를 쓰지 않는다 — 본문은 SF, 대제목만 New York */

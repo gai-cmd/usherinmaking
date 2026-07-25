@@ -5,7 +5,9 @@
 // "실제로 네트워크를 타는 부분"만 TODO(pipeline) seam으로 비워 둔다.
 // seam은 성공을 흉내내지 않고 DependencyUnavailableError를 던진다.
 
-import { DependencyUnavailableError, NotImplementedError } from '@/server/errors';
+import { del, put } from '@vercel/blob';
+import sharp from 'sharp';
+import { DependencyUnavailableError, ValidationError } from '@/server/errors';
 
 /* ============================ 규격 (확정) ============================ */
 
@@ -22,6 +24,53 @@ export const LOW_RES_MIN_LONG_EDGE = 2000;
 
 /** 인코딩 품질. AVIF는 같은 화질을 더 낮은 수치로 낸다. */
 export const RENDITION_QUALITY: Record<RenditionFormat, number> = { avif: 50, webp: 72 };
+
+/* ---------------- 업로드 허용 규격 ---------------- */
+//
+// 서버가 최종 판정자다. 클라이언트가 보낸 mime/크기는 참고값일 뿐이고,
+// 실제 통과 여부는 아래 상수와 sharp 판독 결과로만 정한다.
+
+/** 원본 1장 상한. 스마트폰 RAW 변환본(≈30MB)까지는 받고 그 이상은 거절한다. */
+export const MAX_UPLOAD_BYTES = 32 * 1024 * 1024;
+
+/** 허용 입력 포맷. HEIC는 sharp 빌드에 따라 없을 수 있어 넣지 않는다. */
+export const ALLOWED_UPLOAD_MIME = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'image/gif',
+] as const;
+export type AllowedUploadMime = (typeof ALLOWED_UPLOAD_MIME)[number];
+
+export function isAllowedUploadMime(mime: string | null | undefined): mime is AllowedUploadMime {
+  return Boolean(mime) && (ALLOWED_UPLOAD_MIME as readonly string[]).includes(mime!);
+}
+
+/** mime → 원본 확장자. 스토리지 키를 만들 때만 쓴다. */
+export function extensionForMime(mime: string): string {
+  const map: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/avif': 'avif',
+    'image/gif': 'gif',
+  };
+  return map[mime] ?? 'bin';
+}
+
+/** 확장자 → Content-Type. storeOriginal이 키만 받으므로 여기서 되돌린다. */
+function mimeForExtension(ext: string): string {
+  const map: Record<string, string> = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    avif: 'image/avif',
+    gif: 'image/gif',
+  };
+  return map[ext.toLowerCase()] ?? 'application/octet-stream';
+}
 
 /** Photo.variants(Json)의 형태. 폭 → URL. */
 export type VariantMap = Record<RenditionFormat, Partial<Record<`${RenditionWidth}`, string>>>;
@@ -241,42 +290,155 @@ export async function fetchInstagramMedia(creds: InstagramCredentials): Promise<
   return out;
 }
 
-/** TODO(pipeline): 최대 해상도 원본 다운로드. */
-export async function downloadOriginal(_mediaUrl: string): Promise<ArrayBuffer> {
-  throw new DependencyUnavailableError('원본 다운로드가 연결되지 않았습니다.', {
-    seam: 'downloadOriginal',
-  });
+/** 스토리지 토큰 확인. 없으면 "저장된 척"이 아니라 503으로 끊는다. */
+export function isBlobConfigured(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+function requireBlobToken(seam: string): string {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) {
+    throw new DependencyUnavailableError(
+      '오브젝트 스토리지가 연결되지 않았습니다 (BLOB_READ_WRITE_TOKEN 미설정).',
+      { seam },
+    );
+  }
+  return token;
+}
+
+/**
+ * 원격 원본을 내려받는다. 인스타 수집 경로가 쓴다.
+ * 상한을 넘는 응답은 통째로 메모리에 올리기 전에 끊는다.
+ */
+export async function downloadOriginal(mediaUrl: string): Promise<ArrayBuffer> {
+  const res = await fetch(mediaUrl, { cache: 'no-store' });
+  if (!res.ok) {
+    throw new DependencyUnavailableError(`원본 다운로드 실패 (HTTP ${res.status}).`, {
+      seam: 'downloadOriginal',
+      status: res.status,
+    });
+  }
+
+  const declared = Number(res.headers.get('content-length') ?? '0');
+  if (declared > MAX_UPLOAD_BYTES) {
+    throw new ValidationError('원본이 허용 크기를 넘었습니다.', {
+      seam: 'downloadOriginal',
+      limitBytes: MAX_UPLOAD_BYTES,
+    });
+  }
+
+  const bytes = await res.arrayBuffer();
+  if (bytes.byteLength > MAX_UPLOAD_BYTES) {
+    // content-length가 없거나 거짓말인 경우가 있어 실측으로 한 번 더 막는다.
+    throw new ValidationError('원본이 허용 크기를 넘었습니다.', {
+      seam: 'downloadOriginal',
+      limitBytes: MAX_UPLOAD_BYTES,
+    });
+  }
+  return bytes;
 }
 
 /**
  * 내려받은 바이트에서 실제 픽셀 크기를 잰다.
- * Graph API가 width/height를 주지 않으므로, 저해상도 판정과 파생본 계획은 이 값에 의존한다.
- * TODO(pipeline): sharp metadata() 등으로 연결.
+ * 클라이언트가 보낸 값을 믿지 않는 이유: 저해상도 판정과 파생본 계획이 전부 이 값에 걸려 있다.
  */
 export async function probeImageDimensions(
-  _bytes: ArrayBuffer,
+  bytes: ArrayBuffer,
 ): Promise<{ width: number; height: number }> {
-  throw new DependencyUnavailableError('이미지 크기 판독기가 연결되지 않았습니다.', {
-    seam: 'probeImageDimensions',
-  });
+  let meta;
+  try {
+    meta = await sharp(Buffer.from(bytes)).metadata();
+  } catch (cause) {
+    // sharp가 못 읽으면 이미지가 아니거나 깨진 파일이다 — 저장 전에 끊는다.
+    throw new ValidationError('이미지를 읽을 수 없습니다. 파일이 손상되었을 수 있습니다.', {
+      seam: 'probeImageDimensions',
+      reason: cause instanceof Error ? cause.message : 'unknown',
+    });
+  }
+
+  // EXIF 회전이 걸린 사진은 metadata의 width/height가 회전 전 값이다.
+  // 서빙되는 것은 회전 후이므로 여기서 뒤집어 실제로 보이는 치수를 돌려준다.
+  const rotated = typeof meta.orientation === 'number' && meta.orientation >= 5;
+  const width = rotated ? meta.height : meta.width;
+  const height = rotated ? meta.width : meta.height;
+
+  if (!width || !height) {
+    throw new ValidationError('이미지 크기를 판독하지 못했습니다.', {
+      seam: 'probeImageDimensions',
+    });
+  }
+  return { width, height };
 }
 
-/** TODO(pipeline): 오브젝트 스토리지(S3 / R2 / Vercel Blob) 업로드. */
-export async function storeOriginal(_key: string, _bytes: ArrayBuffer): Promise<string> {
-  throw new DependencyUnavailableError('오브젝트 스토리지가 연결되지 않았습니다.', {
-    seam: 'storeOriginal',
+/** 오브젝트 스토리지(Vercel Blob) 업로드. 반환값이 공개 URL이다. */
+export async function storeOriginal(key: string, bytes: ArrayBuffer): Promise<string> {
+  const token = requireBlobToken('storeOriginal');
+  const ext = key.split('.').pop() ?? '';
+
+  const blob = await put(key, Buffer.from(bytes), {
+    access: 'public',
+    token,
+    contentType: mimeForExtension(ext),
+    // 키를 우리가 만들므로 임의 접미사를 붙이지 않는다 — 같은 사진을 다시 올리면 덮어쓴다.
+    addRandomSuffix: false,
+    allowOverwrite: true,
   });
+  return blob.url;
 }
 
 /**
- * TODO(pipeline): sharp 등으로 AVIF / WebP 3단계 재인코딩 후 업로드.
- * 만들 목록 자체는 planRenditions가 이미 확정한다 — 여기서는 실제 인코딩만 담당한다.
+ * AVIF / WebP 다중 폭 재인코딩 후 업로드.
+ * 만들 목록 자체는 planRenditions가 확정한다 — 여기서는 실제 인코딩과 저장만 담당한다.
  */
 export async function encodeRenditions(
-  _bytes: ArrayBuffer,
-  _plan: Rendition[],
+  bytes: ArrayBuffer,
+  plan: Rendition[],
 ): Promise<VariantMap> {
-  throw new NotImplementedError('이미지 재인코딩(AVIF / WebP)');
+  const token = requireBlobToken('encodeRenditions');
+  const source = Buffer.from(bytes);
+  const map = emptyVariants();
+
+  // 폭이 큰 것부터 순서대로. 병렬로 돌리면 서버리스 메모리 한도를 넘기 쉬워 직렬로 둔다.
+  for (const r of plan) {
+    const pipeline = sharp(source)
+      // EXIF 회전을 먼저 굽는다. 이후 리사이즈 치수가 눈에 보이는 방향과 일치한다.
+      .rotate()
+      .resize({ width: r.width, withoutEnlargement: true });
+
+    const encoded =
+      r.format === 'avif'
+        ? await pipeline.avif({ quality: RENDITION_QUALITY.avif }).toBuffer()
+        : await pipeline.webp({ quality: RENDITION_QUALITY.webp }).toBuffer();
+
+    const blob = await put(r.key, encoded, {
+      access: 'public',
+      token,
+      contentType: `image/${r.format}`,
+      addRandomSuffix: false,
+      allowOverwrite: true,
+    });
+    map[r.format][`${r.width}`] = blob.url;
+  }
+
+  return map;
+}
+
+/**
+ * 업로드된 자산 삭제. 원본과 파생본을 함께 지운다.
+ * 이미 없는 URL은 오류가 아니다 — 목록에서 지우는 것이 목적이므로 조용히 넘어간다.
+ */
+export async function deleteStored(urls: string[]): Promise<void> {
+  if (urls.length === 0) return;
+  const token = requireBlobToken('deleteStored');
+  await del(urls, { token });
+}
+
+/** VariantMap 안의 모든 파생본 URL. 삭제할 때 쓴다. */
+export function variantUrls(variants: VariantMap | null | undefined): string[] {
+  if (!variants) return [];
+  return RENDITION_FORMATS.flatMap((f) => Object.values(variants[f] ?? {})).filter(
+    (u): u is string => typeof u === 'string' && u.length > 0,
+  );
 }
 
 export type CategorySuggestion = { taxonomyKey: string; termSlug: string; score: number };

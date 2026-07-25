@@ -11,3 +11,4 @@
 {"timestamp":"2026-07-25T17:22:43Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 2\n=== CONTROL: a symbol I know I use (listPhotos) — grep must find it ===\nugrep: warning: src/app/admin/inquiries src/app/admin/plans src/app/admin/taxonomy src/app/admin/seo src/server/inqu…","source":"tool:Bash"}
 {"timestamp":"2026-07-25T17:28:11Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 143\nCommand timed out after 2m 0s","source":"tool:Bash"}
 {"timestamp":"2026-07-25T17:30:24Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 143\nCommand timed out after 2m 0s","source":"tool:Bash"}
+{"timestamp":"2026-07-25T18:45:12Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 1\n파싱 실패: Unexpected token ';'","source":"tool:Bash"}

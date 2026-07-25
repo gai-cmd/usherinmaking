@@ -17,8 +17,8 @@
 .lead {
   margin-top: 14px;
   max-width: 64ch;
-  font-size: 13.5px;
-  line-height: 2.1;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
   color: var(--muted);
 }
 

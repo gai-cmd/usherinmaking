@@ -10,9 +10,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Prisma 7부터 접속 URL은 스키마가 아니라 prisma.config.ts 와
+// PrismaClient 어댑터가 들고 있다. 여기에는 provider만 남는다.
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 /* ============================ 사진 ============================ */
@@ -226,6 +227,78 @@ model JournalPost {
 
   @@unique([slug, locale])
   @@index([locale, publishedAt])
+}
+
+/* ======================= 페이지 콘텐츠 (CMS) ======================= */
+
+/// 페이지 문구의 덮어쓰기 레이어.
+///
+/// 원본 카피는 src/content/* 와 각 페이지의 content.ts 에 그대로 남는다.
+/// 이 테이블에 행이 있으면 그 값이 이기고, 없으면 코드의 기본값이 나간다.
+/// 통째로 DB로 옮기지 않는 이유: 행이 하나 비면 화면이 빈칸이 되는 상태를 만들지 않기 위해서다.
+model PageContent {
+  id String @id @default(cuid())
+
+  /// 페이지 키 — home / studio / location / dress / plan / photographer / journal / gallery / contact
+  page   String
+  /// 페이지 안에서의 자리. 코드의 슬롯 이름과 1:1 (예: hero.location.title, lead.body)
+  slot   String
+  locale String // ja | en | ko
+
+  value String
+
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([page, slot, locale])
+  @@index([page, locale])
+}
+
+/// 이미지 슬롯. 페이지의 특정 자리에 어떤 이미지를 걸지.
+///
+/// Photo(인스타 수집분)와 분리한 이유: 히어로·세트컷처럼 "이 자리에 이 사진"인 것과,
+/// 갤러리처럼 "모아서 고르는" 것은 수명주기가 다르다.
+model PageImage {
+  id String @id @default(cuid())
+
+  page String
+  slot String
+
+  /// 스토리지 공개 URL. 로컬 /images/* 경로도 그대로 넣을 수 있다.
+  url    String
+  width  Int?
+  height Int?
+
+  /// { ja, en, ko } — 3개 언어 모두 있어야 게시로 본다.
+  alt Json
+
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([page, slot])
+  @@index([page])
+}
+
+/// 업로드된 미디어 원본. 관리자가 올린 것과 인스타에서 수집한 것이 함께 들어온다.
+model MediaAsset {
+  id String @id @default(cuid())
+
+  url      String  @unique
+  pathname String?
+  mimeType String?
+  size     Int?
+  width    Int?
+  height   Int?
+
+  /// manual | instagram
+  source     String  @default("manual")
+  uploadedBy String?
+
+  createdAt DateTime @default(now())
+
+  @@index([source, createdAt])
 }
 
 /* ============================ 관리자 ============================ */

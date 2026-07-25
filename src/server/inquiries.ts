@@ -2,6 +2,7 @@ import type { Locale } from '@/lib/i18n';
 import { LOCALES } from '@/lib/i18n';
 
 import { NotImplementedError } from '@/server/errors';
+import { isDatabaseConfigured, prisma } from '@/server/db';
 import type { CreateFaqInput, Faq, FaqPage, L10n } from '@/server/faq';
 
 /**
@@ -210,40 +211,94 @@ function toListItem(row: SeedInquiry): InquiryListItem {
 /* 읽기                                                                */
 /* ------------------------------------------------------------------ */
 
+/**
+ * DB가 붙어 있으면 DB가 원본이고, 아니면 시드로 화면을 유지한다.
+ * 시드를 남겨 두는 이유: DATABASE_URL이 빠진 환경에서 관리자가 빈 화면만 보는 것보다
+ * 예시 데이터라도 구조를 보여주는 편이 낫기 때문이다. 실데이터가 있으면 항상 DB가 이긴다.
+ */
+type DbInquiry = {
+  id: string; name: string; email: string; locale: string; shootType: string;
+  dates: string | null; people: string | null; message: string; status: string;
+  memo: string | null; promotedFaqId: string | null; createdAt: Date; repliedAt: Date | null;
+};
+
+function fromDb(row: DbInquiry): SeedInquiry {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    locale: row.locale as Locale,
+    shootType: row.shootType,
+    dates: row.dates,
+    people: row.people,
+    message: row.message,
+    status: row.status as InquiryStatus,
+    memo: row.memo,
+    promotedFaqId: row.promotedFaqId,
+    createdAt: row.createdAt,
+    repliedAt: row.repliedAt,
+    // 알림 실패 여부를 담을 칼럼이 아직 없다. 값을 지어내지 않고 false 로 둔다.
+    notifyFailed: false,
+  };
+}
+
 export async function listInquiries(filter: InquiryFilter = {}): Promise<InquiryListItem[]> {
-  // TODO(prisma): prisma.inquiry.findMany({ where, orderBy: { createdAt: 'desc' } })
   const days = filter.days ?? 30;
-  const since = Date.now() - days * 24 * 60 * 60 * 1000;
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  if (isDatabaseConfigured()) {
+    const rows = await prisma.inquiry.findMany({
+      where: {
+        createdAt: { gte: since },
+        ...(filter.status ? { status: filter.status } : {}),
+        ...(filter.locale ? { locale: filter.locale } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (rows.length > 0) return rows.map((r) => toListItem(fromDb(r as DbInquiry)));
+  }
 
   return SEED_INQUIRIES.filter((r) => {
     if (filter.status && r.status !== filter.status) return false;
     if (filter.locale && r.locale !== filter.locale) return false;
-    return r.createdAt.getTime() >= since;
+    return r.createdAt.getTime() >= since.getTime();
   })
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .map(toListItem);
 }
 
 export async function getInquiry(id: string): Promise<Inquiry | null> {
-  // TODO(prisma): prisma.inquiry.findUnique({ where: { id } })
-  const row = SEED_INQUIRIES.find((r) => r.id === id);
-  return row ? toInquiry(row) : null;
+  if (isDatabaseConfigured()) {
+    const row = await prisma.inquiry.findUnique({ where: { id } });
+    if (row) return toInquiry(fromDb(row as DbInquiry));
+  }
+  const seed = SEED_INQUIRIES.find((r) => r.id === id);
+  return seed ? toInquiry(seed) : null;
 }
 
 /** 상태 탭의 건수. 기간 필터와 무관하게 전체를 센다 — 탭이 문의를 숨기면 안 되기 때문이다. */
 export async function countByStatus(): Promise<Record<InquiryStatus, number>> {
-  // TODO(prisma): prisma.inquiry.groupBy({ by: ['status'], _count: true })
   const zero = Object.fromEntries(INQUIRY_STATUSES.map((s) => [s, 0])) as Record<
     InquiryStatus,
     number
   >;
+
+  if (isDatabaseConfigured()) {
+    const grouped = await prisma.inquiry.groupBy({ by: ['status'], _count: { _all: true } });
+    if (grouped.length > 0) {
+      for (const g of grouped) zero[g.status as InquiryStatus] = g._count._all;
+      return zero;
+    }
+  }
+
   for (const r of SEED_INQUIRIES) zero[r.status] += 1;
   return zero;
 }
 
 /** 알림은 실패했지만 레코드는 남아 있는 건. 대시보드에서 눈에 띄어야 한다. */
 export async function countNotifyFailed(): Promise<number> {
-  // TODO(prisma): 알림 결과를 ActivityLog 또는 전용 칼럼으로 옮긴 뒤 집계
+  // 스키마에 알림 결과 칼럼이 아직 없다. DB 모드에서는 셀 근거가 없으므로 0을 돌려준다.
+  if (isDatabaseConfigured()) return 0;
   return SEED_INQUIRIES.filter((r) => r.notifyFailed).length;
 }
 
@@ -302,21 +357,22 @@ export const REPLY_TEMPLATES: ReplyTemplate[] = [
 /* 쓰기 — 전부 미구현. 성공한 척하지 않는다.                             */
 /* ------------------------------------------------------------------ */
 
-export async function updateInquiryStatus(_id: string, _status: InquiryStatus): Promise<Inquiry> {
-  // TODO(prisma): prisma.inquiry.update({ where: { id }, data: { status } })
-  //               DONE 으로 넘어갈 때 repliedAt 을 함께 채운다.
-  throw new NotImplementedError('문의 상태 변경');
+export async function updateInquiryStatus(id: string, status: InquiryStatus): Promise<Inquiry> {
+  if (!isDatabaseConfigured()) throw new NotImplementedError('문의 상태 변경');
+  const row = await prisma.inquiry.update({ where: { id }, data: { status } });
+  return toInquiry(fromDb(row as DbInquiry));
 }
 
-export async function updateInquiryMemo(_id: string, _memo: string): Promise<Inquiry> {
-  // TODO(prisma): prisma.inquiry.update({ where: { id }, data: { memo } })
-  throw new NotImplementedError('문의 메모 저장');
+export async function updateInquiryMemo(id: string, memo: string): Promise<Inquiry> {
+  if (!isDatabaseConfigured()) throw new NotImplementedError('문의 메모 저장');
+  // 빈 문자열은 "메모 없음"이다 — 빈 문자열을 그대로 저장하면 목록에서 구분이 안 된다.
+  const row = await prisma.inquiry.update({
+    where: { id },
+    data: { memo: memo.trim() || null },
+  });
+  return toInquiry(fromDb(row as DbInquiry));
 }
 
-/**
- * 답장 발송. 메일 전송은 알림일 뿐이므로 실패해도 문의 레코드는 그대로 두고,
- * 실패 사실만 기록한다. 전송 성공을 문의 처리 완료와 동일시하지 않는다.
- */
 export async function sendReply(_id: string, _body: string): Promise<never> {
   // TODO(prisma): 발송 결과를 ActivityLog 에 남기고 status 를 WAITING/DONE 으로 이동
   // TODO(mail): 발송 자체는 별도 어댑터. 실패는 알림 실패일 뿐 문의 유실이 아니다.

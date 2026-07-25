@@ -242,3 +242,14 @@ dist-ssr/
 .firebase/
 .vercel
 .env*
+
+# ===========================================
+# Neon 통합이 설치한 에이전트 스킬 (도구 산출물, 앱 코드 아님)
+# ===========================================
+.agents/
+.claude/skills/neon
+.claude/skills/neon-postgres
+skills-lock.json
+
+# 에이전트가 만든 임시 검증 스크립트
+.probe/
