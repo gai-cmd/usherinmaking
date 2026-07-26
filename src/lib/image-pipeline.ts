@@ -241,20 +241,42 @@ export async function fetchInstagramMedia(creds: InstagramCredentials): Promise<
   return out;
 }
 
-/** 스토리지 토큰 확인. 없으면 "저장된 척"이 아니라 503으로 끊는다. */
+/**
+ * 스토리지 자격 증명 확인. 없으면 "저장된 척"이 아니라 503으로 끊는다.
+ *
+ * Vercel Blob 인증은 두 갈래다.
+ *
+ *  1. OIDC — 이 프로젝트의 실제 설정이다. 플랫폼이 VERCEL_OIDC_TOKEN 을 짧은 주기로
+ *     발급·교체하고, SDK 가 BLOB_STORE_ID 와 짝지어 알아서 쓴다. 정적 비밀이 없어 더 안전하다.
+ *  2. BLOB_READ_WRITE_TOKEN — 장수명 정적 토큰. Vercel 밖에서 도는 코드용이다.
+ *
+ * 여기서 둘 다 인정하는 이유: 이 프로젝트는 OIDC 로 붙어 있어서 정적 토큰이 빈 문자열인데,
+ * 예전 코드가 정적 토큰만 요구하는 바람에 OIDC 경로를 스스로 막고 업로드가 전 환경에서
+ * 꺼져 있었다. 실제로 스토어에 파일이 한 개도 없었다.
+ */
 export function isBlobConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  if (process.env.BLOB_READ_WRITE_TOKEN) return true;
+  return Boolean(process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID);
 }
 
-function requireBlobToken(seam: string): string {
+/**
+ * SDK 호출에 얹을 인증 옵션.
+ *
+ * 정적 토큰이 있으면 그것을 넘기고, 없으면 아무것도 넘기지 않는다 —
+ * 그때 SDK 가 환경변수에서 OIDC 자격 증명을 스스로 찾는다.
+ * 둘 다 없으면 저장을 시도하지 않고 503 으로 끊는다.
+ */
+function blobAuth(seam: string): { token?: string } {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) {
+  if (token) return { token };
+
+  if (!isBlobConfigured()) {
     throw new DependencyUnavailableError(
-      '오브젝트 스토리지가 연결되지 않았습니다 (BLOB_READ_WRITE_TOKEN 미설정).',
+      '오브젝트 스토리지가 연결되지 않았습니다 (BLOB_READ_WRITE_TOKEN 도, OIDC 자격 증명도 없습니다).',
       { seam },
     );
   }
-  return token;
+  return {};
 }
 
 /**
@@ -323,12 +345,12 @@ export async function probeImageDimensions(
 
 /** 오브젝트 스토리지(Vercel Blob) 업로드. 반환값이 공개 URL이다. */
 export async function storeOriginal(key: string, bytes: ArrayBuffer): Promise<string> {
-  const token = requireBlobToken('storeOriginal');
+  const auth = blobAuth('storeOriginal');
   const ext = key.split('.').pop() ?? '';
 
   const blob = await put(key, Buffer.from(bytes), {
     access: 'public',
-    token,
+    ...auth,
     contentType: mimeForExtension(ext),
     // 키를 우리가 만들므로 임의 접미사를 붙이지 않는다 — 같은 사진을 다시 올리면 덮어쓴다.
     addRandomSuffix: false,
@@ -345,7 +367,7 @@ export async function encodeRenditions(
   bytes: ArrayBuffer,
   plan: Rendition[],
 ): Promise<VariantMap> {
-  const token = requireBlobToken('encodeRenditions');
+  const auth = blobAuth('encodeRenditions');
   const source = Buffer.from(bytes);
   const map = emptyVariants();
 
@@ -363,7 +385,7 @@ export async function encodeRenditions(
 
     const blob = await put(r.key, encoded, {
       access: 'public',
-      token,
+      ...auth,
       contentType: `image/${r.format}`,
       addRandomSuffix: false,
       allowOverwrite: true,
@@ -380,8 +402,8 @@ export async function encodeRenditions(
  */
 export async function deleteStored(urls: string[]): Promise<void> {
   if (urls.length === 0) return;
-  const token = requireBlobToken('deleteStored');
-  await del(urls, { token });
+  const auth = blobAuth('deleteStored');
+  await del(urls, auth);
 }
 
 /**
@@ -391,12 +413,12 @@ export async function deleteStored(urls: string[]): Promise<void> {
  * variants 칼럼이 없어서, URL 목록으로 지우면 파생본이 스토리지에 남는다.
  */
 export async function deleteStoredPrefix(prefix: string): Promise<number> {
-  const token = requireBlobToken('deleteStoredPrefix');
-  const { blobs } = await list({ prefix, token });
+  const auth = blobAuth('deleteStoredPrefix');
+  const { blobs } = await list({ prefix, ...auth });
   if (blobs.length === 0) return 0;
   await del(
     blobs.map((b) => b.url),
-    { token },
+    auth,
   );
   return blobs.length;
 }

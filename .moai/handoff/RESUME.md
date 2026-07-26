@@ -127,12 +127,27 @@ RESEND_API_KEY          문의 알림 메일 (없어도 저장은 됨)
 
 ## 남은 일 (우선순위)
 
-1. **Blob 실업로드** — `vercel env pull` 을 development·preview·production 세 환경 모두에서 돌려 봤지만
-   `BLOB_READ_WRITE_TOKEN` 은 전부 **빈 값**으로 내려온다(`vercel env ls` 에는 Preview·Production 에
-   Encrypted 로 존재한다고 나온다 — 통합이 관리하는 시크릿이라 pull 이 복호화하지 않는 것으로 보인다).
-   즉 **로컬에서는 얻을 방법이 없다.** 프로덕션 런타임에 실제 값이 들어가는지도 관리자 화면이
-   SSO 미설정으로 닫혀 있어 확인할 수 없다. 사진 전량 교체 전에 이걸 먼저 풀어야 한다 —
-   Vercel 대시보드에서 토큰을 직접 복사해 `.env.local` 에 넣는 것이 가장 빠르다
+1. **Blob 업로드 — 원인 규명 완료, 남은 것은 설정 토글 하나**
+
+   `BLOB_READ_WRITE_TOKEN` 이 빈 값인 것은 실수가 아니라 **이 프로젝트가 OIDC 방식으로 붙어 있기
+   때문**이다. Vercel 문서 기준 OIDC 가 기본이고 권장이며, SDK 가 `VERCEL_OIDC_TOKEN` + `BLOB_STORE_ID`
+   를 자동으로 읽는다. 둘 다 `.env.local` 에 이미 들어 있다.
+
+   문제는 코드였다. `isBlobConfigured()` 가 정적 토큰만 보고, `put()` 에 `token` 을 강제로 넘겨
+   OIDC 경로를 스스로 막고 있었다. 그래서 **전 환경에서 업로드가 꺼져 있었다** — 스토어 파일 수 0개가 그 증거다.
+   지금은 둘 다 인정하도록 고쳤다(정적 토큰이 있으면 그것, 없으면 SDK 가 OIDC 를 찾는다).
+
+   고친 뒤 로컬에서 실제 업로드를 시도하니 SDK 가 OIDC 로 요청을 보냈고 스토어가 이렇게 거부했다:
+   `OIDC is enabled for this project, but not for the "development" environment`.
+   즉 **프로덕션·프리뷰는 열려 있고 development 만 닫혀 있다.**
+
+   → 로컬 검증을 열려면: Blob 스토어 → Projects 탭 → Connect to Project 에서 **Development 환경을
+   포함**해 연결한 뒤 `vercel env pull .env.local`. 스토어 대시보드:
+   `https://vercel.com/gai-cmds-projects/~/stores/blob/store_1TWhNaMSDw7uymz2`
+
+   **아직 확인 못 한 것**: 업로드가 실제로 성공하는 것을 어느 환경에서도 보지 못했다.
+   프로덕션은 OIDC 가 열려 있다고 스토어가 말하지만, 관리자 화면이 SSO 미설정으로 닫혀 있어
+   업로드를 눌러 볼 수가 없다. "코드 경로가 열렸다"까지가 확인된 사실이다.
 2. **관리자 로그인** — `AUTH_GOOGLE_ID` / `AUTH_SECRET` / `ADMIN_ALLOWED_EMAILS` 는 **어느 환경에도
    아예 없다**(`vercel env ls` 목록에 없음, 미생성). 구글 클라우드 콘솔에서 OAuth 클라이언트를
    만들어야 하는데 그건 계정 소유자만 할 수 있다. 그래서 관리자 화면을 사람이 열어본 적이 없고,
