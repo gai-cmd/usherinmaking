@@ -7,6 +7,9 @@ import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
 import { LOCATION_PLANS, LOCATION_NOTES } from '@/content/site';
 import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
+import { pickImage } from '@/lib/image-slot';
+import { getPageCopy, toLines } from '@/server/page-content';
+import { resolvePageImages } from '@/server/page-images';
 import {
   ARCHIVE,
   CATEGORIES,
@@ -34,17 +37,18 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
+  const text = await getPageCopy('location', locale);
 
   return {
-    title: META.title[locale],
-    description: META.description[locale],
+    title: text['meta.title'],
+    description: text['meta.description'],
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'location')}`,
       languages: alternates('location'),
     },
     openGraph: {
-      title: META.title[locale],
-      description: META.description[locale],
+      title: text['meta.title'],
+      description: text['meta.description'],
       url: `${SITE_URL}${path(locale, 'location')}`,
       images: [{ url: HERO.image }],
     },
@@ -55,11 +59,16 @@ export default async function LocationPage({ params }: { params: Promise<{ local
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
+  const [text, images] = await Promise.all([
+    getPageCopy('location', locale),
+    resolvePageImages('location'),
+  ]);
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
-    name: META.title[locale],
-    description: META.description[locale],
+    name: text['meta.title'],
+    description: text['meta.description'],
     serviceType: 'Outdoor location photography',
     url: `${SITE_URL}${path(locale, 'location')}`,
     areaServed: { '@type': 'Place', name: 'Okinawa, Japan' },
@@ -92,7 +101,7 @@ export default async function LocationPage({ params }: { params: Promise<{ local
         <div className={s.heroText}>
           <p className={s.heroEyebrow}>{HERO.eyebrow}</p>
           <p className={`u-display ${s.heroTitle}`}>{HERO.title}</p>
-          {HERO.sub[locale] && <p className={s.heroSub}>{HERO.sub[locale]}</p>}
+          {text['hero.sub'] && <p className={s.heroSub}>{text['hero.sub']}</p>}
         </div>
       </header>
 
@@ -100,18 +109,18 @@ export default async function LocationPage({ params }: { params: Promise<{ local
       <section className={`u-section ${s.leadSection}`}>
         <div className="u-wrap">
           <h1 className={`u-lead ${s.lead}`}>
-            {LEAD[locale].map((line, i) => (
+            {toLines(text['lead']).map((line, i) => (
               <span key={line}>
                 {line}
-                {i < LEAD[locale].length - 1 && <br />}
+                {i < toLines(text['lead']).length - 1 && <br />}
               </span>
             ))}
           </h1>
           <p className={`u-body ${s.leadNote}`}>
-            {LEAD_NOTE[locale].map((line, i) => (
+            {toLines(text['lead.note']).map((line, i) => (
               <span key={line}>
                 {line}
-                {i < LEAD_NOTE[locale].length - 1 && <br />}
+                {i < toLines(text['lead.note']).length - 1 && <br />}
               </span>
             ))}
           </p>
@@ -121,33 +130,44 @@ export default async function LocationPage({ params }: { params: Promise<{ local
       {/* 지역이 아니라 촬영 종류로 나눈다 */}
       <Section
         label="CATEGORY"
-        title={CATEGORY.title[locale]}
-        aside={CATEGORY.lead[locale] || undefined}
+        title={text['category.title']}
+        aside={text['category.lead'] || undefined}
       >
         <ul className={s.categories}>
-          {CATEGORIES.map((category) => (
+          {CATEGORIES.map((category) => {
+            const image = pickImage(
+              images,
+              `category.${category.slug}`,
+              locale,
+              category.image,
+              category.alt[locale],
+            );
+            return (
             <li key={category.slug} className={s.category}>
               <Link
                 href={path(locale, 'gallery', 'location', category.slug)}
                 className={s.categoryLink}
                 data-tap
               >
+                {image && (
                 <span className={`u-arch-lg ${s.categoryFigure}`}>
                   <Image
-                    src={category.image}
-                    alt={category.alt[locale]}
+                    src={image.src}
+                    alt={image.alt}
                     fill
                     sizes="(max-width: 767px) 100vw, 50vw"
                     className={s.categoryImage}
                   />
                 </span>
+                )}
                 <span className={s.categoryEyebrow}>{category.eyebrow}</span>
                 <span className={s.categoryTitle}>{category.title[locale]}</span>
                 <span className={s.categoryBody}>{category.body[locale]}</span>
                 <span className={s.categoryCta}>{category.link[locale]}</span>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </Section>
 
@@ -173,8 +193,8 @@ export default async function LocationPage({ params }: { params: Promise<{ local
           {/* 월별 아카이브 — 건수 같은 근거 없는 수치는 넣지 않는다 */}
           <div className={s.archive}>
             <p className="u-label">ARCHIVE</p>
-            <h2 className={`u-h2 ${s.archiveTitle}`}>{ARCHIVE.title[locale]}</h2>
-            <p className={s.archiveLead}>{ARCHIVE.lead[locale]}</p>
+            <h2 className={`u-h2 ${s.archiveTitle}`}>{text['archive.title']}</h2>
+            <p className={s.archiveLead}>{text['archive.lead']}</p>
 
             <ul className={s.themes}>
               {ARCHIVE.themes.map((theme) => (
@@ -215,10 +235,10 @@ export default async function LocationPage({ params }: { params: Promise<{ local
 
       <Section
         label="PLAN"
-        title={PLANS.title[locale]}
+        title={text['plans.title']}
         aside={
           <Link href={path(locale, 'plan')} className="u-btn" data-tap>
-            {PLANS.link[locale]}
+            {text['plans.link']}
           </Link>
         }
       >
@@ -237,7 +257,7 @@ export default async function LocationPage({ params }: { params: Promise<{ local
 
       <Section
         label={WORKS.label[locale]}
-        title={WORKS.title[locale]}
+        title={text['works.title']}
         alt
         aside={
           <Link href={path(locale, 'gallery', 'location')} className="u-link" data-tap>

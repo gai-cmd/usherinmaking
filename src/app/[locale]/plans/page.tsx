@@ -19,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale) || ROUTE_SEGMENT.plan[locale] !== 'plans') notFound();
-  return planMetadata(locale);
+  return await planMetadata(locale);
 }
 
 export default async function PlansPage({ params }: { params: Promise<{ locale: string }> }) {

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { path, type Locale } from '@/lib/i18n';
+import { getPageCopy } from '@/server/page-content';
 import { PUBLISHED_PHOTOS, filterPhotos } from '@/content/photos';
 import { selectionSegments, termsFor, type Selection } from '@/content/taxonomy';
 import { FilterBar } from './FilterBar';
@@ -26,7 +27,7 @@ function placeCounts(locale: Locale, selection: Selection): Record<string, numbe
  * 목록 본문. /gallery 와 /gallery/[...filter] 가 같은 화면을 쓰고,
  * 다른 것은 선택 상태와 canonical 뿐이다.
  */
-export function GalleryView({
+export async function GalleryView({
   locale,
   selection,
   page,
@@ -35,6 +36,7 @@ export function GalleryView({
   selection: Selection;
   page: number;
 }) {
+  const text = await getPageCopy('gallery', locale);
   const segments = selectionSegments(selection);
   const photos = filterPhotos(segments);
   const shown = photos.slice(0, PAGE_SIZE * page);
@@ -46,9 +48,9 @@ export function GalleryView({
       <header className={`u-section u-center ${s.hero}`}>
         <div className="u-wrap">
           <p className="u-label">{GALLERY.eyebrow}</p>
-          <h1 className={`u-display ${s.title}`}>{GALLERY.title[locale]}</h1>
-          <p className={`u-lead ${s.definition}`}>{GALLERY.definition[locale]}</p>
-          <p className={`u-body ${s.lead}`}>{GALLERY.lead[locale]}</p>
+          <h1 className={`u-display ${s.title}`}>{text['title']}</h1>
+          <p className={`u-lead ${s.definition}`}>{text['definition']}</p>
+          <p className={`u-body ${s.lead}`}>{text['lead']}</p>
         </div>
       </header>
 
@@ -66,7 +68,7 @@ export function GalleryView({
         {shown.length > 0 ? (
           <PhotoGrid locale={locale} photos={shown} columns={5} priorityCount={5} />
         ) : (
-          <p className={`u-body ${s.empty}`}>{GALLERY.empty[locale]}</p>
+          <p className={`u-body ${s.empty}`}>{text['empty']}</p>
         )}
 
         {hasMore && (
@@ -77,7 +79,7 @@ export function GalleryView({
           </p>
         )}
 
-        <p className={`u-meta ${s.note}`}>{GALLERY.filterNote[locale]}</p>
+        <p className={`u-meta ${s.note}`}>{text['filterNote']}</p>
       </div>
     </>
   );

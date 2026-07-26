@@ -4,7 +4,6 @@ import {
   TAXONOMIES,
   TERMS,
   staticFilterCombinations,
-  termsFor,
 } from '@/content/taxonomy';
 import type { Locale } from '@/lib/i18n';
 import { LOCALES, path } from '@/lib/i18n';

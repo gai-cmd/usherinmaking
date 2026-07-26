@@ -13,6 +13,7 @@ import {
 } from '@/content/journal';
 import { ANNIVERSARY_PLANS, LOCATION_PLANS, STUDIO_PLANS, type Plan } from '@/content/site';
 import { SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { getPageCopy } from '@/server/page-content';
 import s from './page.module.css';
 
 export function generateStaticParams() {
@@ -65,6 +66,7 @@ export default async function JournalPostPage({
   if (!post) notFound();
 
   const ui = JOURNAL_UI[locale];
+  const text = await getPageCopy('journal', locale);
   const plan = planByCode(post.planCode);
   const related = relatedPosts(locale, post.slug, 3);
 
@@ -172,7 +174,7 @@ export default async function JournalPostPage({
         <section className={s.planCta}>
           <div className={s.planInner}>
             <p className={s.planText}>
-              {ui.planLead}
+              {text['planLead']}
               <br />
               <strong className={s.planName}>
                 {plan.badge} {plan.title[locale]}{' '}

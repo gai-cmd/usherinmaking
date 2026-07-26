@@ -9,7 +9,16 @@ import s from './EnquiryForm.module.css';
 type Status = 'idle' | 'sending' | 'sent' | 'invalid' | 'failed';
 
 /** 문의 폼. 상호작용이 필요한 이 부분만 클라이언트 컴포넌트다. */
-export function EnquiryForm({ locale }: { locale: Locale }) {
+export function EnquiryForm({
+  locale,
+  privacyNote,
+  submitLabel,
+}: {
+  locale: Locale;
+  /** 관리자가 고칠 수 있는 문구. 없으면 코드 기본값을 쓴다. */
+  privacyNote?: string;
+  submitLabel?: string;
+}) {
   const [sessionType, setSessionType] = useState<SessionTypeValue>(SESSION_TYPES[0].value);
   const [replyIn, setReplyIn] = useState<Locale>(locale);
   const [status, setStatus] = useState<Status>('idle');
@@ -157,7 +166,7 @@ export function EnquiryForm({ locale }: { locale: Locale }) {
       </label>
 
       <p className={s.privacy}>
-        {CONTACT.privacyNote[locale]} (
+        {privacyNote ?? CONTACT.privacyNote[locale]} (
         <Link href={path(locale, 'privacy')} className="u-link">
           {CONTACT.privacyLink[locale]}
         </Link>
@@ -166,7 +175,7 @@ export function EnquiryForm({ locale }: { locale: Locale }) {
 
       <div className={s.submitRow}>
         <button type="submit" className="u-btn-dark" disabled={status === 'sending'} data-tap>
-          {status === 'sending' ? CONTACT.sending[locale] : CONTACT.submit[locale]}
+          {status === 'sending' ? CONTACT.sending[locale] : (submitLabel ?? CONTACT.submit[locale])}
         </button>
       </div>
 

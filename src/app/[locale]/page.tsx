@@ -11,6 +11,9 @@ import { HomeFaq } from '@/components/home/HomeFaq';
 import { NaverNotice } from '@/components/home/NaverNotice';
 import { StickyCta } from '@/components/home/StickyCta';
 import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { pickImage } from '@/lib/image-slot';
+import { getPageCopy, toLines } from '@/server/page-content';
+import { resolvePageImages } from '@/server/page-images';
 import {
   ANNIVERSARY_PLANS,
   LOCATION_NOTES,
@@ -36,10 +39,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const { title, description } = HOME[locale].meta;
+  const text = await getPageCopy('home', locale);
+  const title = text['meta.title'];
+  const description = text['meta.description'];
 
   return {
-    title,
+    // layout 의 title.template 은 같은 세그먼트의 page 에는 적용되지 않는다(Next.js 사양).
+    // 홈만 브랜드 접미사가 빠지던 원인이라 여기서 직접 붙인다.
+    title: { absolute: `${title} | usherinmaking` },
     description,
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'home')}`,
@@ -113,6 +120,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   if (!isLocale(locale)) notFound();
 
   const copy = HOME[locale];
+  // 관리자가 건 사진을 한 번에 읽는다. 행이 없는 자리는 지금 쓰던 경로가 그대로 나온다.
+  // 세트 그리드는 스튜디오 페이지와 같은 사진이므로 그쪽 슬롯을 함께 읽는다 —
+  // 한 장을 갈아끼웠는데 홈에만 옛 사진이 남는 어긋남을 만들지 않기 위해서다.
+  const [text, images, studioImages] = await Promise.all([
+    // 관리자가 고친 문구. 손대지 않은 자리는 코드 기본값이 그대로 담겨 온다.
+    getPageCopy('home', locale),
+    resolvePageImages('home'),
+    resolvePageImages('studio'),
+  ]);
 
   return (
     <>
@@ -121,13 +137,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(locale)) }}
       />
 
-      <HeroGate locale={locale} />
+      <HeroGate locale={locale} images={images} text={text} />
 
       {/* 정의형 리드문 — 히어로 바로 아래 실제 텍스트로 두는 것이 AI 인용의 1차 표면 */}
       <section className={`u-section ${s.lead}`}>
         <div className="u-wrap">
           <h1 className="u-lead">
-            {copy.lead.headline.map((line, i) => (
+            {toLines(text['lead.headline']).map((line, i) => (
               <span key={line}>
                 {i > 0 && <br />}
                 {line}
@@ -135,7 +151,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             ))}
           </h1>
           <p className={`u-body ${s.leadSub}`}>
-            {copy.lead.sub.map((line, i) => (
+            {toLines(text['lead.sub']).map((line, i) => (
               <span key={line}>
                 {i > 0 && <br />}
                 {line}
@@ -148,7 +164,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* ---------- STUDIO PLAN ---------- */}
       <Section
         label={copy.studioPlans.label}
-        title={copy.studioPlans.title}
+        title={text['studioPlans.title']}
         aside={copy.studioPlans.aside}
       >
         <ul className={s.planGrid}>
@@ -175,7 +191,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </ul>
 
           <div className={s.optionFoot}>
-            <p className={s.footNote}>{copy.studioPlans.note}</p>
+            <p className={s.footNote}>{text['studioPlans.note']}</p>
             <p className={s.footActions}>
               <Link href={path(locale, 'plan')} className="u-btn" data-tap>
                 {copy.studioPlans.detail}
@@ -188,8 +204,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* ---------- 스튜디오 세트 ---------- */}
       <Section
         label={copy.sets.label}
-        title={copy.sets.title}
-        lead={copy.sets.lead}
+        title={text['sets.title']}
+        lead={text['sets.lead']}
         aside={
           <Link href={path(locale, 'studio')} className="u-link">
             {copy.sets.cta}
@@ -197,21 +213,32 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         }
       >
         <ul className={s.setGrid}>
-          {STUDIO_SETS.map((set) => (
-            <li key={set.slug}>
-              <span className={`u-arch ${s.setImage}`}>
-                <Image
-                  src={set.image}
-                  alt={set.title[locale]}
-                  fill
-                  sizes="(max-width: 767px) 50vw, 25vw"
-                  className={s.cover}
-                />
-              </span>
-              <span className={s.setTitle}>{set.title[locale]}</span>
-              <span className={s.setNote}>{set.note[locale]}</span>
-            </li>
-          ))}
+          {STUDIO_SETS.map((set) => {
+            const image = pickImage(
+              studioImages,
+              `set.${set.slug}`,
+              locale,
+              set.image,
+              set.title[locale],
+            );
+            return (
+              <li key={set.slug}>
+                {image && (
+                  <span className={`u-arch ${s.setImage}`}>
+                    <Image
+                      src={image.src}
+                      alt={image.alt}
+                      fill
+                      sizes="(max-width: 767px) 50vw, 25vw"
+                      className={s.cover}
+                    />
+                  </span>
+                )}
+                <span className={s.setTitle}>{set.title[locale]}</span>
+                <span className={s.setNote}>{set.note[locale]}</span>
+              </li>
+            );
+          })}
         </ul>
       </Section>
 
@@ -219,8 +246,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <Section
         alt
         label={copy.locationPlans.label}
-        title={copy.locationPlans.title}
-        lead={copy.locationPlans.lead}
+        title={text['locationPlans.title']}
+        lead={text['locationPlans.lead']}
         aside={copy.locationPlans.aside}
       >
         <ul className={s.locGrid}>
@@ -258,7 +285,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </Section>
 
       {/* ---------- 최근 작품 ---------- */}
-      <Section label={copy.works.label} title={copy.works.title} lead={copy.works.lead}>
+      <Section label={copy.works.label} title={text['works.title']} lead={text['works.lead']}>
         <RecentWorks locale={locale} />
       </Section>
 
@@ -277,7 +304,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <p className="u-label">{copy.photographer.label}</p>
           <p className={`u-h2 ${s.photographerName}`}>{copy.photographer.name}</p>
           <p className={s.photographerText}>
-            {copy.photographer.body.map((line, i) => (
+            {toLines(text['photographer.body']).map((line, i) => (
               <span key={line}>
                 {i > 0 && <br />}
                 {line}
@@ -296,7 +323,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {locale === NAVER_BLOG_NOTICE_LOCALE && <NaverNotice />}
 
       {/* ---------- FAQ ---------- */}
-      <Section alt label={copy.faq.label} title={copy.faq.title}>
+      <Section alt label={copy.faq.label} title={text['faq.title']}>
         <HomeFaq locale={locale} />
       </Section>
 

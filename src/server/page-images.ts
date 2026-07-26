@@ -175,8 +175,10 @@ export const PAGE_IMAGE_SLOTS: PageImageSlot[] = [
     slot: 'portrait',
     label: '포토그래퍼 인물컷',
     group: '포토그래퍼',
-    fallback: fallbackFor('/images/studio/IMG_0766.png'),
-    hint: '작가 소개 옆에 들어갑니다.',
+    // 작가 포트레이트는 아직 받지 못한 자산이다. 화면은 [ PORTRAIT ] 자리표시로 비워 두고 있고,
+    // 스튜디오 실내컷을 대신 걸면 "이 사람이 작가"라는 거짓 정보가 된다. 올릴 때까지 비운다.
+    fallback: null,
+    hint: '아직 사진이 없습니다. 올리면 자리표시 대신 이 사진이 나갑니다.',
   },
 ];
 

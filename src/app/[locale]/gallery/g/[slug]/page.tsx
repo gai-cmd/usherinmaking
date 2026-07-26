@@ -14,6 +14,7 @@ import {
   type Plan,
 } from '@/content/site';
 import { SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { getPageCopy } from '@/server/page-content';
 import s from './page.module.css';
 
 const ALL_PLANS: Plan[] = [...STUDIO_PLANS, ...LOCATION_PLANS, ...ANNIVERSARY_PLANS];
@@ -68,6 +69,8 @@ export default async function WorkDetailPage({
 
   const photo = findPhoto(slug);
   if (!photo) notFound();
+
+  const text = await getPageCopy('gallery', locale);
 
   const plan = planOf(photo);
   const moods = moodTermsOf(photo);
@@ -178,7 +181,7 @@ export default async function WorkDetailPage({
         </aside>
       </article>
 
-      <p className={`u-wrap u-meta ${s.domainNote}`}>{GALLERY.ownDomainNote[locale]}</p>
+      <p className={`u-wrap u-meta ${s.domainNote}`}>{text['ownDomainNote']}</p>
 
       {related.length > 0 && (
         <section className={`u-wrap ${s.related}`}>

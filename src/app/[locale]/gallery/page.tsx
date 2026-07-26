@@ -9,10 +9,11 @@ export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
 
+/** 다른 페이지와 같은 관례 — 키워드 + 로케일 구분자 + 오키나와를 담은 설명구. */
 const TITLE: Record<Locale, string> = {
-  ja: 'ギャラリー',
-  en: 'Gallery',
-  ko: '갤러리',
+  ja: 'ギャラリー ・ 沖縄の撮影作品',
+  en: 'Gallery — photo work in Okinawa',
+  ko: '갤러리 · 오키나와 촬영 작품',
 };
 
 export async function generateMetadata({

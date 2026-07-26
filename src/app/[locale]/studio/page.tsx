@@ -7,6 +7,9 @@ import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
 import { STUDIO_SETS, STUDIO_PLANS, STUDIO_INFO, TBC } from '@/content/site';
 import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { pickImage } from '@/lib/image-slot';
+import { getPageCopy, toLines } from '@/server/page-content';
+import { resolvePageImages } from '@/server/page-images';
 import {
   ACCESS,
   FLOW,
@@ -32,17 +35,18 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
+  const text = await getPageCopy('studio', locale);
 
   return {
-    title: META.title[locale],
-    description: META.description[locale],
+    title: text['meta.title'],
+    description: text['meta.description'],
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'studio')}`,
       languages: alternates('studio'),
     },
     openGraph: {
-      title: META.title[locale],
-      description: META.description[locale],
+      title: text['meta.title'],
+      description: text['meta.description'],
       url: `${SITE_URL}${path(locale, 'studio')}`,
       images: [{ url: HERO.image }],
     },
@@ -60,12 +64,16 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
   if (!isLocale(locale)) notFound();
 
   const address = resolvedAddress(locale);
+  const [text, images] = await Promise.all([
+    getPageCopy('studio', locale),
+    resolvePageImages('studio'),
+  ]);
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
-    name: META.title[locale],
-    description: META.description[locale],
+    name: text['meta.title'],
+    description: text['meta.description'],
     serviceType: 'Indoor wedding photography',
     url: `${SITE_URL}${path(locale, 'studio')}`,
     areaServed: { '@type': 'Place', name: 'Okinawa, Japan' },
@@ -98,7 +106,7 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
         <div className={s.heroText}>
           <p className={s.heroEyebrow}>{HERO.eyebrow}</p>
           <p className={`u-display ${s.heroTitle}`}>{HERO.title}</p>
-          {HERO.sub[locale] && <p className={s.heroSub}>{HERO.sub[locale]}</p>}
+          {text['hero.sub'] && <p className={s.heroSub}>{text['hero.sub']}</p>}
         </div>
       </header>
 
@@ -106,39 +114,42 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
       <section className={`u-section ${s.leadSection}`}>
         <div className="u-wrap">
           <h1 className={`u-lead ${s.lead}`}>
-            {LEAD[locale].map((line, i) => (
+            {toLines(text['lead']).map((line, i) => (
               <span key={line} className={s.leadLine}>
                 {line}
-                {i < LEAD[locale].length - 1 && <br />}
+                {i < toLines(text['lead']).length - 1 && <br />}
               </span>
             ))}
           </h1>
           <p className={`u-body ${s.leadNote}`}>
-            {LEAD_NOTE[locale].map((line, i) => (
+            {toLines(text['lead.note']).map((line, i) => (
               <span key={line}>
                 {line}
-                {i < LEAD_NOTE[locale].length - 1 && <br />}
+                {i < toLines(text['lead.note']).length - 1 && <br />}
               </span>
             ))}
           </p>
         </div>
       </section>
 
-      <Section label="SETS" title={SETS.title[locale]} aside={SETS.lead[locale]}>
+      <Section label="SETS" title={text['sets.title']} aside={text['sets.lead']}>
         <ul className={s.sets}>
           {STUDIO_SETS.map((set) => {
             const copy = SET_COPY[set.slug];
+            const image = pickImage(images, `set.${set.slug}`, locale, set.image, copy.alt[locale]);
             return (
               <li key={set.slug} className={s.set}>
-                <div className={`u-arch ${s.setFigure}`}>
-                  <Image
-                    src={set.image}
-                    alt={copy.alt[locale]}
-                    fill
-                    sizes="(max-width: 767px) 60vw, 25vw"
-                    className={s.setImage}
-                  />
-                </div>
+                {image && (
+                  <div className={`u-arch ${s.setFigure}`}>
+                    <Image
+                      src={image.src}
+                      alt={image.alt}
+                      fill
+                      sizes="(max-width: 767px) 60vw, 25vw"
+                      className={s.setImage}
+                    />
+                  </div>
+                )}
                 <h3 className={s.setTitle}>{copy.title[locale]}</h3>
                 <p className={s.setBody}>{copy.body[locale]}</p>
               </li>
@@ -151,7 +162,7 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
         <div className="u-wrap">
           <div className={s.flowHead}>
             <p className="u-label">FLOW</p>
-            <h2 className="u-h2">{FLOW.title[locale]}</h2>
+            <h2 className="u-h2">{text['flow.title']}</h2>
           </div>
           <ol className={s.flow}>
             {FLOW.steps.map((step) => (
@@ -169,10 +180,10 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
 
       <Section
         label={PLANS.label[locale]}
-        title={PLANS.title[locale]}
+        title={text['plans.title']}
         aside={
           <Link href={path(locale, 'plan')} className="u-btn" data-tap>
-            {PLANS.link[locale]}
+            {text['plans.link']}
           </Link>
         }
       >
@@ -195,7 +206,7 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
         </div>
         <div className={s.accessBody}>
           <p className="u-label">ACCESS</p>
-          <h2 className={`u-h2 ${s.accessTitle}`}>{ACCESS.title[locale]}</h2>
+          <h2 className={`u-h2 ${s.accessTitle}`}>{text['access.title']}</h2>
 
           <dl className={s.accessList}>
             <div className={s.accessRow}>
@@ -210,7 +221,7 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
             </div>
             <div className={s.accessRow}>
               <dt>{ACCESS.labels.landmark[locale]}</dt>
-              <dd>{ACCESS.landmark[locale]}</dd>
+              <dd>{text['access.landmark']}</dd>
             </div>
             <div className={s.accessRow}>
               <dt>{ACCESS.labels.languages[locale]}</dt>
@@ -246,7 +257,7 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
 
       <Section
         label="GALLERY"
-        title={WORKS.title[locale]}
+        title={text['works.title']}
         alt
         aside={
           <Link href={path(locale, 'gallery', 'studio')} className="u-link" data-tap>

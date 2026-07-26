@@ -10,16 +10,18 @@ import {
   type Plan,
 } from '@/content/site';
 import { SITE_URL, alternates, path, type Locale } from '@/lib/i18n';
+import { getPageCopy, toLines, type PageCopy } from '@/server/page-content';
 import { PlanTabs, type PlanTab } from './PlanTabs';
 import * as C from './content';
 import s from './PlanBody.module.css';
 
 /* ---------------- metadata ---------------- */
 
-export function planMetadata(locale: Locale): Metadata {
+export async function planMetadata(locale: Locale): Promise<Metadata> {
+  const text = await getPageCopy('plan', locale);
   return {
-    title: C.META_TITLE[locale],
-    description: C.HERO.lead[locale],
+    title: text['meta.title'],
+    description: text['hero.lead'],
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'plan')}`,
       languages: alternates('plan'),
@@ -76,17 +78,17 @@ function faqLd(locale: Locale) {
 /* ---------------- 패널 ---------------- */
 
 /** site.ts 가격은 그대로 두고, 이 페이지에서만 쓰는 표기(모니터 가격·포함 내역)를 덧입힌다. */
-function studioPlans(locale: Locale): Plan[] {
+function studioPlans(locale: Locale, text: PageCopy): Plan[] {
   return STUDIO_PLANS.map((plan) => ({
     ...plan,
-    badge: `${plan.badge} · ${C.MONITOR_PRICE[locale]}`,
+    badge: `${plan.badge} · ${text['monitorPrice']}`,
     duration: C.STUDIO_DURATION[plan.code] ?? plan.duration,
     includes: C.STUDIO_INCLUDES[plan.code] ?? plan.includes,
   }));
 }
 
-function StudioPanel({ locale }: { locale: Locale }) {
-  const plans = studioPlans(locale);
+function StudioPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
+  const plans = studioPlans(locale, text);
   return (
     <div className={`u-wrap ${s.grid}`}>
       {plans.map((plan, i) => (
@@ -101,7 +103,7 @@ function StudioPanel({ locale }: { locale: Locale }) {
   );
 }
 
-function LocationPanel({ locale }: { locale: Locale }) {
+function LocationPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
   return (
     <div className="u-wrap">
       <div className={s.grid}>
@@ -116,12 +118,12 @@ function LocationPanel({ locale }: { locale: Locale }) {
           <li key={line}>{line}</li>
         ))}
       </ul>
-      <p className={s.panelNote}>{C.LOCATION_PANEL.note[locale]}</p>
+      <p className={s.panelNote}>{text['locationPanel.note']}</p>
     </div>
   );
 }
 
-function AnniversaryPanel({ locale }: { locale: Locale }) {
+function AnniversaryPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
   return (
     <div className="u-wrap">
       <div className={s.grid}>
@@ -134,7 +136,7 @@ function AnniversaryPanel({ locale }: { locale: Locale }) {
       <p className={s.panelNote}>
         {C.ANNIVERSARY_PANEL.unconfirmed[locale]} — {TBC[locale]}
       </p>
-      <p className={s.panelNote}>{C.ANNIVERSARY_PANEL.note[locale]}</p>
+      <p className={s.panelNote}>{text['anniversaryPanel.note']}</p>
     </div>
   );
 }
@@ -159,14 +161,15 @@ function HairPanel({ locale }: { locale: Locale }) {
 
 /* ---------------- 본문 ---------------- */
 
-export function PlanBody({ locale }: { locale: Locale }) {
+export async function PlanBody({ locale }: { locale: Locale }) {
+  const text = await getPageCopy('plan', locale);
   const tabs: PlanTab[] = [
-    { id: 'studio', label: C.TABS.studio[locale], panel: <StudioPanel locale={locale} /> },
-    { id: 'location', label: C.TABS.location[locale], panel: <LocationPanel locale={locale} /> },
+    { id: 'studio', label: C.TABS.studio[locale], panel: <StudioPanel locale={locale} text={text} /> },
+    { id: 'location', label: C.TABS.location[locale], panel: <LocationPanel locale={locale} text={text} /> },
     {
       id: 'anniversary',
       label: C.TABS.anniversary[locale],
-      panel: <AnniversaryPanel locale={locale} />,
+      panel: <AnniversaryPanel locale={locale} text={text} />,
     },
     { id: 'hair', label: C.TABS.hair[locale], panel: <HairPanel locale={locale} /> },
   ];
@@ -188,9 +191,9 @@ export function PlanBody({ locale }: { locale: Locale }) {
       )}
 
       <header className={`u-wrap ${s.hero}`}>
-        <p className="u-label">{C.HERO.label[locale]}</p>
-        <h1 className={`u-display ${s.h1}`}>{C.HERO.title[locale]}</h1>
-        <p className={s.lead}>{C.HERO.lead[locale]}</p>
+        <p className="u-label">{text['hero.label']}</p>
+        <h1 className={`u-display ${s.h1}`}>{text['hero.title']}</h1>
+        <p className={s.lead}>{text['hero.lead']}</p>
       </header>
 
       <PlanTabs tabs={tabs} />
@@ -200,10 +203,8 @@ export function PlanBody({ locale }: { locale: Locale }) {
         <div className="u-wrap">
           <div className={s.optHead}>
             <p className="u-label">{C.OPTION_SECTION.label[locale]}</p>
-            <h2 className={`u-h2 ${s.optTitle}`}>{C.OPTION_SECTION.title[locale]}</h2>
-            {C.OPTION_SECTION.lead[locale] && (
-              <p className={s.optLead}>{C.OPTION_SECTION.lead[locale]}</p>
-            )}
+            <h2 className={`u-h2 ${s.optTitle}`}>{text['option.title']}</h2>
+            {text['option.lead'] && <p className={s.optLead}>{text['option.lead']}</p>}
           </div>
 
           <table className={s.table}>
@@ -233,9 +234,9 @@ export function PlanBody({ locale }: { locale: Locale }) {
       <section className="u-section">
         <div className="u-wrap">
           <p className="u-label">{C.FLOW.label[locale]}</p>
-          <h2 className={`u-h2 ${s.optTitle}`}>{C.FLOW.title[locale]}</h2>
+          <h2 className={`u-h2 ${s.optTitle}`}>{text['flow.title']}</h2>
           <ol className={s.flow}>
-            {C.FLOW.steps[locale].map((step, i) => (
+            {toLines(text['flow.steps']).map((step, i) => (
               <li key={step} className={s.flowStep}>
                 <span className={`u-num ${s.flowNo}`}>{String(i + 1).padStart(2, '0')}</span>
                 <span>
@@ -252,12 +253,12 @@ export function PlanBody({ locale }: { locale: Locale }) {
       <section className="u-section u-section--alt">
         <div className="u-wrap">
           <p className="u-label">{C.NOTES.label[locale]}</p>
-          <h2 className={`u-h2 ${s.optTitle}`}>{C.NOTES.title[locale]}</h2>
+          <h2 className={`u-h2 ${s.optTitle}`}>{text['notes.title']}</h2>
           <div className={s.notes}>
             <div>
               {questions && <h3 className={s.q}>{questions[0]}</h3>}
-              <p className={s.a}>{C.NOTES.cancel[locale]}</p>
-              <p className={`u-num ${s.scale}`}>{C.NOTES.cancelScale[locale]}</p>
+              <p className={s.a}>{text['notes.cancel']}</p>
+              <p className={`u-num ${s.scale}`}>{text['notes.cancelScale']}</p>
             </div>
             <div>
               {questions && <h3 className={s.q}>{questions[1]}</h3>}

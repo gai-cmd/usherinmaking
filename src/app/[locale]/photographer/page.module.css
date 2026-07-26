@@ -15,6 +15,17 @@
   justify-content: center;
 }
 
+/* 사진이 걸린 상태. fill 이미지는 위치 기준이 필요하고, 자리표시용 배경은 가린다. */
+.portraitFilled {
+  position: relative;
+  overflow: hidden;
+  background: none;
+}
+
+.portraitImage {
+  object-fit: cover;
+}
+
 .portraitLabel {
   font-family: var(--ff-latin);
   font-size: 11px;

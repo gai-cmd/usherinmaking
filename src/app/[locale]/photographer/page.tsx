@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ContactCta } from '@/components/ContactCta';
 import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { pickImage } from '@/lib/image-slot';
+import { getPageCopy, toLines } from '@/server/page-content';
+import { resolvePageImages } from '@/server/page-images';
 import { PHOTOGRAPHER } from './content';
 import s from './page.module.css';
 
@@ -18,17 +21,17 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const c = PHOTOGRAPHER[locale];
+  const text = await getPageCopy('photographer', locale);
   return {
-    title: c.meta.title,
-    description: c.meta.description,
+    title: text['meta.title'],
+    description: text['meta.description'],
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'photographer')}`,
       languages: alternates('photographer'),
     },
     openGraph: {
-      title: `${c.meta.title} | usherinmaking`,
-      description: c.meta.description,
+      title: `${text['meta.title']} | usherinmaking`,
+      description: text['meta.description'],
       url: `${SITE_URL}${path(locale, 'photographer')}`,
       type: 'profile',
     },
@@ -67,6 +70,12 @@ export default async function PhotographerPage({
   if (!isLocale(locale)) notFound();
 
   const c = PHOTOGRAPHER[locale];
+  // 폴백이 없는 슬롯이다 — 관리자가 올리기 전까지 null 이고, 화면은 자리표시를 유지한다.
+  const [text, images] = await Promise.all([
+    getPageCopy('photographer', locale),
+    resolvePageImages('photographer'),
+  ]);
+  const portrait = pickImage(images, 'portrait', locale, null, c.title);
 
   return (
     <>
@@ -77,15 +86,29 @@ export default async function PhotographerPage({
 
       {/* 인트로 — 좌 포트레이트 자리, 우 정의형 도입 문단 */}
       <section className={s.intro}>
-        <div className={s.portrait} aria-hidden>
-          <span className={s.portraitLabel}>{c.portraitPlaceholder}</span>
-        </div>
+        {portrait ? (
+          <div className={`${s.portrait} ${s.portraitFilled}`}>
+            <Image
+              src={portrait.src}
+              alt={portrait.alt}
+              fill
+              priority
+              sizes="(max-width: 767px) 100vw, 40vw"
+              className={s.portraitImage}
+            />
+          </div>
+        ) : (
+          // 작가 포트레이트는 아직 받지 못했다. 지어낸 사진을 채우는 대신 자리만 남긴다.
+          <div className={s.portrait} aria-hidden>
+            <span className={s.portraitLabel}>{c.portraitPlaceholder}</span>
+          </div>
+        )}
 
         <div className={s.introBody}>
           <p className="u-label">{c.eyebrow}</p>
-          <h1 className={`u-display ${s.title}`}>{c.title}</h1>
+          <h1 className={`u-display ${s.title}`}>{text['title']}</h1>
           <p className={s.lead}>
-            {c.intro.map((line, i) => (
+            {toLines(text['intro']).map((line, i) => (
               <span key={line}>
                 {i > 0 && <br />}
                 {line}
@@ -109,7 +132,7 @@ export default async function PhotographerPage({
         <div className="u-wrap">
           <p className="u-label">{c.name.label}</p>
           <p className={`u-lead ${s.nameLead}`}>
-            {c.name.lines.map((line, i) => (
+            {toLines(text['name.lines']).map((line, i) => (
               <span key={line}>
                 {i > 0 && <br />}
                 {line}
@@ -117,7 +140,7 @@ export default async function PhotographerPage({
             ))}
           </p>
           <p className={s.nameNote}>
-            {c.name.note.map((line, i) => (
+            {toLines(text['name.note']).map((line, i) => (
               <span key={line}>
                 {i > 0 && <br />}
                 {line}
@@ -132,7 +155,7 @@ export default async function PhotographerPage({
         <div className="u-wrap">
           <div className={s.howHead}>
             <p className="u-label">{c.how.label}</p>
-            <h2 className={`u-h2 ${s.howTitle}`}>{c.how.title}</h2>
+            <h2 className={`u-h2 ${s.howTitle}`}>{text['how.title']}</h2>
           </div>
           <ul className={s.points}>
             {c.how.points.map((p) => (
@@ -159,9 +182,9 @@ export default async function PhotographerPage({
         <div className={`u-wrap ${s.guestGrid}`}>
           <div>
             <p className="u-label">{c.guests.label}</p>
-            <h2 className={`u-h2 ${s.guestTitle}`}>{c.guests.title}</h2>
+            <h2 className={`u-h2 ${s.guestTitle}`}>{text['guests.title']}</h2>
             <p className={s.guestBody}>
-              {c.guests.body.map((line, i) => (
+              {toLines(text['guests.body']).map((line, i) => (
                 <span key={line}>
                   {i > 0 && <br />}
                   {line}
@@ -172,7 +195,7 @@ export default async function PhotographerPage({
 
           <div>
             <p className="u-label">{c.follow.label}</p>
-            <h2 className={`u-h2 ${s.guestTitle}`}>{c.follow.title}</h2>
+            <h2 className={`u-h2 ${s.guestTitle}`}>{text['follow.title']}</h2>
             <ul className={s.rows}>
               {c.follow.rows.map((row) => {
                 const body = (
@@ -197,7 +220,7 @@ export default async function PhotographerPage({
                 );
               })}
             </ul>
-            <p className={s.rowsNote}>{c.follow.note}</p>
+            <p className={s.rowsNote}>{text['follow.note']}</p>
           </div>
         </div>
       </section>

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { EnquiryForm } from '@/components/contact/EnquiryForm';
 import { CHANNELS, STUDIO_INFO, TBC, NAVER_BLOG_NOTICE_LOCALE } from '@/content/site';
 import { LOCALES, SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { getPageCopy, toLines } from '@/server/page-content';
 import { CONTACT } from './content';
 import s from './page.module.css';
 
@@ -10,10 +11,11 @@ export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
 
+/** 다른 페이지와 같은 관례. 자동 예약은 없으므로 '상담' 이상으로 쓰지 않는다. */
 const TITLE: Record<Locale, string> = {
-  ja: 'お問い合わせ',
-  en: 'Contact',
-  ko: '문의',
+  ja: 'お問い合わせ ・ 沖縄の撮影相談',
+  en: 'Contact — enquiries for Okinawa sessions',
+  ko: '문의 · 오키나와 촬영 상담',
 };
 
 /** 언어마다 구분점이 다르다 — EN 페이지에 일본어 중점을 쓰지 않는다. */
@@ -26,10 +28,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
+  const text = await getPageCopy('contact', locale);
 
   return {
     title: TITLE[locale],
-    description: CONTACT.definition[locale],
+    description: text['definition'],
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'contact')}`,
       languages: alternates('contact'),
@@ -40,6 +43,7 @@ export async function generateMetadata({
 export default async function ContactPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  const text = await getPageCopy('contact', locale);
 
   const channels = CHANNELS[locale];
   const showNaverBlog = locale === NAVER_BLOG_NOTICE_LOCALE;
@@ -64,9 +68,9 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
       <header className={`u-section u-center ${s.hero}`}>
         <div className="u-wrap">
           <p className="u-label">{CONTACT.eyebrow}</p>
-          <h1 className={`u-display ${s.title}`}>{CONTACT.title[locale]}</h1>
-          <p className={`u-lead ${s.definition}`}>{CONTACT.definition[locale]}</p>
-          {CONTACT.lead[locale].map((line) => (
+          <h1 className={`u-display ${s.title}`}>{text['title']}</h1>
+          <p className={`u-lead ${s.definition}`}>{text['definition']}</p>
+          {toLines(text['lead']).map((line) => (
             <p key={line} className={`u-body ${s.lead}`}>
               {line}
             </p>
@@ -78,7 +82,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         {/* 모바일에서는 메신저 카드가 폼보다 위에 온다 */}
         <section className={s.direct}>
           <p className="u-label">{CONTACT.directLabel}</p>
-          <h2 className={`u-h2 ${s.blockTitle}`}>{CONTACT.directTitle[locale]}</h2>
+          <h2 className={`u-h2 ${s.blockTitle}`}>{text['direct.title']}</h2>
 
           <ul className={s.channels}>
             {channels.map((channel) => {
@@ -128,8 +132,12 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
 
         <section className={s.formCol} id="enquiry-form">
           <p className="u-label">{CONTACT.formLabel}</p>
-          <h2 className={`u-h2 ${s.blockTitle}`}>{CONTACT.formTitle[locale]}</h2>
-          <EnquiryForm locale={locale} />
+          <h2 className={`u-h2 ${s.blockTitle}`}>{text['form.title']}</h2>
+          <EnquiryForm
+            locale={locale}
+            privacyNote={text['form.privacyNote']}
+            submitLabel={text['form.submit']}
+          />
         </section>
 
         <section className={s.faq}>

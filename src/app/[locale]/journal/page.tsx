@@ -14,6 +14,7 @@ import {
   usedCategories,
 } from '@/content/journal';
 import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
+import { getPageCopy, toLines } from '@/server/page-content';
 import s from './page.module.css';
 
 export function generateStaticParams() {
@@ -27,17 +28,17 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const ui = JOURNAL_UI[locale];
+  const text = await getPageCopy('journal', locale);
   return {
-    title: ui.listMeta.title,
-    description: ui.listMeta.description,
+    title: text['meta.title'],
+    description: text['meta.description'],
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'journal')}`,
       languages: alternates('journal'),
     },
     openGraph: {
-      title: `${ui.listMeta.title} | usherinmaking`,
-      description: ui.listMeta.description,
+      title: `${text['meta.title']} | usherinmaking`,
+      description: text['meta.description'],
       url: `${SITE_URL}${path(locale, 'journal')}`,
       type: 'website',
     },
@@ -49,6 +50,7 @@ export default async function JournalPage({ params }: { params: Promise<{ locale
   if (!isLocale(locale)) notFound();
 
   const ui = JOURNAL_UI[locale];
+  const text = await getPageCopy('journal', locale);
   const featured = featuredPost(locale);
   // 대표 글은 위에서 크게 보여주므로 그리드에서는 뺀다.
   const rest = listPosts(locale).filter((p) => p.slug !== featured?.slug);
@@ -58,11 +60,11 @@ export default async function JournalPage({ params }: { params: Promise<{ locale
       <section className={s.head}>
         <div className="u-wrap">
           <p className="u-label">{ui.eyebrow}</p>
-          <h1 className={`u-display ${s.title}`}>{ui.heading}</h1>
+          <h1 className={`u-display ${s.title}`}>{text['heading']}</h1>
           {/* 글이 전부 샘플이라는 사실을 목록 맨 위에서 밝힌다 */}
           <p className={s.sampleBadge}>{SAMPLE_BADGE[locale]}</p>
           <p className={s.lead}>
-            {ui.lead.map((line, i) => (
+            {toLines(text['lead']).map((line, i) => (
               <span key={line}>
                 {i > 0 && <br />}
                 {line}
@@ -70,7 +72,7 @@ export default async function JournalPage({ params }: { params: Promise<{ locale
             ))}
           </p>
           {/* 네이버 블로그 안내는 한국어 페이지에만 */}
-          {ui.naverNote && <p className={s.naverNote}>{ui.naverNote}</p>}
+          {text['naverNote'] && <p className={s.naverNote}>{text['naverNote']}</p>}
         </div>
       </section>
 
