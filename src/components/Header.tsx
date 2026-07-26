@@ -34,8 +34,8 @@ export function Header({ locale, page }: { locale: Locale; page?: PageKey }) {
           <Image
             src="/brand/logo.png"
             alt="usherinmaking"
-            width={195}
-            height={48}
+            width={260}
+            height={64}
             priority
             className={s.logoImg}
           />
