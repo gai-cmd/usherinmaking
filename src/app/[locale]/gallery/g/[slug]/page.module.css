@@ -18,9 +18,12 @@
   color: var(--text);
 }
 
+/* 작품 상세의 큰 사진도 컨테이너 폭을 지킨다. */
 .hero {
   height: 520px;
   overflow: hidden;
+  max-width: var(--content-max);
+  margin-inline: auto;
 }
 
 .heroImage {

@@ -59,11 +59,15 @@
   line-height: 1;
 }
 
+/* 표지 사진도 본문과 같은 컨테이너 안에 둔다 — 사진만 화면 끝까지 가면
+   아래 글과 좌우 축이 어긋난다. */
 .cover {
   position: relative;
   height: 460px;
   overflow: hidden;
   background: var(--placeholder);
+  max-width: var(--content-max);
+  margin-inline: auto;
 }
 
 .cover img {
