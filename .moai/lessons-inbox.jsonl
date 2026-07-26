@@ -12,3 +12,7 @@
 {"timestamp":"2026-07-25T17:28:11Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 143\nCommand timed out after 2m 0s","source":"tool:Bash"}
 {"timestamp":"2026-07-25T17:30:24Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 143\nCommand timed out after 2m 0s","source":"tool:Bash"}
 {"timestamp":"2026-07-25T18:45:12Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 1\n파싱 실패: Unexpected token ';'","source":"tool:Bash"}
+{"timestamp":"2026-07-25T19:10:26Z","event_key":"tool_failure:Bash:OOMKilled","summary":"Exit code 137","source":"tool:Bash"}
+{"timestamp":"2026-07-26T01:08:29Z","event_key":"tool_failure:mcp__claude-in-chrome__javascript_tool:UnknownFailure","summary":"JavaScript execution error: SecurityError: Failed to read a named property 'innerWidth' from 'Window': Blocked a frame with origin \"http://localhost:3125\" from accessing a cross-origin frame.","source":"tool:mcp__claude-in-chrome__javascript_tool"}
+{"timestamp":"2026-07-26T01:08:41Z","event_key":"tool_failure:mcp__claude-in-chrome__javascript_tool:UnknownFailure","summary":"JavaScript execution error: TypeError: Cannot read properties of null (reading 'readyState')\n    at \u003canonymous\u003e:5:19","source":"tool:mcp__claude-in-chrome__javascript_tool"}
+{"timestamp":"2026-07-26T01:09:45Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 1\n(eval):1: no matches found: .next/server/app/[locale]/page/*.html","source":"tool:Bash"}

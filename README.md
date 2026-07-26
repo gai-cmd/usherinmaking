@@ -105,12 +105,20 @@ legacy/                  이전 정적 사이트 (보존)
 - 배경은 `#FAF8F4` / `#F4F1EA` **두 가지만** 교차합니다
 - 포인트는 브라스 `#8A6A3F`
 - 서체는 **애플 시스템 서체** 를 씁니다. 웹폰트를 내려받지 않으므로 렌더 차단 요청이 없습니다
+  - **세 언어 모두 고딕입니다. 명조·세리프를 쓰지 않습니다** — apple.com/kr 제품 페이지가 기준입니다
   - 라틴 본문 · UI — SF Pro (`-apple-system`)
-  - 라틴 대제목 — New York (`ui-serif`). "Location" "Studio" 같은 큰 영문 단어가 여기에 해당합니다
-  - 일본어 — 히라기노 (본문 Hiragino Sans / 제목 Hiragino Mincho ProN)
-  - 한국어 — Apple SD 산돌고딕 Neo. 애플의 한글 명조는 굵기가 하나뿐이라 큰 제목에서 무너져 쓰지 않습니다
+  - 라틴 대제목 — SF Pro Display. "Location" "Studio" 같은 큰 영문 단어가 여기에 해당합니다
+  - 일본어 — 히라기노 고딕 (Hiragino Sans)
+  - 한국어 — Apple SD 산돌고딕 Neo
   - **금액·숫자는 언제나 SF의 등폭 숫자** (`u-num`)
   - 비애플 환경에는 각 스택 뒤의 대체 서체가 적용됩니다
+  - 제목 서체는 `--ff-heading` 하나로 갈라집니다. `.u-display` · `.u-h2` · `.u-lead` 가 그것을 읽으므로,
+    로케일별 제목 서체를 바꾸려면 `:lang()` 블록의 `--ff-heading` 만 고치면 됩니다
+
+> **시안과의 의도된 차이**: `.moai/handoff/DESIGN-README.md` 의 서체표는 웹폰트 기준(Cormorant Garamond ·
+> Nanum Myeongjo · Zen Old Mincho)입니다. 실제 구현은 웹폰트를 걷어내고 애플 시스템 서체로 갔고,
+> 이후 사용자 지시로 **명조 계열을 전부 고딕으로** 바꿨습니다. 시안 문서는 인계 기록이라 그대로 두고,
+> 구현 기준은 이 절입니다.
 - 아치가 브랜드 모티프입니다 (`border-radius: 140px 140px 0 0`)
 - **그림자를 쓰지 않습니다.** 구분은 1px 헤어라인으로 합니다
 - 모바일 탭 타겟은 최소 44px
@@ -191,16 +199,42 @@ Vercel 기준입니다. `vercel.json` 이 인스타 수집 크론(6시간 주기
 
 ---
 
+## 데이터베이스
+
+Neon Postgres 가 실제로 붙어 있습니다. 런타임 클라이언트는 `src/server/db.ts` 싱글턴 하나뿐이며,
+`new PrismaClient()` 를 직접 만들지 마십시오.
+
+```bash
+vercel env pull .env.local          # DATABASE_URL 등 내려받기
+set -a; . ./.env.local; set +a      # 셸에 주입 (npx prisma 는 이게 있어야 합니다)
+npx prisma generate && npx prisma db push
+npm run db:seed                     # src/content/* 의 현재 값을 DB로 옮깁니다
+```
+
+`db:seed` 는 **몇 번 돌려도 안전합니다**(멱등). 모든 쓰기가 자연 유일키 기준 upsert 이고,
+값을 스크립트에 다시 적지 않고 `src/server/*` 의 시드 함수를 그대로 씁니다 —
+화면이 폴백으로 보여 주는 값과 DB에 들어가는 값이 갈라지지 않게 하기 위해서입니다.
+
+> **Prisma 7 주의** — 접속 URL은 `prisma/schema.prisma` 가 아니라 `prisma.config.ts` 와
+> `src/server/db.ts` 의 Neon 어댑터가 들고 있습니다. 스키마에 `url` 을 다시 넣으면 validate 가 깨집니다.
+
+### 문구·사진을 관리자에서 고치는 층
+
+DB는 **덮어쓰기 층**입니다. 행이 없으면 코드 기본값(`src/content/*`, 각 페이지 `content.ts`)이 그대로 나갑니다.
+통째로 DB로 옮기지 않은 이유는, 행 하나가 비었을 때 화면이 빈칸이 되는 상태를 만들지 않기 위해서입니다.
+
+- 문구 — `src/content/slots.ts` 가 편집 가능한 자리의 계약입니다. 공개 페이지는 `getPageCopy(page, locale)` 로 읽습니다
+- 사진 — `src/server/page-images.ts` 의 `resolvePageImages(page)`. 클라이언트 컴포넌트는
+  `src/lib/image-slot.ts` 의 `pickImage()` 만 씁니다(서버 모듈을 브라우저 번들로 끌고 오지 않기 위해)
+
 ## 아직 연결되지 않은 것
 
-설계와 이관 지점은 있으나 실제 연결은 되어 있지 않습니다. 코드에 `TODO(prisma)` /
-`TODO(pipeline)` 로 표시해 두었고, **거짓 성공을 반환하지 않습니다.**
+**거짓 성공을 반환하지 않습니다** — 연결되지 않은 쓰기 경로는 `NotImplementedError` 나 503 을 냅니다.
 
-- 데이터베이스 — 스키마(`prisma/schema.prisma`)는 있고 `prisma` / `@prisma/client` 패키지도
-  설치돼 있습니다. 다만 아직 어디서도 import 하지 않습니다 — `DATABASE_URL` 을 채우고
-  `npx prisma generate` 후 `src/server/*` 의 `TODO(prisma)` 지점을 바꾸면 됩니다
-- `sharp`(AVIF/WebP 인코딩)와 `@vercel/blob`(오브젝트 스토리지)도 같은 상태입니다 —
-  설치만 돼 있고 `src/lib/image-pipeline.ts` 의 seam이 아직 호출하지 않습니다
-- 오브젝트 스토리지 업로드 · AVIF/WebP 실제 인코딩
+- 오브젝트 스토리지 업로드 — 코드 경로는 완성돼 있으나 `BLOB_READ_WRITE_TOKEN` 이 빈 문자열이라
+  **아직 아무도 실업로드를 확인하지 못했습니다.** 사진 교체를 사람이 검증하려면 이것부터 채워야 합니다
+- 사진 큐레이션 쓰기 — `src/server/photos.ts` 는 여전히 전부 스텁입니다.
+  수동 업로드는 미디어 라이브러리에 들어가고 큐레이션 큐로는 가지 않습니다(화면에 그렇게 표시됩니다)
+- 문의 알림 — 저장은 정상이고 메일/LINE 발송만 seam 입니다(`notifyEnquiry`). 알림 실패가 접수 실패를 뒤집지 않습니다
 - Instagram Graph API 실호출 · AI 분류 실호출 (자격 증명 없음)
 - 관리자 멤버 명부의 DB화 — 로그인은 구글 SSO로 연결되어 있고, 누가 관리자인지는 환경변수 허용 목록이 정합니다
