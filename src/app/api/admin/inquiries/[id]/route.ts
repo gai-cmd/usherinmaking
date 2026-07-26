@@ -42,9 +42,9 @@ export async function GET(
 /**
  * 상태·메모 변경.
  *
- * 저장 경로는 아직 없다. NotImplementedError 가 501 로 그대로 나가고,
- * 화면은 그 501 을 실패로 표시한다 — 성공 토스트를 띄우지 않는다.
- * 제출한 내용을 그대로 되돌려 주지도 않는다(에코 금지).
+ * DB 가 연결돼 있으면 실제로 저장된다. 연결되지 않은 환경에서는
+ * NotImplementedError 가 501 로 그대로 나가고, 화면은 그 501 을 실패로 표시한다 —
+ * 성공 토스트를 띄우지 않는다. 제출한 내용을 그대로 되돌려 주지도 않는다(에코 금지).
  */
 export async function PATCH(
   req: Request,

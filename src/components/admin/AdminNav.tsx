@@ -15,6 +15,9 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin', label: '대시보드' },
   { href: '/admin/photos', label: '전시 선별' },
   { href: '/admin/inquiries', label: '문의' },
+  // 문구 편집은 저장이 실제로 되고 공개 페이지에도 반영되는데 내비에 빠져 있어
+  // 주소를 직접 쳐야만 닿을 수 있었다. 동선상 문의 다음, 후기 앞이 맞다.
+  { href: '/admin/content', label: '페이지 문구' },
   { href: '/admin/journal', label: '촬영후기' },
   { href: '/admin/plans', label: '플랜 · 옵션' },
   { href: '/admin/dress', label: '드레스' },
