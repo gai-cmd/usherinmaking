@@ -33,9 +33,33 @@ function pickLocale(header: string | null): Locale {
  */
 const SESSION_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token'];
 
+/**
+ * SSO 자격 증명이 갖춰졌는지. src/auth.ts 의 isSsoConfigured() 와 같은 조건을 본다 —
+ * 미들웨어는 엣지에서 돌아 next-auth 를 불러올 수 없으므로 환경변수를 직접 읽는다.
+ * 둘 중 하나만 고치면 어긋나므로 같이 고칠 것.
+ */
+function ssoConfigured(): boolean {
+  return Boolean(
+    process.env.AUTH_GOOGLE_ID &&
+      process.env.AUTH_GOOGLE_SECRET &&
+      process.env.AUTH_SECRET &&
+      process.env.ADMIN_ALLOWED_EMAILS,
+  );
+}
+
 function guardAdmin(req: NextRequest): NextResponse | null {
   const { pathname } = req.nextUrl;
   if (!pathname.startsWith('/admin')) return null;
+
+  // SSO 를 아직 설정하지 않은 개발 환경에서는 통과시킨다.
+  // checkAdminPageAccess() 도 같은 조건에서 열어 주는데 여기서 먼저 돌려보내면
+  // 두 층의 판정이 어긋나 관리자 화면을 로컬에서도 열 수 없다.
+  //
+  // NODE_ENV 가 production 이면 이 분기는 절대 타지 않는다. 배포본은 종전과 같이
+  // 세션 쿠키가 없으면 로그인으로 돌려보낸다.
+  if (!ssoConfigured() && process.env.NODE_ENV !== 'production') {
+    return NextResponse.next();
+  }
 
   // 관리자는 로케일 경로 밖에 있다. 아래 로케일 로직으로 흘러가면 /ko/admin 으로 바뀌어
   // 존재하지 않는 경로가 되므로, 판정이 끝나면 여기서 응답을 확정해 돌려준다.
