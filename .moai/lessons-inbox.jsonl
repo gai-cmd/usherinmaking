@@ -21,3 +21,4 @@
 {"timestamp":"2026-07-26T01:26:07Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 1\n--- content files ---\n(eval):1: no matches found: src/app/[locale]/photographer","source":"tool:Bash"}
 {"timestamp":"2026-07-26T01:28:14Z","event_key":"tool_failure:Bash:OOMKilled","summary":"Exit code 1\n=== ja_studio mobile vs desktop diff ===\n1,3c1,2\n\u003c 1aSTUDIO — /ja/studio\n\u003c STUDIOLOCATIONDRESSPLANPHOTOGRAPHERJOURNALCONTACT\n\u003c 日本語 / English\n---\n\u003e 2aSTUDIO · 모바일 (1a의 모바일)\n\u003e 日本語/EN≡\n6,9c5\n…","source":"tool:Bash"}
 {"timestamp":"2026-07-26T01:32:50Z","event_key":"tool_failure:Bash:UnknownFailure","summary":"Exit code 1\n파일: \nsed: : No such file or directory","source":"tool:Bash"}
+{"timestamp":"2026-07-26T07:33:42Z","event_key":"tool_failure:mcp__claude-in-chrome__navigate:UnknownFailure","summary":"Tab 1943138724 no longer exists. Call tabs_context_mcp to get current tabs.","source":"tool:mcp__claude-in-chrome__navigate"}
