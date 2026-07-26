@@ -387,7 +387,7 @@ export const FAQ_QUESTIONS: Partial<Record<Locale, [string, string, string]>> = 
 };
 
 export const META_TITLE: L10n = {
-  ja: 'プラン ・ 料金 — スタジオとロケーション',
+  ja: 'プラン ・ スタジオとロケーションの料金',
   en: 'Plans and pricing — studio and location',
-  ko: '요금 안내 — 스튜디오와 로케이션',
+  ko: '요금 안내 · 스튜디오와 로케이션',
 };

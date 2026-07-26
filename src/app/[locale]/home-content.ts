@@ -7,7 +7,7 @@ import type { Locale } from '@/lib/i18n';
 
 type HeroPanel = {
   eyebrow: string;
-  /** --ff-display(New York)로 크게 놓이는 한 단어 */
+  /** --ff-heading(SF Pro Display / 산돌고딕)으로 크게 놓이는 한 단어 */
   display: string;
   lines: [string, string];
   cta: string;
@@ -55,7 +55,7 @@ type HomeCopy = {
 export const HOME: Record<Locale, HomeCopy> = {
   ja: {
     meta: {
-      title: '沖縄のロケーションフォト・スタジオウェディングフォト',
+      title: '沖縄のロケーションフォト ・ スタジオウェディングフォト',
       description:
         'usherinmaking は、沖縄でロケーションフォトとスタジオウェディングフォトを撮影する、韓国人女性カメラマンのフォトスタジオです。前撮り・セルフウェディング・マタニティ・記念日・家族写真。',
     },
@@ -151,7 +151,7 @@ export const HOME: Record<Locale, HomeCopy> = {
 
   en: {
     meta: {
-      title: 'Wedding photography in Okinawa, outdoors and in studio',
+      title: 'Okinawa wedding photography — studio and outdoors',
       description:
         'usherinmaking is a photo studio in Okinawa run by a Korean female photographer, offering outdoor location sessions and indoor studio wedding photography. Pre-wedding, self-wedding, maternity, anniversary and family portraits.',
     },

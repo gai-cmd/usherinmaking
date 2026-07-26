@@ -103,7 +103,7 @@ export const PHOTOGRAPHER: Record<Locale, PhotographerContent> = {
       note: 'サイトのギャラリーは、Instagram の投稿から掲載を選んだものです。',
     },
     meta: {
-      title: 'PHOTOGRAPHER',
+      title: 'フォトグラファー ・ 沖縄で撮る韓国人カメラマン',
       description:
         '沖縄で写真を撮っている韓国人の女性カメラマンです。ロケーションもスタジオも、はじめから終わりまで同じ人間が撮ります。撮影のご相談は日本語・韓国語・英語で。',
     },
@@ -174,7 +174,7 @@ export const PHOTOGRAPHER: Record<Locale, PhotographerContent> = {
       note: 'The gallery on this site is selected from Instagram posts and served from our own domain.',
     },
     meta: {
-      title: 'PHOTOGRAPHER',
+      title: 'PHOTOGRAPHER — a Korean photographer in Okinawa',
       description:
         'A Korean woman photographing in Okinawa. The same person shoots every session, indoors or out. Enquiries are welcome in English, Japanese or Korean.',
     },
@@ -244,7 +244,7 @@ export const PHOTOGRAPHER: Record<Locale, PhotographerContent> = {
       note: '사이트의 갤러리는 인스타그램에서 고른 사진을 자사 서버에서 보여드립니다.',
     },
     meta: {
-      title: '작가 소개',
+      title: '작가 소개 · 오키나와 웨딩 사진작가',
       description:
         '오키나와에서 사진을 찍는 한국인 여성 작가입니다. 실내든 실외든 처음부터 끝까지 직접 담습니다. 상담은 한국어로 편하게 문의해 주세요.',
     },

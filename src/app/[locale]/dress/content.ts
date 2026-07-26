@@ -189,7 +189,7 @@ export const FITTING = {
 };
 
 export const META_TITLE: L10n = {
-  ja: 'ドレス — コレクションとレンタル',
+  ja: 'ドレス ・ コレクションとレンタル',
   en: 'Dress — collections and rental',
-  ko: '드레스 — 컬렉션과 대여',
+  ko: '드레스 · 컬렉션과 대여',
 };

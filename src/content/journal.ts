@@ -102,7 +102,7 @@ export const JOURNAL_UI: Record<
     planLead: 'この記事の撮影プラン',
     planDetail: 'PLAN 詳細',
     listMeta: {
-      title: '撮影レポート',
+      title: '撮影レポート ・ 沖縄の撮影エピソード',
       description:
         '撮影当日の天気、場所、撮影のエピソードまで。沖縄のスタジオとロケーションで撮るときに知っておくと役立つことをまとめています。掲載中の記事はサンプルです。',
     },
@@ -118,7 +118,7 @@ export const JOURNAL_UI: Record<
     planLead: 'The plan behind this session',
     planDetail: 'VIEW PLAN',
     listMeta: {
-      title: 'Session stories',
+      title: 'Session stories — Okinawa photo sessions',
       description:
         'Weather, places and stories from sessions at the Okinawa studio and on location — things worth knowing before your own shoot. The entries shown are samples.',
     },
@@ -133,7 +133,7 @@ export const JOURNAL_UI: Record<
     planDetail: '플랜 상세',
     naverNote: '네이버 블로그에서 가져온 글',
     listMeta: {
-      title: '촬영후기',
+      title: '촬영후기 · 오키나와 촬영 에피소드',
       description:
         '촬영 당일의 날씨와 장소, 촬영 에피소드까지. 오키나와 스튜디오와 로케이션 촬영 전에 알아두면 좋은 팁을 모았습니다. 현재 올라와 있는 글은 샘플입니다.',
     },
