@@ -26,23 +26,21 @@
   --ff-latin: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui,
     'Helvetica Neue', 'Segoe UI', Roboto, Arial, sans-serif;
 
-  /* 라틴 대제목 — New York(애플의 에디토리얼 세리프). ui-serif 가 New York으로 해석된다.
-     "Location" "Studio" 같은 큰 영문 단어는 로케일과 무관하게 이 서체로 놓인다. */
-  --ff-display: ui-serif, 'New York', 'Iowan Old Style', Palatino, Georgia, 'Times New Roman',
-    serif;
+  /* 라틴 대제목 — SF Pro Display. 애플 제품 페이지(apple.com/kr)의 큰 제목은
+     세리프가 아니라 SF 고딕이다. 세 언어 모두 고딕으로 맞춰 한 화면 안에서
+     제목 서체가 갈라지지 않게 한다. */
+  --ff-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, 'SF Pro Text',
+    'Helvetica Neue', 'Segoe UI', Roboto, Arial, sans-serif;
 
-  /* 일본어 — 히라기노. 애플이 macOS·iOS에 기본 탑재한다. */
+  /* 일본어 — 히라기노 고딕. 애플이 macOS·iOS에 기본 탑재한다. */
   --ff-ja-sans: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Hiragino Kaku Gothic Pro',
     -apple-system, BlinkMacSystemFont, system-ui, 'Yu Gothic Medium', 'Yu Gothic', Meiryo,
     sans-serif;
-  --ff-ja-serif: 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', ui-serif, YuMincho, 'Yu Mincho',
-    'MS PMincho', serif;
 
   /* 한국어 — Apple SD 산돌고딕 Neo. 애플이 한국어 UI에 실제로 쓰는 서체다.
      애플의 한글 명조(AppleMyungjo)는 굵기가 하나뿐이라 큰 제목에서 무너지므로 쓰지 않는다. */
   --ff-ko-sans: 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, system-ui, Pretendard,
     'Malgun Gothic', sans-serif;
-  --ff-ko-serif: var(--ff-ko-sans);
 
   /* 금액·숫자 — SF의 등폭 숫자를 쓴다(u-num 이 tabular-nums 를 켠다).
      세리프 대제목 서체의 올드스타일 숫자는 금액 표에서 높이가 어긋나 보인다. */
@@ -72,7 +70,7 @@
 
 :lang(ja),
 [lang^='ja'] {
-  --ff-heading: var(--ff-ja-serif);
+  --ff-heading: var(--ff-ja-sans);
   --ff-body: var(--ff-ja-sans);
 }
 
@@ -125,7 +123,7 @@
   letter-spacing: -0.02em;
 }
 
-/* EN은 명조를 쓰지 않는다 — 본문은 SF, 대제목만 New York */
+/* EN도 전부 SF 고딕이다 — 세리프 대제목은 쓰지 않는다 */
 :lang(en),
 [lang^='en'] {
   --ff-heading: var(--ff-display);
@@ -230,7 +228,7 @@ table {
 
 /* ---------- type scale ---------- */
 .u-display {
-  font-family: var(--ff-display);
+  font-family: var(--ff-heading);
   font-weight: 300;
   font-size: clamp(38px, 5vw, 62px);
   line-height: 1.1;
@@ -238,7 +236,7 @@ table {
 }
 
 .u-h2 {
-  font-family: var(--ff-display);
+  font-family: var(--ff-heading);
   font-weight: 300;
   font-size: clamp(28px, 3.4vw, 40px);
   line-height: 1.2;

@@ -52,7 +52,7 @@
 
 /* 한국어 카드는 표제도 명조로 놓는다 */
 :lang(ko) .display {
-  font-family: var(--ff-ko-serif);
+  font-family: var(--ff-heading);
 }
 
 .lines {
