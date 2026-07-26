@@ -3,11 +3,14 @@
   border-top: 1px solid var(--hairline);
 }
 
+/* 본문(.u-wrap)과 같은 폭·같은 거터로 맞춘다 — 푸터만 화면 끝까지 가면 축이 어긋나 보인다. */
 .inner {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
+  max-width: var(--content-max);
+  margin-inline: auto;
   padding: 54px var(--gutter) 46px;
   text-align: center;
 }

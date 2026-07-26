@@ -17,11 +17,15 @@
   background: linear-gradient(to top, rgba(30, 26, 22, 0.45), rgba(30, 26, 22, 0) 60%);
 }
 
+/* 히어로 사진은 화면 끝까지 가지만, 그 위의 글은 본문과 같은 축에 놓는다.
+   글만 화면 가장자리에 붙으면 아래 섹션들과 세로선이 어긋나 보인다. */
 .heroText {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 0;
+  width: 100%;
+  max-width: var(--content-max);
   padding: 0 var(--gutter) 44px;
   color: #fff;
 }
@@ -60,6 +64,8 @@
 
 .leadNote {
   margin-top: 24px;
+  max-width: var(--reading-max);
+  margin-inline: auto;
 }
 
 /* ---------- 촬영 종류 (2 카테고리) ---------- */

@@ -25,6 +25,8 @@
 
 .note {
   margin-top: 22px;
+  max-width: var(--reading-max);
+  margin-inline: auto;
   font-size: var(--fs-meta);
   line-height: 1.9;
   color: var(--muted-2);

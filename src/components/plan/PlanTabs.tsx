@@ -42,7 +42,9 @@ export function PlanTabs({ tabs }: { tabs: PlanTab[] }) {
           hidden={active !== tab.id}
           className={s.panel}
         >
-          {tab.panel}
+          {/* 패널 자체는 전폭이라 아래 경계선이 화면 끝까지 간다.
+              안쪽만 본문과 같은 폭으로 묶어 카드 그리드가 퍼지지 않게 한다. */}
+          <div className="u-wrap">{tab.panel}</div>
         </div>
       ))}
     </>

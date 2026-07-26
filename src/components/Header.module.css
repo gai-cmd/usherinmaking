@@ -5,10 +5,13 @@
   z-index: 40;
 }
 
+/* 본문과 같은 폭 안에서 정렬한다. 헤더만 화면 끝까지 가면 로고·내비 축이 본문과 어긋난다. */
 .bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  max-width: var(--content-max);
+  margin-inline: auto;
   padding: 26px var(--gutter) 0;
 }
 
@@ -70,6 +73,8 @@
   align-items: center;
   justify-content: center;
   gap: 22px;
+  max-width: var(--content-max);
+  margin-inline: auto;
   padding: 14px var(--gutter) 20px;
 }
 

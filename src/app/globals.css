@@ -59,6 +59,11 @@
   --ff-body: var(--ff-latin);
 
   /* Spacing */
+  --content-max: 1200px;
+  /* 글줄 폭. 컨테이너(1200)는 카드·표를 담는 폭이고, 이어 읽는 글은 그보다 좁아야 한다.
+     apple.com/jp 의 본문 단락이 같은 조건에서 840px 였고, 이 사이트 리드문도 이미
+     820px 로 잡혀 있어 그 선에 맞춘다. */
+  --reading-max: 840px;
   --gutter: 54px;
   --section-y: 64px;
   --radius-arch: 140px 140px 0 0;
@@ -209,7 +214,18 @@ table {
 }
 
 /* ---------- layout primitives ---------- */
+/*
+ * 콘텐츠 폭. 시안이 데스크톱 1200px 캔버스로 그려져 있어 그 값을 그대로 쓴다
+ * (브레이크포인트도 375 / 768 / 1024 / 1280+ 로 잡혀 있다).
+ * box-sizing: border-box 라 1200px 안에 좌우 거터가 포함된다 → 실제 글 폭은 약 1092px.
+ *
+ * max-width 가 없으면 넓은 화면에서 한 줄이 끝없이 늘어나 읽기 리듬이 무너진다.
+ * 히어로·갤러리 그리드처럼 일부러 화면 끝까지 가야 하는 요소는 u-wrap 을 쓰지 않으므로
+ * 여기서 제한해도 영향을 받지 않는다.
+ */
 .u-wrap {
+  max-width: var(--content-max);
+  margin-inline: auto;
   padding-inline: var(--gutter);
 }
 
