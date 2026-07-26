@@ -22,3 +22,8 @@
 {"timestamp":"2026-07-26T01:28:14.168467Z","event_type":"tool_failure","subject":"Bash","context_hash":"OOMKilled","tier_increment":0,"schema_version":"v2.1"}
 {"timestamp":"2026-07-26T01:32:50.762928Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
 {"timestamp":"2026-07-26T07:33:42.921575Z","event_type":"tool_failure","subject":"mcp__claude-in-chrome__navigate","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-07-26T13:01:02.731197Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-07-26T13:26:09.185344Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-07-26T13:27:06.066218Z","event_type":"tool_failure","subject":"mcp__claude-in-chrome__javascript_tool","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-07-26T13:40:23.741588Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-07-26T13:57:25.853111Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}

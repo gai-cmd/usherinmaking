@@ -1,7 +1,26 @@
 # usherinmaking — 다음 세션 인계
 
 새 세션에서 이 파일부터 읽으면 이어받을 수 있다.
-마지막 갱신: 2026-07-26 · 커밋 `0aef1a4`
+마지막 갱신: 2026-07-26 22:5x · 커밋 `abd8261`
+
+---
+
+## 지금 당장 할 일 (세션 시작 직후)
+
+**`abd8261` 이 아직 프로덕션에 없다.** 푸시는 됐고 프리뷰 빌드는 자동으로 돈다.
+빌드가 Ready 가 되면 승격해야 한다.
+
+```bash
+vercel ls usherinmaking | head -6            # 최신 Preview 가 Ready 인지 확인
+vercel inspect <그 URL> | grep created       # 커밋 시각과 4초 이내인지 대조
+vercel promote <그 URL> --yes
+```
+
+> **승격 전 반드시 커밋 시각을 대조할 것.** 프리뷰 URL 은 커밋마다 새로 생기고 각자
+> 그 시점으로 굳는다. 이번 세션에서 사용자가 7시간 전 프리뷰 주소를 보며 "안 보인다"고
+> 한 일이 있었다. **공개 주소는 `https://usherinmaking.vercel.app` 하나뿐이다.**
+
+승격 후에는 브라우저가 옛 CSS 를 들고 있을 수 있다. `?v=2` 를 붙이거나 시크릿 창으로 확인한다.
 
 ---
 
@@ -19,7 +38,7 @@
 | 브랜치 | `feat/renewal-nextjs` — origin 푸시됨. **main 병합 안 함** |
 | 프로덕션 | https://usherinmaking.vercel.app — 배포 완료·동작 중 |
 | 빌드 | `npm test` (tsc + eslint) 0 errors, `npm run build` 성공 |
-| 마지막 커밋 | `0aef1a4` CMS 편집기·미디어·인스타 통합 |
+| 마지막 커밋 | `abd8261` 레이아웃 폭 (프로덕션 승격 대기) |
 
 ## 계정 (중요)
 
@@ -43,7 +62,7 @@ gh auth switch --user gai-cmd     # 개인 계정으로
 | 리소스 | 상태 |
 |---|---|
 | Neon Postgres `usherinmaking-db` | ● 연결됨. free · ap-southeast-1. 스키마 push 완료 |
-| Vercel Blob | ● `BLOB_READ_WRITE_TOKEN` 존재 |
+| Vercel Blob | ● **OIDC 방식**. 정적 토큰은 빈 값이 정상. Development 까지 연결 완료 |
 | Vercel Cron | 등록됨 — `/api/cron/ingest-instagram` 6시간 주기 |
 | Upstash Redis | 구 사이트 잔재. 새 코드는 안 씀 |
 
@@ -66,12 +85,14 @@ npx prisma generate && npx prisma db push
 ```
 AUTH_GOOGLE_ID          Google Cloud Console → OAuth 클라이언트 ID (웹)
 AUTH_GOOGLE_SECRET      리디렉션 URI: https://usherinmaking.vercel.app/api/auth/callback/google
-AUTH_SECRET             openssl rand -base64 32
+AUTH_SECRET             ✅ 생성해 .env.local 에 넣어 둠
 ADMIN_ALLOWED_EMAILS    관리자 구글 계정, 쉼표 구분 — 이 목록이 곧 멤버 명부다
 IG_USER_ID              Instagram Graph API
 IG_ACCESS_TOKEN
-CRON_SECRET             크론 무단 호출 차단
+CRON_SECRET             ✅ 생성해 .env.local 에 넣어 둠
 RESEND_API_KEY          문의 알림 메일 (없어도 저장은 됨)
+NOTIFY_TO               알림 수신 주소
+RESEND_FROM             발신 주소 (비우면 Resend 예시 주소)
 ```
 
 ---
@@ -93,6 +114,24 @@ RESEND_API_KEY          문의 알림 메일 (없어도 저장은 됨)
 
 ---
 
+## 레이아웃 폭 — 이번 세션의 마지막 작업
+
+시안 1200px 캔버스와 apple.com/jp 실측(같은 뷰포트에서 본문 단락 840px), 그리고 사용자가
+지정한 zoellife.com(배경 전폭 + 콘텐츠 가운데 컨테이너)을 근거로 **폭을 세 단계로 나눴다.**
+
+| 단계 | 토큰 | 대상 |
+|---|---|---|
+| 전폭 | — | 섹션 배경·경계선만 (`u-section`, 헤더/푸터 root) |
+| 컨테이너 | `--content-max: 1200px` | 히어로 포함 모든 시각 블록·카드·표 |
+| 글줄 | `--reading-max: 840px` | 이어 읽는 문장 |
+
+**폭 검사할 때 주의**: "이미지 하나가 1200 을 넘는가" 로 훑으면 분할 레이아웃을 놓친다.
+드레스 히어로·작가 인트로·문의 2단은 각 절반이 1200 미만이라 그 기준을 빠져나갔고,
+사용자가 화면을 보내 줘서야 드러났다. **`display:grid` 인 컨테이너를 폭 기준으로 훑을 것.**
+
+아직 안 본 것: 모바일(375·768) 실렌더. 브레이크포인트 CSS 는 그대로 두었으므로
+깨질 이유는 없지만 눈으로 확인하지는 않았다.
+
 ## CMS 읽기 경로 — 연결 완료 (이 세션)
 
 **들어왔을 때 상태**: 관리자 화면은 DB에 저장까지 정상 동작했지만 **공개 페이지가 그 값을 읽는 코드가 한 줄도 없었다.**
@@ -105,7 +144,7 @@ RESEND_API_KEY          문의 알림 메일 (없어도 저장은 됨)
 | 문구 슬롯 | ● 연결됨 — 9개 페이지 95슬롯 중 94개 도달 | 전 슬롯에 표식값 삽입 후 렌더 산출물에서 역추적 |
 | 회귀 | ● 없음 | DB 빈 상태에서 정적 산출물 118개 변경 전후 대조 → 차이 0건 |
 | 시드 | ● 반영됨 | plan 9 · option 4 · taxonomy 3 · term 16 · journal 21 · faq 3 |
-| Blob 업로드 | ○ **여전히 미검증** | `BLOB_READ_WRITE_TOKEN` 이 빈 문자열이라 아무도 실업로드를 못 해봤다 |
+| Blob 업로드 | ● **검증됨** | 원본→sharp 파생본→공개 URL HTTP 200 까지 확인, 테스트 객체 삭제 |
 | 인스타 | ○ 미검증 | 토큰 없음 |
 
 `gallery/empty`(결과 0건 화면 문구)도 도달을 확인했다. 0건이 되는 URL 은
@@ -127,7 +166,19 @@ RESEND_API_KEY          문의 알림 메일 (없어도 저장은 됨)
 
 ## 남은 일 (우선순위)
 
-1. **Blob 업로드 — 원인 규명 완료, 남은 것은 설정 토글 하나**
+1. **Blob 업로드 — ✅ 해결됨 (이번 세션에서 실제 업로드 성공)**
+
+   사용자가 Blob 스토어를 Development 환경까지 연결했고, `isBlobConfigured()` 가 OIDC 를
+   인정하도록 코드를 고친 뒤 **실제로 올라갔다.** 50일 된 스토어에 파일이 들어간 것은 그때가 처음이다.
+   원본 372KB PNG 업로드 → sharp 재인코딩 → avif/webp 400px 생성 → 공개 URL 이 HTTP 200
+   (`image/avif`, 12,943 bytes) 로 서빙되는 것까지 확인하고 테스트 객체 3개를 지웠다.
+
+   OIDC 토큰은 수명이 짧다. 로컬에서 업로드가 갑자기 실패하면 `vercel env pull` 을 다시 하면 된다.
+   정적 토큰(`BLOB_READ_WRITE_TOKEN`)은 만들지 않았다 — 필요해지면 스토어 연결 다이얼로그의
+   "Add a read-write token env var" 를 켜면 되지만, 장수명 비밀이 하나 늘어난다.
+
+<!-- 이전 진단 기록 (해결 완료) -->
+<details><summary>원인 규명 과정</summary>
 
    `BLOB_READ_WRITE_TOKEN` 이 빈 값인 것은 실수가 아니라 **이 프로젝트가 OIDC 방식으로 붙어 있기
    때문**이다. Vercel 문서 기준 OIDC 가 기본이고 권장이며, SDK 가 `VERCEL_OIDC_TOKEN` + `BLOB_STORE_ID`
@@ -145,9 +196,8 @@ RESEND_API_KEY          문의 알림 메일 (없어도 저장은 됨)
    포함**해 연결한 뒤 `vercel env pull .env.local`. 스토어 대시보드:
    `https://vercel.com/gai-cmds-projects/~/stores/blob/store_1TWhNaMSDw7uymz2`
 
-   **아직 확인 못 한 것**: 업로드가 실제로 성공하는 것을 어느 환경에서도 보지 못했다.
-   프로덕션은 OIDC 가 열려 있다고 스토어가 말하지만, 관리자 화면이 SSO 미설정으로 닫혀 있어
-   업로드를 눌러 볼 수가 없다. "코드 경로가 열렸다"까지가 확인된 사실이다.
+   코드가 정적 토큰만 요구해 OIDC 경로를 스스로 막고 있었다는 것이 결론이었다.
+</details>
 2. **관리자 로그인** — `AUTH_GOOGLE_ID` / `AUTH_SECRET` / `ADMIN_ALLOWED_EMAILS` 는 **어느 환경에도
    아예 없다**(`vercel env ls` 목록에 없음, 미생성). 구글 클라우드 콘솔에서 OAuth 클라이언트를
    만들어야 하는데 그건 계정 소유자만 할 수 있다. 그래서 관리자 화면을 사람이 열어본 적이 없고,
