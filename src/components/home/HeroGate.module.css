@@ -1,6 +1,10 @@
+/* 히어로도 본문과 같은 컨테이너 안에 둔다 — 사진만 모니터를 다 차지하면
+   아래 섹션들과 좌우 여백이 어긋나 화면이 퍼져 보인다. */
 .root {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  max-width: var(--content-max);
+  margin-inline: auto;
 }
 
 .panel {
