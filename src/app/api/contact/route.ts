@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { LOCALES } from '@/lib/i18n';
 import { SESSION_TYPES, type SessionTypeValue } from '@/app/[locale]/contact/content';
 import { isDatabaseConfigured, prisma } from '@/server/db';
+import { notifyInquiry } from '@/server/notify';
 
 /**
  * 문의 수신 경로.
@@ -63,11 +64,21 @@ async function persistEnquiry(enquiry: Enquiry): Promise<string | null> {
 }
 
 /**
- * TODO(notify): 저장이 끝난 뒤에만 부르는 알림 단계.
- * 메일 의존성은 아직 넣지 않는다. 알림 실패는 접수 실패가 아니다.
+ * 저장이 끝난 뒤에만 부르는 알림 단계. 실제 전송 로직은 src/server/notify.ts 에 있다.
+ * 여기서는 Enquiry → InquiryNotification 형태 변환만 한다. 알림 실패는 접수 실패가 아니다.
  */
-async function notifyEnquiry(_enquiry: Enquiry): Promise<void> {
-  // TODO(notify): 저장된 문의 id를 담아 운영자에게 알림
+async function notifyEnquiry(enquiry: Enquiry, id: string): Promise<void> {
+  await notifyInquiry({
+    id,
+    name: enquiry.name,
+    email: enquiry.email,
+    sessionType: enquiry.sessionType,
+    preferredDates: enquiry.preferredDates,
+    people: enquiry.people,
+    message: enquiry.message,
+    locale: enquiry.locale,
+    replyIn: enquiry.replyIn,
+  });
 }
 
 export async function POST(request: Request) {
@@ -102,8 +113,10 @@ export async function POST(request: Request) {
   }
 
   // 알림은 저장 다음이다. 알림이 실패해도 문의는 이미 남아 있으므로 접수는 성공이다.
+  // notifyInquiry는 내부에서 실패를 값으로 돌려주고 throw하지 않지만, 예상치 못한
+  // 예외까지 접수 실패로 번지지 않도록 이 try/catch를 안전망으로 남겨 둔다.
   try {
-    await notifyEnquiry(parsed.data);
+    await notifyEnquiry(parsed.data, id);
   } catch (err) {
     console.error('[contact] 알림 실패 (접수는 정상)', err);
   }
