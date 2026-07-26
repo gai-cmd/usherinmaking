@@ -30,7 +30,11 @@ export const COLLECTION = {
     en: 'The line-up',
     ko: '드레스 컬렉션',
   } satisfies L10n,
-  filterAll: { ja: 'すべて', en: 'All', ko: '전체' } satisfies L10n,
+  /**
+   * 필터 탭 라벨. JA·EN 카드는 로케일 번역 없이 영문 대문자(ALL/WHITE/…)를 그대로 쓰고,
+   * KO 카드만 한글로 옮긴다 — 세 카드가 서로 다른 표기를 실제로 쓰고 있어 그대로 옮겼다.
+   */
+  filterAll: { ja: 'ALL', en: 'ALL', ko: '전체' } satisfies L10n,
   /**
    * 개별 드레스 사진은 아직 받지 못했다.
    * 시안 캡션은 인스타그램에서 가져온다고 적혀 있으나, 사진은 자기 도메인에서만
@@ -105,11 +109,12 @@ export const DRESS_ITEMS: DressItem[] = [
   },
 ];
 
+/** 위 filterAll 과 같은 이유로 JA·EN 은 영문 대문자, KO 는 한글이다. */
 export const CATEGORY_LABEL: Record<DressCategory, L10n> = {
-  white: { ja: 'ホワイト', en: 'White', ko: '화이트' },
-  color: { ja: 'カラー', en: 'Colour', ko: '컬러' },
-  vintage: { ja: 'ヴィンテージ', en: 'Vintage', ko: '빈티지' },
-  maternity: { ja: 'マタニティ', en: 'Maternity', ko: '만삭' },
+  white: { ja: 'WHITE', en: 'WHITE', ko: '화이트' },
+  color: { ja: 'COLOR', en: 'COLOR', ko: '컬러' },
+  vintage: { ja: 'VINTAGE', en: 'VINTAGE', ko: '빈티지' },
+  maternity: { ja: 'MATERNITY', en: 'MATERNITY', ko: '만삭' },
 };
 
 /* ---------------- 대여 조건 ---------------- */

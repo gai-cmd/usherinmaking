@@ -188,9 +188,13 @@ export const OPTION_SECTION = {
 export type OptionRow = { label: string; price: string; note: string };
 
 /**
- * 시안 옵션 표는 8행이다. 이 가운데 신랑 의상 / 원본 JPEG / 프리미엄 드레스 3행은
+ * 시안 옵션 표는 JA·EN 카드에서 8행이다. 이 가운데 신랑 의상 / 원본 JPEG / 프리미엄 드레스 3행은
  * site.ts STUDIO_OPTIONS 가격을 그대로 쓰고, site.ts 에 없는 나머지 행만 여기에 둔다.
  * 주말 요금은 site.ts 가 로케이션 기준 단일가(＋¥18,000)라 범위를 보여주는 시안 표기를 따른다.
+ *
+ * "인원 추가"와 "헤어메이크업 추가"는 로케일마다 실제 행 구성이 다르다 — JA·EN 카드는
+ * 이 둘을 별도 행 2개로 보여주지만, KO 카드만 한 행으로 합쳐서 보여준다. extraPersonRows 가
+ * 그 차이를 그대로 옮긴 것이다.
  */
 export function optionRows(locale: Locale): OptionRow[] {
   const [groom, raw, premium] = STUDIO_OPTIONS;
@@ -200,7 +204,6 @@ export function optionRows(locale: Locale): OptionRow[] {
       'STUDIO 01 / 02 ・ サイズは M のみ',
       'STUDIO 全プラン ・ 編集前の全カット',
       'STUDIO 01 / 02 ・ ドレスにより異なります',
-      'STUDIO 04 ・ 記念写真の追加は ＋¥3,000',
       'LOCATION ・ 〜¥50,000 台 ／ タキシードはありません。小物・ブーケ・アクセサリー込み',
       'LOCATION ・ 1分30秒 ／ 単体でのご依頼は不可',
       'STUDIO 01 / 02 ＋¥18,000 ・ 03 / 04 ＋¥11,000 ／ LOCATION ＋¥18,000 ・ 記念写真 ＋¥8,000',
@@ -209,7 +212,6 @@ export function optionRows(locale: Locale): OptionRow[] {
       'Studio 01 / 02 · size M only',
       'All studio plans',
       'Studio 01 / 02 · depends on the dress',
-      'Studio 04 · anniversary portraits +¥3,000',
       'Location · up to the ¥50,000 range, no tuxedos. Small items, bouquet and accessories included',
       'Location · 1 min 30 sec · not available on its own',
       'Studio 01 / 02 +¥18,000 · 03 / 04 +¥11,000 · location +¥18,000 · anniversary +¥8,000',
@@ -218,7 +220,6 @@ export function optionRows(locale: Locale): OptionRow[] {
       '스튜디오 01 / 02 · M 사이즈만',
       '스튜디오 전 플랜 · 보정 전 전체 컷',
       '스튜디오 01 / 02 · 드레스에 따라 다름',
-      '스튜디오 04 · 기념사진은 1명 +¥3,000',
       '로케이션 · ~¥50,000대 / 턱시도는 없습니다. 소품 · 부케 · 액세서리 포함',
       '로케이션 · 1분 30초 / 영상 단독 의뢰 불가',
       '스튜디오 01/02 +¥18,000 · 03/04 +¥11,000 / 로케이션 +¥18,000 · 기념사진 +¥8,000',
@@ -226,35 +227,43 @@ export function optionRows(locale: Locale): OptionRow[] {
   };
 
   const labels: L10nList = {
-    ja: [
-      '1名様 追加 / ヘアメイク 追加',
-      'ドレスレンタル',
-      '動画 + ドローン撮影',
-      '休日料金（土・日・祝）',
-    ],
-    en: [
-      'Extra person / hair & make-up',
-      'Dress rental',
-      'Video + drone',
-      'Weekends and holidays',
-    ],
-    ko: ['인원 추가 / 헤어메이크업 추가', '드레스 대여', '영상 + 드론 촬영', '주말 · 공휴일 요금'],
+    ja: ['ドレスレンタル', '動画 + ドローン撮影', '休日料金（土・日・祝）'],
+    en: ['Dress rental', 'Video + drone', 'Weekends and holidays'],
+    ko: ['드레스 대여', '영상 + 드론 촬영', '주말 · 공휴일 요금'],
   };
 
   const prices: L10nList = {
-    ja: ['＋¥3,300 / ＋¥22,000', '¥10,000 台〜', '¥35,000', '＋¥8,000 〜 ¥18,000'],
-    en: ['+¥3,300 / +¥22,000', 'from ¥10,000', '¥35,000', '+¥8,000–18,000'],
-    ko: ['+¥3,300 / +¥22,000', '¥10,000대부터', '¥35,000', '+¥8,000~18,000'],
+    ja: ['¥10,000 台〜', '¥35,000', '＋¥8,000 〜 ¥18,000'],
+    en: ['from ¥10,000', '¥35,000', '+¥8,000–18,000'],
+    ko: ['¥10,000대부터', '¥35,000', '+¥8,000~18,000'],
+  };
+
+  const extraPersonRows: Record<Locale, OptionRow[]> = {
+    ja: [
+      { label: '1名様 追加', price: '＋¥3,300', note: 'STUDIO 04 ・ 記念写真は ＋¥3,000' },
+      { label: 'ヘアメイク 追加', price: '＋¥22,000', note: 'STUDIO 04' },
+    ],
+    en: [
+      { label: 'Extra person', price: '+¥3,300', note: 'Studio 04 · anniversary portraits +¥3,000' },
+      { label: 'Hair & make-up', price: '+¥22,000', note: 'Studio 04' },
+    ],
+    ko: [
+      {
+        label: '인원 추가 / 헤어메이크업 추가',
+        price: '+¥3,300 / +¥22,000',
+        note: '스튜디오 04 · 기념사진은 1명 +¥3,000',
+      },
+    ],
   };
 
   return [
     { label: groom.label[locale], price: groom.price[locale], note: notes[locale][0] },
     { label: raw.label[locale], price: raw.price[locale], note: notes[locale][1] },
     { label: premium.label[locale], price: premium.price[locale], note: notes[locale][2] },
+    ...extraPersonRows[locale],
     { label: labels[locale][0], price: prices[locale][0], note: notes[locale][3] },
     { label: labels[locale][1], price: prices[locale][1], note: notes[locale][4] },
     { label: labels[locale][2], price: prices[locale][2], note: notes[locale][5] },
-    { label: labels[locale][3], price: prices[locale][3], note: notes[locale][6] },
   ];
 }
 
@@ -317,7 +326,11 @@ export const FLOW = {
       '撮影当日・残金のお支払い',
     ],
     en: [
-      'Tell us your dates (form or email)',
+      /**
+       * 카드 원문은 "form or email" 이었지만, 상담 채널 규칙상 영어권 채널은
+       * Instagram 이고 이메일 주소는 어디에도 노출하지 않는다 — 규칙이 카드보다 우선한다.
+       */
+      'Tell us your dates (form or Instagram)',
       'Deposit of 50% of the total',
       'Contract issued and signed',
       'Session day and balance payment',

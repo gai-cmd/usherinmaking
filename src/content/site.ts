@@ -103,7 +103,7 @@ export const STUDIO_PLANS: Plan[] = [
     badge: 'PLAN 01',
     title: {
       ja: 'スタジオ ウェディングフォト',
-      en: 'Studio Wedding Photo',
+      en: 'Studio Wedding',
       ko: '스튜디오 웨딩 촬영',
     },
     duration: { ja: '約 3.5H ・ 30 CUTS', en: 'approx. 3.5H · 30 cuts', ko: '약 3.5시간 · 30컷' },
@@ -122,7 +122,7 @@ export const STUDIO_PLANS: Plan[] = [
     badge: 'PLAN 02',
     title: {
       ja: 'スタジオ + ロケーションフォト',
-      en: 'Studio + Location Photo',
+      en: 'Studio + Location',
       ko: '스튜디오 + 로케이션',
     },
     duration: { ja: '約 4.5H ・ 40 CUTS', en: 'approx. 4.5H · 40 cuts', ko: '약 4.5시간 · 40컷' },
@@ -141,7 +141,7 @@ export const STUDIO_PLANS: Plan[] = [
     badge: 'PLAN 03',
     title: {
       ja: 'ウェディング風 マタニティフォト',
-      en: 'Wedding-style Maternity Photo',
+      en: 'Wedding-style Maternity',
       ko: '웨딩풍 만삭 촬영',
     },
     duration: { ja: '約 3H ・ 20 CUTS', en: 'approx. 3H · 20 cuts', ko: '약 3시간 · 20컷' },
@@ -161,7 +161,7 @@ export const STUDIO_PLANS: Plan[] = [
     title: {
       ja: '記念日・家族 プロフィール撮影',
       en: 'Anniversary and Family Portrait',
-      ko: '기념일 · 가족 프로필',
+      ko: '기념일 · 가족 · 프로필',
     },
     duration: { ja: '約 50分 ・ 20 CUTS', en: 'approx. 50 min · 20 cuts', ko: '약 50분 · 20컷' },
     listPrice: 38000,

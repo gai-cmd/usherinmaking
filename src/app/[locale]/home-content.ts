@@ -193,7 +193,7 @@ export const HOME: Record<Locale, HomeCopy> = {
     sets: {
       label: 'STUDIO',
       title: 'Four sets',
-      lead: 'You can move between more than one room in a single session.',
+      lead: 'You can move between more than one room in a single session',
       cta: 'VIEW STUDIO →',
     },
     locationPlans: {
@@ -206,7 +206,7 @@ export const HOME: Record<Locale, HomeCopy> = {
       detail: 'LOCATION PLANS →',
     },
     works: {
-      label: 'LOCATION · SELECTED WORK',
+      label: 'LOCATION · FROM INSTAGRAM',
       title: 'Recent works',
       lead: 'A selection from our Instagram posts, newest first, hosted here on our own site.',
       filters: ['ALL', 'WEDDING', 'SELF', 'FAMILY', 'MATERNITY', 'DATE'],
@@ -236,7 +236,7 @@ export const HOME: Record<Locale, HomeCopy> = {
         },
         {
           q: 'Is a dress included?',
-          a: 'Studio plans include 1-2 dresses. For location sessions, dress rental starts in the ¥10,000 range.',
+          a: 'Studio plans include 1–2 dresses. For location sessions, dress rental starts in the ¥10,000 range.',
         },
         {
           q: 'What happens if it rains?',
@@ -294,7 +294,7 @@ export const HOME: Record<Locale, HomeCopy> = {
     sets: {
       label: 'STUDIO',
       title: '4개의 세트',
-      lead: '한 번의 촬영에서 공간을 옮겨가며 담습니다.',
+      lead: '한 번의 촬영에서 공간을 옮겨가며 담습니다',
       cta: '스튜디오 보기 →',
     },
     locationPlans: {
