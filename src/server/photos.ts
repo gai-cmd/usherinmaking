@@ -1,13 +1,16 @@
 // 사진 저장소 계층.
 //
-// 읽기는 아래 시드에서, 쓰기는 전부 NotImplementedError로 막아 둔다.
-// 함수 시그니처와 필드 이름은 prisma/schema.prisma의 Photo / Term / PhotoTerm과 맞춰 두었으므로
-// 시드 읽기를 Prisma 호출로 바꾸는 것만으로 드롭인 교체가 된다.
+// 읽기는 DB 우선 · 시드 폴백이다 — DB에 행이 한 건이라도 있으면 DB가 이긴다(journal.ts와 같은 패턴).
+// 쓰기는 DB가 붙어 있으면 실제로 저장하고, 붙어 있지 않으면 검증까지 마친 뒤 NotImplementedError로 끊는다.
+// 성공을 흉내내는 경로는 없다.
 //
 // TODO(seed): src/content/photos.ts · src/content/taxonomy.ts 가 생기면 SEED_PHOTOS / SEED_TAXONOMIES를
 // 그쪽 import로 교체한다. 작성 시점에 두 파일이 없어 타입을 여기에 로컬 정의했다.
 
-import { AppError, NotImplementedError, NotFoundError } from './errors';
+import type { Prisma } from '@prisma/client';
+import { isDatabaseConfigured, prisma } from '@/server/db';
+import { logAdminAction } from '@/server/activity';
+import { AppError, NotImplementedError, NotFoundError, ValidationError } from './errors';
 import { isLowRes, type VariantMap } from '@/lib/image-contract';
 import { LOCALES, type Locale } from '@/lib/i18n';
 import {
@@ -263,15 +266,129 @@ function fromQueue(q: QueueInput): Photo {
 
 const SEED_PHOTOS: Photo[] = [...INGEST_QUEUE.map(fromQueue), ...CONTENT_PHOTOS.map(fromContent)];
 
+/* ============================ DB 매핑 ============================ */
+
+/** photo.terms 조인 포함. 조회·쓰기 후 재조회 모두 이 include로 통일한다. */
+const PHOTO_INCLUDE = {
+  terms: { include: { term: { include: { taxonomy: true } } } },
+} satisfies Prisma.PhotoInclude;
+
+type DbPhoto = Prisma.PhotoGetPayload<{ include: typeof PHOTO_INCLUDE }>;
+type DbPhotoTerm = DbPhoto['terms'][number];
+
+/** Json 칼럼은 unknown이나 다름없이 들어온다. 모양이 아니면 지어내지 않고 fallback으로 떨어뜨린다. */
+function readLocalized(raw: unknown, fallback: Localized): Localized {
+  if (!raw || typeof raw !== 'object') return fallback;
+  const obj = raw as Record<string, unknown>;
+  const out = {} as Localized;
+  for (const l of LOCALES) {
+    const v = obj[l];
+    out[l] = typeof v === 'string' ? v : fallback[l];
+  }
+  return out;
+}
+
+/** story처럼 없어도 되는 다국어 필드. 내용이 하나도 없으면 null. */
+function readOptionalLocalized(raw: unknown): Localized | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, unknown>;
+  const out = {} as Localized;
+  let hasContent = false;
+  for (const l of LOCALES) {
+    const v = obj[l];
+    out[l] = typeof v === 'string' ? v : '';
+    if (out[l].length > 0) hasContent = true;
+  }
+  return hasContent ? out : null;
+}
+
+function readVariants(raw: unknown): VariantMap {
+  const empty: VariantMap = { avif: {}, webp: {} };
+  if (!raw || typeof raw !== 'object') return empty;
+  const obj = raw as Record<string, unknown>;
+  return {
+    avif: obj.avif && typeof obj.avif === 'object' ? (obj.avif as VariantMap['avif']) : {},
+    webp: obj.webp && typeof obj.webp === 'object' ? (obj.webp as VariantMap['webp']) : {},
+  };
+}
+
+function readAiSuggestion(raw: unknown): AiSuggestion[] | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const out: AiSuggestion[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    if (
+      typeof o.taxonomyId === 'string' &&
+      typeof o.termId === 'string' &&
+      typeof o.label === 'string' &&
+      typeof o.score === 'number'
+    ) {
+      out.push({ taxonomyId: o.taxonomyId, termId: o.termId, label: o.label, score: o.score });
+    }
+  }
+  return out.length > 0 ? out : null;
+}
+
+/** term.label(Json)을 읽는다. ja → slug 대체 규칙은 시드 쪽 fillLabel과 맞춰 둔다. */
+function readTermLabel(raw: unknown, slug: string): Localized {
+  if (!raw || typeof raw !== 'object') return { ja: slug, en: slug, ko: slug };
+  const obj = raw as Record<string, unknown>;
+  const ja = typeof obj.ja === 'string' ? obj.ja : slug;
+  const en = typeof obj.en === 'string' ? obj.en : ja;
+  const ko = typeof obj.ko === 'string' ? obj.ko : ja;
+  return { ja, en, ko };
+}
+
+function fromDbTerm(row: DbPhotoTerm): PhotoTermRef {
+  return {
+    taxonomyId: row.term.taxonomyId,
+    taxonomyKey: row.term.taxonomy.key,
+    termId: row.term.id,
+    slug: row.term.slug,
+    label: readTermLabel(row.term.label, row.term.slug),
+  };
+}
+
+function fromDb(row: DbPhoto): Photo {
+  return {
+    id: row.id,
+    igMediaId: row.igMediaId,
+    originalUrl: row.originalUrl,
+    variants: readVariants(row.variants),
+    width: row.width,
+    height: row.height,
+    caption: row.caption,
+    takenAt: row.takenAt,
+    status: row.status,
+    lowRes: row.lowRes,
+    alt: readLocalized(row.alt, ZERO_ALT),
+    story: readOptionalLocalized(row.story),
+    aiSuggestion: readAiSuggestion(row.aiSuggestion),
+    isCover: row.isCover,
+    terms: row.terms.map(fromDbTerm),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
 /* ============================ 읽기 ============================ */
 
 function hasNoTerms(p: Photo): boolean {
   return p.terms.length === 0;
 }
 
+/** 전체 목록. DB에 한 건이라도 있으면 DB가 원본이다. */
+async function allRows(): Promise<Photo[]> {
+  if (isDatabaseConfigured()) {
+    const rows = await prisma.photo.findMany({ include: PHOTO_INCLUDE });
+    if (rows.length > 0) return rows.map(fromDb);
+  }
+  return SEED_PHOTOS.slice();
+}
+
 export async function listPhotos(filter: PhotoFilter = {}): Promise<Photo[]> {
-  // TODO(prisma): prisma.photo.findMany({ where, orderBy, include: { terms: { include: { term: true } } } })
-  let rows = SEED_PHOTOS.slice();
+  let rows = await allRows();
 
   if (filter.status) rows = rows.filter((p) => p.status === filter.status);
   if (filter.untagged) rows = rows.filter(hasNoTerms);
@@ -286,14 +403,34 @@ export async function listPhotos(filter: PhotoFilter = {}): Promise<Photo[]> {
   return rows;
 }
 
+/** 단건 조회. id 기준으로 DB를 먼저 보고, 없으면(또는 DB 미설정이면) 시드에서 찾는다. */
 export async function getPhoto(id: string): Promise<Photo | null> {
-  // TODO(prisma): prisma.photo.findUnique({ where: { id }, include: { terms: ... } })
+  if (isDatabaseConfigured()) {
+    const row = await prisma.photo.findUnique({ where: { id }, include: PHOTO_INCLUDE });
+    if (row) return fromDb(row);
+  }
   return SEED_PHOTOS.find((p) => p.id === id) ?? null;
 }
 
+/**
+ * 쓰기 대상 조회. getPhoto와 달리 DB가 붙어 있으면 시드로 대체하지 않는다 —
+ * 시드는 실제 DB 행이 아니므로 그 자체로 쓰기 대상이 될 수 없다(있으면 존재하지 않는 행을
+ * update하게 되어 조용히 깨진다). DB 미설정일 때만 시드로 검증을 계속한다
+ * (그다음 각 쓰기 함수가 NotImplementedError로 끊는다).
+ */
+async function requirePhoto(id: string): Promise<Photo> {
+  if (isDatabaseConfigured()) {
+    const row = await prisma.photo.findUnique({ where: { id }, include: PHOTO_INCLUDE });
+    if (!row) throw new NotFoundError('사진을 찾을 수 없습니다.');
+    return fromDb(row);
+  }
+  const seedPhoto = SEED_PHOTOS.find((p) => p.id === id);
+  if (!seedPhoto) throw new NotFoundError('사진을 찾을 수 없습니다.');
+  return seedPhoto;
+}
+
 export async function countPhotos(): Promise<PhotoCounts> {
-  // TODO(prisma): prisma.photo.groupBy({ by: ['status'], _count: true }) + 조건별 count
-  const all = SEED_PHOTOS;
+  const all = await allRows();
   const publishedByPlace: Record<string, number> = {};
   for (const p of all) {
     if (p.status !== 'PUBLISHED') continue;
@@ -326,56 +463,132 @@ export async function getStorageUsage(): Promise<{ originals: number; bytes: num
   return { originals: SEED_PHOTOS.length, bytes: null };
 }
 
-/* ============================ 쓰기 (전부 미연결) ============================ */
+/* ============================ 쓰기 ============================ */
 //
-// 아래 함수는 어떤 경우에도 성공을 반환하지 않는다. 검증은 실제로 수행하고 —
-// 규칙 위반은 지금도 정확히 걸러진다 — 저장 직전에 NotImplementedError로 끊는다.
+// DB가 붙어 있으면 실제로 저장한다. 붙어 있지 않으면 검증까지 실제로 수행한 뒤
+// NotImplementedError로 끊는다 — 성공을 흉내내는 경로는 어디에도 없다.
 
 export type StatusChange = { id: string; status: PhotoStatus };
 
 export async function updatePhotoStatus(id: string, status: PhotoStatus): Promise<Photo> {
-  const photo = await getPhoto(id);
-  if (!photo) throw new NotFoundError('사진을 찾을 수 없습니다.');
+  const photo = await requirePhoto(id);
 
-  // 전시 전제 조건은 스텁 이전에 실제로 검사한다.
+  // 전시 전제 조건(alt 3개 언어)은 DB 연결 여부와 무관하게 항상 검사한다.
   assertPublishable(photo, status);
 
-  // TODO(prisma): prisma.photo.update({ where: { id }, data: { status } })
-  throw new NotImplementedError(`사진 상태 변경(${status})`);
+  if (!isDatabaseConfigured()) {
+    throw new NotImplementedError(`사진 상태 변경(${status})`);
+  }
+
+  const row = await prisma.photo.update({
+    where: { id },
+    data: { status },
+    include: PHOTO_INCLUDE,
+  });
+
+  await logAdminAction('사진 상태 변경', id, { status });
+  return fromDb(row);
 }
 
 export async function bulkUpdatePhotoStatus(ids: string[], status: PhotoStatus): Promise<Photo[]> {
+  // 저장을 시작하기 전에 대상 전원을 검증한다 — 중간에 막히면 일부만 바뀐 상태로
+  // 끝나서는 안 된다.
   for (const id of ids) {
-    const photo = await getPhoto(id);
-    if (!photo) throw new NotFoundError(`사진을 찾을 수 없습니다: ${id}`);
+    let photo: Photo;
+    try {
+      photo = await requirePhoto(id);
+    } catch {
+      throw new NotFoundError(`사진을 찾을 수 없습니다: ${id}`);
+    }
     assertPublishable(photo, status);
   }
-  // TODO(prisma): prisma.photo.updateMany({ where: { id: { in: ids } }, data: { status } })
-  throw new NotImplementedError(`사진 ${ids.length}건 일괄 상태 변경(${status})`);
+
+  if (!isDatabaseConfigured()) {
+    throw new NotImplementedError(`사진 ${ids.length}건 일괄 상태 변경(${status})`);
+  }
+
+  await prisma.photo.updateMany({ where: { id: { in: ids } }, data: { status } });
+  await logAdminAction('사진 일괄 상태 변경', undefined, { count: ids.length, status });
+
+  const rows = await prisma.photo.findMany({ where: { id: { in: ids } }, include: PHOTO_INCLUDE });
+  return rows.map(fromDb);
 }
 
 export async function updatePhotoAlt(id: string, alt: Partial<Localized>): Promise<Photo> {
-  const photo = await getPhoto(id);
-  if (!photo) throw new NotFoundError('사진을 찾을 수 없습니다.');
-  // TODO(prisma): prisma.photo.update({ where: { id }, data: { alt: { ...photo.alt, ...alt } } })
-  throw new NotImplementedError('alt 저장');
+  const photo = await requirePhoto(id);
+  const merged: Localized = { ...photo.alt, ...alt };
+
+  if (!isDatabaseConfigured()) {
+    throw new NotImplementedError('alt 저장');
+  }
+
+  const row = await prisma.photo.update({
+    where: { id },
+    data: { alt: merged as unknown as Prisma.InputJsonValue },
+    include: PHOTO_INCLUDE,
+  });
+
+  await logAdminAction('사진 alt 저장', id, { locales: Object.keys(alt) });
+  return fromDb(row);
 }
 
+/**
+ * termId 존재 판정 기준. DB가 붙어 있으면 실제 Term 행을, 아니면 content 시드의
+ * term key를 쓴다(시드 스크립트가 Term.id로 term.key를 그대로 쓰기 때문에 둘은 같은 값이다).
+ */
+async function knownTermIds(): Promise<Set<string>> {
+  if (isDatabaseConfigured()) {
+    const rows = await prisma.term.findMany({ select: { id: true } });
+    return new Set(rows.map((r) => r.id));
+  }
+  return new Set(TERMS.map((t) => t.key));
+}
+
+/** 통째로 교체한다 — 지운 항목이 실제로 사라지도록 delete 후 create를 한 트랜잭션으로 묶는다. */
 export async function setPhotoTerms(id: string, termIds: string[]): Promise<Photo> {
-  const photo = await getPhoto(id);
-  if (!photo) throw new NotFoundError('사진을 찾을 수 없습니다.');
-  // TODO(prisma): deleteMany(PhotoTerm) 후 createMany — 트랜잭션으로 묶는다
-  throw new NotImplementedError(`분류 지정(${termIds.length}건)`);
+  await requirePhoto(id);
+
+  const uniqueIds = [...new Set(termIds)];
+  const known = await knownTermIds();
+  const unknown = uniqueIds.filter((termId) => !known.has(termId));
+  if (unknown.length > 0) {
+    throw new ValidationError(`존재하지 않는 분류입니다: ${unknown.join(', ')}`);
+  }
+
+  if (!isDatabaseConfigured()) {
+    throw new NotImplementedError(`분류 지정(${uniqueIds.length}건)`);
+  }
+
+  await prisma.$transaction([
+    prisma.photoTerm.deleteMany({ where: { photoId: id } }),
+    ...(uniqueIds.length > 0
+      ? [prisma.photoTerm.createMany({ data: uniqueIds.map((termId) => ({ photoId: id, termId })) })]
+      : []),
+  ]);
+
+  await logAdminAction('사진 분류 지정', id, { termIds: uniqueIds });
+  return requirePhoto(id);
 }
 
 export async function setCoverPhoto(id: string): Promise<Photo> {
-  const photo = await getPhoto(id);
-  if (!photo) throw new NotFoundError('사진을 찾을 수 없습니다.');
+  const photo = await requirePhoto(id);
   if (photo.status !== 'PUBLISHED') {
-    throw new NotImplementedError('대표컷 지정 — 전시중인 사진만 대표컷이 될 수 있습니다');
+    throw new ValidationError('대표컷은 전시중인 사진만 지정할 수 있습니다.');
   }
-  // TODO(prisma): 기존 isCover=false로 내린 뒤 대상만 true. 트랜잭션.
-  throw new NotImplementedError('대표컷 지정');
+
+  if (!isDatabaseConfigured()) {
+    throw new NotImplementedError('대표컷 지정');
+  }
+
+  // 기존 대표컷을 내리는 것과 새 대표컷을 올리는 것이 한 트랜잭션 안에 있어야 한다 —
+  // 둘 사이에 크래시가 나면 대표컷이 0장 또는 2장인 상태로 사이트에 남는다.
+  await prisma.$transaction([
+    prisma.photo.updateMany({ where: { isCover: true, NOT: { id } }, data: { isCover: false } }),
+    prisma.photo.update({ where: { id }, data: { isCover: true } }),
+  ]);
+
+  await logAdminAction('대표컷 지정', id);
+  return requirePhoto(id);
 }
 
 export type IngestCandidate = {
@@ -390,10 +603,49 @@ export type IngestCandidate = {
   aiSuggestion: AiSuggestion[] | null;
 };
 
-/** 크론이 수집한 결과를 UNSORTED로 저장. 수동 업로드도 같은 큐로 들어온다. */
+/**
+ * 크론이 수집한 결과를 UNSORTED로 저장. 수동 업로드도 같은 큐로 들어온다.
+ * igMediaId가 @unique라 skipDuplicates만으로 재실행 안전성이 보장된다 — 별도 조회가 필요 없다.
+ */
 export async function createIngestedPhotos(items: IngestCandidate[]): Promise<number> {
-  // TODO(prisma): prisma.photo.createMany({ data: items.map(...), skipDuplicates: true }) — igMediaId unique로 중복 방지
-  throw new NotImplementedError(`수집 사진 ${items.length}건 저장`);
+  if (items.length === 0) return 0;
+
+  for (const item of items) {
+    if (!item.igMediaId.trim()) {
+      throw new ValidationError('igMediaId가 없는 수집 항목은 저장할 수 없습니다.');
+    }
+  }
+
+  if (!isDatabaseConfigured()) {
+    throw new NotImplementedError(`수집 사진 ${items.length}건 저장`);
+  }
+
+  const { count } = await prisma.photo.createMany({
+    data: items.map((item) => ({
+      igMediaId: item.igMediaId,
+      originalUrl: item.originalUrl,
+      variants: item.variants as unknown as Prisma.InputJsonValue,
+      width: item.width,
+      height: item.height,
+      caption: item.caption,
+      takenAt: item.takenAt,
+      status: 'UNSORTED',
+      lowRes: isLowRes(item.width, item.height),
+      alt: item.alt as unknown as Prisma.InputJsonValue,
+      aiSuggestion:
+        item.aiSuggestion !== null
+          ? (item.aiSuggestion as unknown as Prisma.InputJsonValue)
+          : undefined,
+    })),
+    // igMediaId unique 제약이 중복 방지의 실제 근거. skipDuplicates가 이미 있는 행을 조용히 건너뛴다.
+    skipDuplicates: true,
+  });
+
+  if (count > 0) {
+    await logAdminAction('수집 사진 저장', undefined, { created: count, attempted: items.length });
+  }
+
+  return count;
 }
 
 /** 이미 수집된 인스타 media id 집합. 크론이 신규만 내려받도록 판단하는 근거. */
