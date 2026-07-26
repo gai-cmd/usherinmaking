@@ -154,13 +154,26 @@ export default async function AdminJournalPage({
                   : '동기화 기록 없음'
                 : '네이버 연동 미설정'}
             </span>
+            {/*
+              importFromNaverBlog() 함수는 server/journal.ts 에 있지만, 그것을 부르는 API 라우트
+              액션이 없다(route.ts 는 GET/POST/PATCH publish·unpublish·category·clear-sample만
+              받는다). 연동 자격증명이 있어도 이 버튼을 누를 경로가 없으므로 항상 비활성이다.
+            */}
             <AdminButton
-              disabled={!naver.configured}
-              title={naver.configured ? undefined : naver.reason}
+              disabled
+              title={
+                naver.configured
+                  ? '가져오기 API 라우트가 아직 연결되지 않았습니다.'
+                  : naver.reason
+              }
             >
               블로그에서 가져오기
             </AdminButton>
-            <AdminButton variant="primary" disabled title="저장 경로가 아직 연결되지 않았습니다">
+            <AdminButton
+              variant="primary"
+              disabled
+              title="새 글 작성 폼이 아직 없습니다. 기존 글의 언어별 본문 저장·게시는 글 상세 화면에서 할 수 있습니다."
+            >
               새 글 작성
             </AdminButton>
           </>

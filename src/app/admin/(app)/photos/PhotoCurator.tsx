@@ -25,8 +25,9 @@ type ApiError = { error?: { code?: string; message?: string } };
 /**
  * 그리드 선택 + 우측 상세 패널.
  *
- * 쓰기는 전부 /api/admin/photos/* 를 실제로 호출한다. 저장 경로가 아직 없으므로
- * 501이 돌아오고, 그 메시지를 그대로 화면에 띄운다 — 성공 토스트를 흉내내지 않는다.
+ * 쓰기는 전부 /api/admin/photos/* 를 실제로 호출하고, DB가 붙어 있으면 실제로 저장된다.
+ * 실패하면 그 사유를 화면에 그대로 띄운다 — 성공 토스트를 흉내내지 않는다.
+ * (전시 전제 조건 위반은 422, DB 미연결은 501 로 돌아온다.)
  */
 export function PhotoCurator({ photos, taxonomies, initialPhotoId }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());

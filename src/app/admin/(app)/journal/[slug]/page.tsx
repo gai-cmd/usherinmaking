@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AdminButton, Badge, NotWired, PageHeader, Panel } from '@/components/admin';
-import { LOCALES, LOCALE_LABEL, type Locale } from '@/lib/i18n';
+import { NotWired, PageHeader, Panel } from '@/components/admin';
+import { LOCALES, type Locale } from '@/lib/i18n';
 import { STUDIO_PLANS, LOCATION_PLANS, ANNIVERSARY_PLANS } from '@/content/site';
 import { getJournalGroup, JOURNAL_CATEGORY_LABEL } from '@/server/journal';
+import { JournalPostEditor, type LocalePostSnapshot } from './JournalPostEditor';
 import s from './post.module.css';
 import { checkAdminPageAccess } from '@/server/auth';
 
@@ -39,17 +40,9 @@ export default async function AdminJournalPostPage({
           </>
         }
         actions={
-          <>
-            <Link href="/admin/journal" className={s.back}>
-              목록으로
-            </Link>
-            <AdminButton disabled title="저장 경로가 아직 연결되지 않았습니다">
-              저장
-            </AdminButton>
-            <AdminButton variant="primary" disabled title="저장 경로가 아직 연결되지 않았습니다">
-              {group.status === 'published' ? '게시 취소' : '게시'}
-            </AdminButton>
-          </>
+          <Link href="/admin/journal" className={s.back}>
+            목록으로
+          </Link>
         }
       />
 
@@ -102,51 +95,35 @@ export default async function AdminJournalPostPage({
           </dl>
         </Panel>
 
-        {/* 세 언어를 나란히 놓는다. 서로의 번역이 아니라 각각의 본문이다. */}
-        <div className={s.langGrid}>
-          {LOCALES.map((locale: Locale) => {
-            const post = group.posts[locale];
-            const empty = !post || !post.title.trim();
-            return (
-              <Panel
-                key={locale}
-                title={LOCALE_LABEL[locale]}
-                aside={
-                  empty ? (
-                    <Badge tone="warn">본문 없음</Badge>
-                  ) : (
-                    <Badge tone="default">
-                      {post!.publishedAt ? '게시중' : '임시저장'}
-                    </Badge>
-                  )
-                }
-              >
-                {empty ? (
-                  <p className={s.missing}>
-                    이 언어의 본문이 아직 없습니다. 다른 언어를 번역해 채우는 것이 아니라, 이
-                    언어의 독자에게 맞는 글을 따로 씁니다.
-                  </p>
-                ) : (
-                  <div className={s.postBody}>
-                    <h3 className={s.postTitle} lang={locale}>
-                      {post!.title}
-                    </h3>
-                    <p className={s.postText} lang={locale}>
-                      {post!.body}
-                    </p>
-                    <p className={s.cover}>
-                      커버 <code className={s.slug}>{post!.cover}</code>
-                    </p>
-                  </div>
-                )}
-              </Panel>
-            );
-          })}
-        </div>
+        {/* 세 언어를 나란히 놓는다. 서로의 번역이 아니라 각각의 본문이다.
+            저장·게시는 slug+locale 레코드 단위라서 언어 패널마다 따로 처리한다. */}
+        <JournalPostEditor
+          slug={slug}
+          category={group.category}
+          planCode={group.planCode}
+          isSample={group.isSample}
+          posts={
+            Object.fromEntries(
+              LOCALES.map((locale: Locale) => {
+                const post = group.posts[locale];
+                const empty = !post || !post.title.trim();
+                const snapshot: LocalePostSnapshot = empty
+                  ? null
+                  : {
+                      title: post!.title,
+                      body: post!.body,
+                      cover: post!.cover,
+                      published: post!.publishedAt !== null,
+                    };
+                return [locale, snapshot];
+              }),
+            ) as Record<Locale, LocalePostSnapshot>
+          }
+        />
 
         <NotWired
-          what="본문 편집 · 게시"
-          hint="Prisma 연결 후 열립니다. 지금 이 화면은 읽기 전용입니다."
+          what="카테고리 변경 · 샘플 표시 해제 · 커버 이미지 교체"
+          hint="이 화면에서는 아직 지원하지 않습니다. 저장 · 게시 · 게시 취소는 위 언어별 패널에서 할 수 있습니다."
         />
       </div>
     </>
