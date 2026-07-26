@@ -3,6 +3,8 @@
 .intro {
   display: grid;
   grid-template-columns: 1fr 1.05fr;
+  max-width: var(--content-max);
+  margin-inline: auto;
   border-bottom: 1px solid var(--hairline);
 }
 
@@ -139,6 +141,8 @@
 .split {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  max-width: var(--content-max);
+  margin-inline: auto;
   border-bottom: 1px solid var(--hairline);
 }
 

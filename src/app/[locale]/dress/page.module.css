@@ -1,6 +1,8 @@
 .hero {
   display: grid;
   grid-template-columns: 1.15fr 1fr;
+  max-width: var(--content-max);
+  margin-inline: auto;
   border-bottom: 1px solid var(--hairline);
 }
 
