@@ -36,6 +36,8 @@ export function EnquiryForm({
         body: JSON.stringify({
           name: String(data.get('name') ?? ''),
           email: String(data.get('email') ?? ''),
+          // 봇 감지용 미끼. 사람이 채울 수 없는 자리이므로 항상 빈 문자열이어야 한다.
+          refCode: String(data.get('refCode') ?? ''),
           sessionType,
           preferredDates: String(data.get('preferredDates') ?? ''),
           people: String(data.get('people') ?? ''),
@@ -67,6 +69,24 @@ export function EnquiryForm({
 
   return (
     <form className={s.form} onSubmit={handleSubmit} noValidate={false}>
+      {/*
+        봇 감지용 미끼 필드. 화면에서 감추고 탭 이동과 스크린리더에서도 빼 두었으므로
+        사람은 채울 수 없다. 값이 들어오면 폼을 자동으로 훑은 것이다.
+
+        이름을 refCode 로 둔 것은 의도적이다. name·email·tel·organization 처럼 뜻이
+        분명한 이름을 쓰면 비밀번호 관리자가 숨은 필드까지 자동 완성해 실제 고객이
+        걸린다. 뜻 없는 이름이라야 자동 완성 대상에서 벗어난다.
+      */}
+      <div className={s.honeypot} aria-hidden="true">
+        <input
+          type="text"
+          name="refCode"
+          tabIndex={-1}
+          autoComplete="off"
+          defaultValue=""
+        />
+      </div>
+
       <div className={s.pair}>
         <label className={s.field}>
           <span className={s.label}>{CONTACT.fields.name[locale]}</span>

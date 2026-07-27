@@ -28,6 +28,11 @@ const EnquirySchema = z
     message: z.string().trim().max(4000).optional().default(''),
     /** 문의가 들어온 페이지의 언어 */
     locale: z.enum(LOCALES),
+    /**
+     * 봇 감지용 미끼. 폼에서 화면 밖으로 감춰 둔 자리라 사람은 채울 수 없다.
+     * 값이 있으면 폼을 자동으로 훑은 것이다. 아래에서 별도로 판정한다.
+     */
+    refCode: z.string().max(200).optional().default(''),
   })
   .strict();
 
@@ -59,6 +64,40 @@ async function persistEnquiry(enquiry: Enquiry): Promise<string | null> {
   } catch (err) {
     // 저장 실패는 삼키지 않는다 — 삼키면 문의가 조용히 사라진다.
     console.error('[contact] 저장 실패', err);
+    return null;
+  }
+}
+
+/** 같은 사람이 같은 내용을 다시 보낸 것으로 볼 시간 폭 */
+const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
+
+/**
+ * 직전에 같은 내용이 이미 저장되었는지.
+ *
+ * 새 데이터를 저장하지 않는다 — 이미 있는 Inquiry 행을 조회할 뿐이다. IP 를 기록하는
+ * 방식은 개인정보 처리 방침에 영향을 주므로 여기서는 쓰지 않는다.
+ *
+ * 목적은 같은 문의가 여러 행으로 쌓이는 것을 막는 것이다. 중복이면 새로 저장하지
+ * 않되 접수는 성공으로 답하는데, 이것은 성공을 흉내내는 것이 아니다 —
+ * 그 문의는 이미 저장되어 있으므로 사용자에게는 실제로 접수된 상태가 맞다.
+ */
+async function findRecentDuplicate(enquiry: Enquiry): Promise<string | null> {
+  if (!isDatabaseConfigured()) return null;
+
+  try {
+    const row = await prisma.inquiry.findFirst({
+      where: {
+        email: enquiry.email,
+        message: enquiry.message,
+        createdAt: { gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+    return row?.id ?? null;
+  } catch (err) {
+    // 중복 조회 실패로 접수를 막지는 않는다. 최악의 경우 행이 하나 더 생길 뿐이다.
+    console.error('[contact] 중복 조회 실패 (접수는 계속)', err);
     return null;
   }
 }
@@ -105,6 +144,25 @@ export async function POST(request: Request) {
       ...new Set(parsed.error.issues.map((issue) => String(issue.path[0] ?? '')).filter(Boolean)),
     ];
     return NextResponse.json({ error: 'invalid_input', fields }, { status: 400 });
+  }
+
+  /*
+    미끼 필드에 값이 들어왔다 — 폼을 자동으로 훑은 것이다.
+
+    봇에게 201 을 돌려주어 재시도를 막는 방식은 쓰지 않는다. 비밀번호 관리자나
+    브라우저가 숨은 필드를 채워 실제 고객이 여기 걸릴 수 있는데, 그때 성공으로
+    답하면 문의가 성공한 것처럼 보이면서 사라진다. 이 저장소가 계속 경계해 온
+    실패 방식이라, 걸리면 실패로 알려 다른 경로로 연락할 수 있게 둔다.
+  */
+  if (parsed.data.refCode.trim() !== '') {
+    console.warn('[contact] 미끼 필드에 값이 들어옴 — 자동 제출로 보고 거부');
+    return NextResponse.json({ error: 'invalid_input', fields: [] }, { status: 400 });
+  }
+
+  const duplicate = await findRecentDuplicate(parsed.data);
+  if (duplicate) {
+    // 이미 저장된 문의다. 새 행을 만들지 않고, 알림도 다시 보내지 않는다.
+    return NextResponse.json({ ok: true, duplicate: true }, { status: 201 });
   }
 
   const id = await persistEnquiry(parsed.data);
