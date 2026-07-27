@@ -130,6 +130,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     resolvePageImages('studio'),
   ]);
 
+  // 작가 소개 옆 사진도 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
+  const photographerImage = pickImage(
+    images,
+    'photographer',
+    locale,
+    '/images/studio/IMG_0769.png',
+    copy.photographer.alt,
+  )!;
+
   return (
     <>
       <script
@@ -293,8 +302,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <section className={s.photographer}>
         <div className={s.photographerImage}>
           <Image
-            src="/images/studio/IMG_0769.png"
-            alt={copy.photographer.alt}
+            src={photographerImage.src}
+            alt={photographerImage.alt}
             fill
             sizes="(max-width: 767px) 100vw, 55vw"
             className={s.cover}

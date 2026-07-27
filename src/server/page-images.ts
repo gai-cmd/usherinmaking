@@ -119,8 +119,42 @@ export const PAGE_IMAGE_SLOTS: PageImageSlot[] = [
     hint: '실내 촬영을 대표하는 한 장. 가로가 긴 사진이 맞습니다.',
   },
 
+  {
+    page: 'home',
+    slot: 'photographer',
+    label: '홈 작가 소개 사진',
+    group: '홈',
+    fallback: fallbackFor('/images/studio/IMG_0769.png'),
+    hint: '홈 하단 작가 소개 옆에 걸립니다. 세로가 긴 사진이 맞습니다.',
+  },
+
+  {
+    page: 'studio',
+    slot: 'hero',
+    label: '스튜디오 히어로',
+    group: '스튜디오 대표',
+    fallback: fallbackFor('/images/studio/IMG_0766.png'),
+    hint: '페이지 최상단을 꽉 채웁니다. 가로가 긴 사진이 맞습니다.',
+  },
+  {
+    page: 'studio',
+    slot: 'access',
+    label: '스튜디오 — 찾아오시는 길 사진',
+    group: '스튜디오 대표',
+    fallback: fallbackFor('/images/studio/IMG_0769.png'),
+    hint: '주소표 왼쪽 절반에 걸립니다. 외관 사진이 어울립니다.',
+  },
+
   ...STUDIO_SET_SLOTS,
 
+  {
+    page: 'location',
+    slot: 'hero',
+    label: '로케이션 히어로',
+    group: '로케이션 대표',
+    fallback: fallbackFor('/images/up/0f62c6d466bcea42.jpg'),
+    hint: '페이지 최상단을 꽉 채웁니다. 가로가 긴 야외 사진이 맞습니다.',
+  },
   {
     page: 'location',
     slot: 'category.wedding',
@@ -179,6 +213,30 @@ export const PAGE_IMAGE_SLOTS: PageImageSlot[] = [
     // 스튜디오 실내컷을 대신 걸면 "이 사람이 작가"라는 거짓 정보가 된다. 올릴 때까지 비운다.
     fallback: null,
     hint: '아직 사진이 없습니다. 올리면 자리표시 대신 이 사진이 나갑니다.',
+  },
+  {
+    page: 'photographer',
+    slot: 'gallery.1',
+    label: '포토그래퍼 3분할 — 왼쪽',
+    group: '포토그래퍼 3분할',
+    fallback: fallbackFor('/images/studio/IMG_0766.png'),
+    hint: '화면 폭을 3등분하는 띠의 왼쪽 칸입니다.',
+  },
+  {
+    page: 'photographer',
+    slot: 'gallery.2',
+    label: '포토그래퍼 3분할 — 가운데',
+    group: '포토그래퍼 3분할',
+    fallback: fallbackFor('/images/up/0f62c6d466bcea42.jpg'),
+    hint: '화면 폭을 3등분하는 띠의 가운데 칸입니다.',
+  },
+  {
+    page: 'photographer',
+    slot: 'gallery.3',
+    label: '포토그래퍼 3분할 — 오른쪽',
+    group: '포토그래퍼 3분할',
+    fallback: fallbackFor('/images/studio/IMG_0769.png'),
+    hint: '화면 폭을 3등분하는 띠의 오른쪽 칸입니다.',
   },
 ];
 
@@ -384,6 +442,57 @@ export async function setPageImage(input: SetPageImageInput): Promise<ResolvedIm
   });
 
   return { url: row.url, width: row.width, height: row.height, alt, source: 'db' };
+}
+
+/* ============================ 재검증 ============================ */
+
+/**
+ * 이 슬롯이 걸린 공개 주소들.
+ *
+ * 공개 페이지는 전부 정적 생성이라 DB만 바꾸면 화면은 옛 사진을 계속 낸다.
+ * 저장 뒤에 이 주소들을 무효화해야 실제로 바뀐다.
+ *
+ * 홈이 스튜디오 세트 슬롯을 함께 읽으므로(한 장을 갈아끼웠는데 홈에만 옛 사진이
+ * 남지 않게 하려는 것) `studio` 의 세트 슬롯은 스튜디오와 홈 양쪽을 무효화한다.
+ */
+export function affectedRoutes(page: string, slot: string): string[] {
+  const pageRoutes: Record<string, string[]> = {
+    home: ['/'],
+    studio: ['/studio'],
+    location: ['/location'],
+    dress: ['/dress'],
+    photographer: ['/photographer'],
+  };
+
+  const base = pageRoutes[page] ?? [];
+  const alsoHome = page === 'studio' && slot.startsWith('set.') ? ['/'] : [];
+
+  // 로케일 접두사가 붙은 실제 주소로 펼친다. '/' 는 '/ko' 처럼 로케일 루트가 된다.
+  return [...new Set([...base, ...alsoHome])].flatMap((r) =>
+    LOCALES.map((l) => (r === '/' ? `/${l}` : `/${l}${r}`)),
+  );
+}
+
+/**
+ * 저장·해제한 슬롯이 걸린 공개 주소를 무효화한다.
+ *
+ * 요청 컨텍스트 밖(스크립트·크론)에서는 revalidatePath 가 던진다. 그 실패로 저장을
+ * 되돌리지는 않되 revalidated: false 를 그대로 돌려준다 — 화면이 "반영됨"이라고
+ * 말하려면 이 값이 true 여야 한다. plans.ts 의 revalidatePlanSurfaces 와 같은 규칙이다.
+ */
+export async function revalidateImageSurfaces(
+  page: string,
+  slot: string,
+): Promise<{ revalidated: boolean; routes: string[] }> {
+  const routes = affectedRoutes(page, slot);
+  try {
+    const { revalidatePath } = await import('next/cache');
+    for (const r of routes) revalidatePath(r);
+    return { revalidated: true, routes };
+  } catch (err) {
+    console.error('[page-images] 재검증 실패', err);
+    return { revalidated: false, routes };
+  }
 }
 
 /** 슬롯 해제 — 행을 지우면 폴백(/images/*)이 다시 나간다. */

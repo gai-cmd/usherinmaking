@@ -53,6 +53,9 @@ export default async function LocationPage({ params }: { params: Promise<{ local
     resolvePageImages('location'),
   ]);
 
+  // 히어로는 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
+  const heroImage = pickImage(images, 'hero', locale, HERO.image, HERO.alt[locale])!;
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -79,8 +82,8 @@ export default async function LocationPage({ params }: { params: Promise<{ local
 
       <header className={s.hero}>
         <Image
-          src={HERO.image}
-          alt={HERO.alt[locale]}
+          src={heroImage.src}
+          alt={heroImage.alt}
           fill
           priority
           sizes="100vw"

@@ -2,7 +2,12 @@ import { z } from 'zod';
 
 import { currentAdminEmail, requireAdmin } from '@/server/auth';
 import { errorResponse, ValidationError } from '@/server/errors';
-import { clearPageImage, listPageImageBindings, setPageImage } from '@/server/page-images';
+import {
+  clearPageImage,
+  listPageImageBindings,
+  revalidateImageSurfaces,
+  setPageImage,
+} from '@/server/page-images';
 import { recordActivity } from '@/server/activity';
 
 export const runtime = 'nodejs';
@@ -79,13 +84,17 @@ export async function PUT(req: Request) {
     const actor = await currentAdminEmail();
     const resolved = await setPageImage({ ...parsed.data, updatedBy: actor });
 
+    // 공개 페이지는 정적이라 저장만으로는 화면이 바뀌지 않는다. 걸린 주소를 무효화한다.
+    const revalidation = await revalidateImageSurfaces(parsed.data.page, parsed.data.slot);
+
     await recordActivity({
       actor: actor ?? 'admin',
       action: `페이지 이미지 교체 — ${parsed.data.page} / ${parsed.data.slot}`,
       target: `${parsed.data.page}:${parsed.data.slot}`,
     }).catch(() => undefined);
 
-    return Response.json({ current: resolved });
+    // revalidated 를 그대로 실어 보낸다 — 화면이 "반영됨"이라고 말하려면 이 값이 true 여야 한다.
+    return Response.json({ current: resolved, ...revalidation });
   } catch (err) {
     return errorResponse(err);
   }
@@ -108,13 +117,16 @@ export async function DELETE(req: Request) {
     const actor = await currentAdminEmail();
     const fallback = await clearPageImage(parsed.data.page, parsed.data.slot);
 
+    // 해제도 화면을 바꾸는 일이다(폴백으로 되돌아간다). 저장과 같이 무효화한다.
+    const revalidation = await revalidateImageSurfaces(parsed.data.page, parsed.data.slot);
+
     await recordActivity({
       actor: actor ?? 'admin',
       action: `페이지 이미지 해제 — ${parsed.data.page} / ${parsed.data.slot}`,
       target: `${parsed.data.page}:${parsed.data.slot}`,
     }).catch(() => undefined);
 
-    return Response.json({ current: fallback });
+    return Response.json({ current: fallback, ...revalidation });
   } catch (err) {
     return errorResponse(err);
   }

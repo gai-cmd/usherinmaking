@@ -170,11 +170,16 @@ export default async function PhotographerPage({
 
       {/* 3분할 이미지 — 거터 없이 화면 폭 전체 */}
       <section className={s.split}>
-        {c.gallery.map((img) => (
-          <div key={img.src} className={s.splitCell}>
-            <Image src={img.src} alt={img.alt} fill sizes="(max-width: 767px) 50vw, 33vw" />
-          </div>
-        ))}
+        {c.gallery.map((img, i) => {
+          // 3분할은 자리가 셋으로 고정이라 슬롯도 1·2·3 으로 둔다.
+          const cell = pickImage(images, `gallery.${i + 1}`, locale, img.src, img.alt);
+          if (!cell) return null;
+          return (
+            <div key={`gallery.${i + 1}`} className={s.splitCell}>
+              <Image src={cell.src} alt={cell.alt} fill sizes="(max-width: 767px) 50vw, 33vw" />
+            </div>
+          );
+        })}
       </section>
 
       {/* 상담 언어 + SNS */}

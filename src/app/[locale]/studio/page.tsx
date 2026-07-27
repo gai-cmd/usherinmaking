@@ -58,6 +58,10 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
     resolvePageImages('studio'),
   ]);
 
+  // 히어로와 찾아오시는 길 사진은 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
+  const heroImage = pickImage(images, 'hero', locale, HERO.image, HERO.alt[locale])!;
+  const accessImage = pickImage(images, 'access', locale, ACCESS.image, ACCESS.alt[locale])!;
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -84,8 +88,8 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
 
       <header className={s.hero}>
         <Image
-          src={HERO.image}
-          alt={HERO.alt[locale]}
+          src={heroImage.src}
+          alt={heroImage.alt}
           fill
           priority
           sizes="100vw"
@@ -186,8 +190,8 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
       <section className={s.access}>
         <div className={s.accessFigure}>
           <Image
-            src={ACCESS.image}
-            alt={ACCESS.alt[locale]}
+            src={accessImage.src}
+            alt={accessImage.alt}
             fill
             sizes="(max-width: 767px) 100vw, 50vw"
             className={s.accessImage}
