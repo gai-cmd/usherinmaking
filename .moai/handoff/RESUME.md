@@ -118,17 +118,36 @@ npx prisma generate && npx prisma db push
 값이 없으면 관리자와 인스타는 **열리지 않고 닫힌다** (의도된 동작이다).
 
 ```
-AUTH_GOOGLE_ID          Google Cloud Console → OAuth 클라이언트 ID (웹)
+AUTH_GOOGLE_ID          Google Cloud Console → OAuth 클라이언트 ID (웹)   ← 사람만 발급 가능
 AUTH_GOOGLE_SECRET      리디렉션 URI: https://usherinmaking.vercel.app/api/auth/callback/google
-AUTH_SECRET             ✅ 생성해 .env.local 에 넣어 둠
 ADMIN_ALLOWED_EMAILS    관리자 구글 계정, 쉼표 구분 — 이 목록이 곧 멤버 명부다
+AUTH_SECRET             ✅ Vercel 3개 환경 모두 등록 완료 (7/27)
 IG_USER_ID              Instagram Graph API
 IG_ACCESS_TOKEN
-CRON_SECRET             ✅ 생성해 .env.local 에 넣어 둠
+CRON_SECRET             ⏸ 일부러 비워 둠 — 아래 이유 참조
 RESEND_API_KEY          문의 알림 메일 (없어도 저장은 됨)
 NOTIFY_TO               알림 수신 주소
 RESEND_FROM             발신 주소 (비우면 Resend 예시 주소)
 ```
+
+> **`CRON_SECRET` 을 일부러 비워 둔 이유.** 이 값을 넣으면 크론이 인증을 통과해
+> 실제로 수집을 시도하는데, `IG_USER_ID`·`IG_ACCESS_TOKEN` 이 없으므로 매번 실패한다.
+> 그런데 `runInstagramIngest` 는 환경변수 검사보다 **먼저** `startRun()` 으로 실행 기록을
+> 만들고 그 뒤에 실패 처리를 한다. 즉 6시간마다 실패한 IngestRun 행이 하루 4건씩 쌓인다.
+> 비워 두면 `requireCronSecret` 이 인증 단계에서 끊고 기록도 남지 않는다.
+> **인스타 토큰을 받는 시점에 두 토큰과 `CRON_SECRET` 을 같이 넣을 것.**
+
+### 정리한 구 사이트 변수 (7/27 삭제)
+
+현재 코드가 한 줄도 읽지 않는 것을 전수 검색으로 확인한 뒤 지웠다. 살아 있는 자격 증명을
+쓰지도 않으면서 발급된 채 두는 것이 위험이기 때문이다.
+
+`ADMIN_PASSWORD` · `ADMIN_TOKEN_SECRET` · `DEPLOY_HOOK_URL` · `BLOB_WEBHOOK_PUBLIC_KEY`
+· `KV_URL` · `KV_REDIS_URL` · `KV_REST_API_URL` · `KV_REST_API_TOKEN` · `KV_REST_API_READ_ONLY_TOKEN`
+
+`BLOB_WEBHOOK_PUBLIC_KEY` 는 검증키만 있고 웹훅 핸들러 자체가 코드에 없었다.
+`KV_*` 는 Upstash Redis 다 — 나중에 IP 레이트리밋을 넣기로 하면 다시 만들어야 한다.
+삭제 전 목록은 `.moai/state/verify/reboot-20260727/30-env-before-cleanup.txt` 에 있다.
 
 ---
 
@@ -241,6 +260,26 @@ RESEND_FROM             발신 주소 (비우면 Resend 예시 주소)
 > 메타데이터는 그 페이로드 안에 있으므로, `content`/`children`/`href`/`alt`/`hrefLang` 값만
 > 따로 뽑아 정렬 비교한다. 청크 참조 번호(`$L16` → `$L15`)가 밀리는 것은 모듈을 지우면
 > 번들 그래프 순서가 바뀌기 때문이며 내용 변화가 아니다 — 여기서 오진하기 쉽다.
+
+## 진단으로 바로잡은 인식 (7/27)
+
+인계 문서가 "관리자 쓰기가 전부 막혀 있다"고 적어 온 것은 **DB 연결 이전 기준이라 지금과
+맞지 않는다.** `NotImplementedError` 대부분은 `!isDatabaseConfigured()` 조건 안에 있고,
+그 함수는 `Boolean(process.env.DATABASE_URL)` 이다. 프로덕션에 DATABASE_URL 이 있으므로
+조건은 거짓이고, **사진·FAQ·플랜·분류 쓰기 경로는 이미 살아 있다.**
+
+조건 없이 던지는 것은 `settings.ts` 와 `dress.ts` 둘뿐이며, 이 둘은 모델을 일부러 만들지
+않기로 한 항목이다(아래 "모델을 일부러 만들지 않은 화면 3개" 참조).
+
+즉 관리자 기능은 만들어져 있고 쓰기도 되는데 **로그인이 안 되어 아무도 도달하지 못하는**
+상태다. 최대 병목은 코드가 아니라 Google OAuth 클라이언트다.
+
+규모도 기록해 둔다 — 관리자 화면 24개, 관리자 API 20개. 공개 사이트는 118페이지 전부
+정적이고 동적 라우트는 전부 `/admin` 과 `/api` 아래에 있다.
+
+보안은 전부 닫히는 쪽으로 설계돼 있다. `requireAdmin` 은 SSO 미설정을 통과로 해석하지
+않고 막고, `requireCronSecret` 은 시크릿이 없으면 엔드포인트를 비활성화한다.
+공개 영역 이메일 노출은 0건이다.
 
 ## 남은 일 (우선순위)
 
