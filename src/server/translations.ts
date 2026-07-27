@@ -233,7 +233,7 @@ export type TranslationSaveInput = {
   reviewed: boolean;
 };
 
-export async function saveTranslationField(input: TranslationSaveInput): Promise<TranslationField> {
+export async function saveTranslationField(_input: TranslationSaveInput): Promise<TranslationField> {
   // TODO(prisma): 키의 앞 세그먼트로 대상 모델을 정하고 해당 Json 컬럼을 갱신한다.
   throw new NotImplementedError('번역 저장');
 }
@@ -264,7 +264,7 @@ export function getTranslationEngineConfig(): { configured: boolean; engine: str
   return { configured: Boolean(engine && process.env.TRANSLATION_API_KEY), engine };
 }
 
-export async function requestMachineDraft(key: string, locale: Locale): Promise<MachineDraftResult> {
+export async function requestMachineDraft(_key: string, _locale: Locale): Promise<MachineDraftResult> {
   const cfg = getTranslationEngineConfig();
   if (!cfg.configured) {
     return { ok: false, reason: '기계번역 엔진이 설정되지 않았습니다. 초안을 만들 수 없습니다.' };

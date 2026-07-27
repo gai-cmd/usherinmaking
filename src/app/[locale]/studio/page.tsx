@@ -10,18 +10,7 @@ import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/li
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
-import {
-  ACCESS,
-  FLOW,
-  HERO,
-  LEAD,
-  LEAD_NOTE,
-  META,
-  PLANS,
-  SETS,
-  SET_COPY,
-  WORKS,
-} from './content';
+import { ACCESS, FLOW, HERO, PLANS, SET_COPY, WORKS } from './content';
 import s from './page.module.css';
 
 export function generateStaticParams() {

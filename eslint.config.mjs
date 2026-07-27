@@ -3,7 +3,7 @@ import { FlatCompat } from '@eslint/eslintrc';
 // next lint 는 Next 16에서 사라지므로 처음부터 ESLint CLI + flat config 로 간다.
 const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
 
-export default [
+const config = [
   {
     ignores: [
       '.next/**',
@@ -31,3 +31,5 @@ export default [
     },
   },
 ];
+
+export default config;

@@ -13,7 +13,7 @@ import {
   TBC,
   type Plan,
 } from '@/content/site';
-import { SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
 import { getPageCopy } from '@/server/page-content';
 import s from './page.module.css';
 

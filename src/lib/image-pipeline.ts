@@ -8,17 +8,11 @@
 import { del, list, put } from '@vercel/blob';
 import sharp from 'sharp';
 import {
-  ALLOWED_UPLOAD_MIME,
-  LOW_RES_MIN_LONG_EDGE,
   MAX_UPLOAD_BYTES,
   RENDITION_FORMATS,
   RENDITION_QUALITY,
   RENDITION_WIDTHS,
-  extensionForMime,
-  isAllowedUploadMime,
-  isLowRes,
   mimeForExtension,
-  type AllowedUploadMime,
   type RenditionFormat,
   type RenditionWidth,
   type VariantMap,

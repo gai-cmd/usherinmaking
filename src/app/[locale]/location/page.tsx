@@ -10,18 +10,7 @@ import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
-import {
-  ARCHIVE,
-  CATEGORIES,
-  CATEGORY,
-  DETAILS,
-  HERO,
-  LEAD,
-  LEAD_NOTE,
-  META,
-  PLANS,
-  WORKS,
-} from './content';
+import { ARCHIVE, CATEGORIES, DETAILS, HERO, WORKS } from './content';
 import s from './page.module.css';
 
 const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
