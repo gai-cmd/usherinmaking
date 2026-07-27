@@ -25,6 +25,20 @@ export const HERO = {
   } satisfies L10n,
 };
 
+/**
+ * 플랜 목록 절의 제목. 화면에는 보이지 않고 보조기기에만 읽힌다.
+ *
+ * 시안에는 이 자리에 제목이 없고 탭이 바로 온다. 그런데 h1(요금 안내) 다음에
+ * 카드 제목이 h3 로 나오면 그 사이 h2 가 비어, 제목으로 문서를 훑는 사용자에게는
+ * 존재하지 않는 상위 절 아래에 플랜이 매달린 것처럼 읽힌다.
+ * 보이지 않는 h2 를 두어 시안을 그대로 두면서 목차만 바로잡는다.
+ */
+export const PLAN_LIST_SECTION: L10n = {
+  ja: 'プラン一覧',
+  en: 'Plan list',
+  ko: '플랜 목록',
+};
+
 export const TABS = {
   studio: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' } satisfies L10n,
   location: { ja: 'LOCATION', en: 'LOCATION', ko: '로케이션' } satisfies L10n,

@@ -196,7 +196,14 @@ export async function PlanBody({ locale }: { locale: Locale }) {
         <p className={s.lead}>{text['hero.lead']}</p>
       </header>
 
-      <PlanTabs tabs={tabs} />
+      {/* 카드 제목이 h3 이므로 그 위에 h2 가 있어야 제목 목차가 이어진다.
+          시안에는 이 자리에 제목이 없으니 화면에서는 감추고 보조기기에만 읽힌다. */}
+      <section aria-labelledby="plan-list-heading">
+        <h2 id="plan-list-heading" className="u-visually-hidden">
+          {C.PLAN_LIST_SECTION[locale]}
+        </h2>
+        <PlanTabs tabs={tabs} />
+      </section>
 
       {/* 옵션 표 — 어떤 플랜에 붙일 수 있는지까지 같은 줄에서 읽히게 한다 */}
       <section className="u-section u-section--alt">
