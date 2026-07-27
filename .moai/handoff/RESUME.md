@@ -183,6 +183,32 @@ RESEND_FROM             발신 주소 (비우면 Resend 예시 주소)
 드레스 히어로·작가 인트로·문의 2단은 각 절반이 1200 미만이라 그 기준을 빠져나갔고,
 사용자가 화면을 보내 줘서야 드러났다. **`display:grid` 인 컨테이너를 폭 기준으로 훑을 것.**
 
+> **이 실수는 두 번 났다.** 7/26 에 4곳을 고칠 때 스튜디오 `.access` 와 홈 `.photographer`
+> 가 남았고, 7/27 에 사용자가 다시 화면을 보내 줘서 드러났다. 원인은 매번 같다 —
+> "그리드 컨테이너를 보라"는 말만 있고 **재는 방법이 없어서** 눈으로 훑었기 때문이다.
+> 다음부터는 아래를 브라우저 콘솔에 붙여 넣어 **재고** 판단할 것. 넓은 뷰포트에서 실행한다.
+>
+> ```js
+> // 폭이 --content-max 를 넘으면서 내용을 담은 grid·flex 요소만 골라낸다
+> const c = parseFloat(getComputedStyle(document.documentElement)
+>   .getPropertyValue('--content-max')) || 1200;
+> [...document.querySelectorAll('body *')].filter(e => {
+>   const s = getComputedStyle(e);
+>   if (s.display !== 'grid' && s.display !== 'flex') return false;
+>   if (e.getBoundingClientRect().width <= c + 2) return false;
+>   return (e.innerText || '').trim() !== '' || e.querySelector('img');
+> }).map(e => e.className + ' ' + Math.round(e.getBoundingClientRect().width) + 'px');
+> ```
+>
+> **걸린 것을 전부 고치면 안 된다.** `PlanTabs .strip` 과 `JournalList .filter` 는
+> `justify-content: center` + `border-bottom` 조합이라 내용은 가운데 모으고 경계선만
+> 전폭으로 긋는 구조다. 규약("전폭은 섹션 배경·경계선만")에 맞으므로 그대로 두어야 한다.
+> 걸린 요소마다 **내용이 넓은가, 경계선만 넓은가** 를 구분할 것.
+>
+> 경계선을 가진 분할 섹션은 `max-width: var(--content-max); margin-inline: auto;` 두 줄만
+> 더한다. 경계선도 함께 좁아지지만 `dress .hero` · `photographer .intro` 가 이미 그렇게
+> 배포돼 있으므로 그쪽에 맞추는 것이 일관된다.
+
 모바일(375·768) 실렌더 — **확인 완료.** 9페이지 × 2뷰포트 전부 수평 문서 오버플로 0,
 2단 그리드(드레스 히어로·작가 인트로·문의 폼) 모두 1단으로 접힘, 헤더 75/91px.
 갤러리 필터 칩과 스튜디오 세트 목록이 우측으로 넘치는 건 자체 스크롤 컨테이너 안이다
