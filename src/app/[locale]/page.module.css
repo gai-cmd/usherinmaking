@@ -208,6 +208,8 @@
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   align-items: center;
+  max-width: var(--content-max);
+  margin-inline: auto;
   border-bottom: 1px solid var(--hairline);
 }
 
