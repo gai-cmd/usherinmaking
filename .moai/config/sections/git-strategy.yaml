@@ -54,7 +54,7 @@ git_strategy:
             auto_branch: false
             auto_commit: true
             auto_pr: false
-            auto_push: true
+            auto_push: false
         branch_creation:
             auto_enabled: false
             prompt_always: true
