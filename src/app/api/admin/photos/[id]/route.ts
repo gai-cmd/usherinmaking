@@ -70,16 +70,34 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
     const body = parsed.data;
 
+    // 재검증 판단용 — 공개 그리드는 PUBLISHED 사진의 alt·태그가 바뀔 때만 달라진다.
+    // 비공개(UNSORTED·ARCHIVED) 사진의 큐레이션 편집은 공개 캐시를 건드릴 이유가 없다.
+    const photo = await getPhoto(id);
+    if (!photo) throw new NotFoundError('사진을 찾을 수 없습니다.');
+    const affectsGrid = photo.status === 'PUBLISHED';
+
     // 각 쓰기 함수는 대상 존재 확인과 규칙 검증을 실제로 수행한 뒤,
     // 저장 직전에 NotImplementedError를 던진다(501).
-    if (body.alt) await updatePhotoAlt(id, body.alt);
-    if (body.termIds) await setPhotoTerms(id, body.termIds);
-    if (body.isCover) await setCoverPhoto(id);
+    // 앞선 쓰기가 커밋된 뒤 후속 쓰기가 실패할 수 있으므로(부분 성공), 그리드에 반영되는
+    // 쓰기가 하나라도 커밋됐다면 실패로 끝나도 재검증은 하고 나간다 — 저장만 되고
+    // 화면은 그대로인 닫힌 고리를 만들지 않기 위해서다.
+    let gridWritten = false;
+    try {
+      if (body.alt) {
+        await updatePhotoAlt(id, body.alt);
+        gridWritten = affectsGrid;
+      }
+      if (body.termIds) {
+        await setPhotoTerms(id, body.termIds);
+        gridWritten = gridWritten || affectsGrid;
+      }
+      if (body.isCover) await setCoverPhoto(id);
+    } catch (err) {
+      if (gridWritten) await revalidateWorksSurfaces();
+      throw err;
+    }
 
-    // alt·태그는 작품 그리드(홈·스튜디오·로케이션)의 선별과 표기에 쓰인다 —
-    // 저장만 하고 재검증을 빠뜨리면 "저장은 되는데 화면은 그대로"인 닫힌 고리가 된다.
-    const worksRevalidate =
-      body.alt || body.termIds ? await revalidateWorksSurfaces() : { revalidated: false };
+    const worksRevalidate = gridWritten ? await revalidateWorksSurfaces() : { revalidated: false };
 
     return Response.json({ ok: true, revalidated: worksRevalidate.revalidated });
   } catch (err) {

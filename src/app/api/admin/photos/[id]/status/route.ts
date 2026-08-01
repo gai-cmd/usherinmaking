@@ -37,8 +37,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
     await updatePhotoStatus(id, parsed.data.status);
 
-    // 공개/비공개 전환은 작품 그리드(홈·스튜디오·로케이션)의 선별 결과를 바꾼다.
-    const { revalidated } = await revalidateWorksSurfaces();
+    // 공개 그리드는 PUBLISHED 가 개입하는 전환에서만 바뀐다 — UNSORTED↔ARCHIVED 는 무관하다.
+    const touchesPublic = photo.status === 'PUBLISHED' || parsed.data.status === 'PUBLISHED';
+    const { revalidated } = touchesPublic
+      ? await revalidateWorksSurfaces()
+      : { revalidated: false };
     return Response.json({ ok: true, revalidated });
   } catch (err) {
     return errorResponse(err);

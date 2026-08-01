@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { requireAdmin } from '@/server/auth';
 import { errorResponse, ValidationError } from '@/server/errors';
-import { bulkUpdatePhotoStatus, type PhotoStatus } from '@/server/photos';
+import { bulkUpdatePhotoStatus, countPublishedAmong, type PhotoStatus } from '@/server/photos';
 import { revalidateWorksSurfaces } from '@/server/works';
 
 export const runtime = 'nodejs';
@@ -35,10 +35,16 @@ export async function POST(req: Request) {
     // 중복 id는 여기서 정리한다 — 아래 계층이 건수를 잘못 세지 않도록.
     const unique = [...new Set(ids)];
 
+    // 공개 그리드는 PUBLISHED 가 개입하는 전환에서만 바뀐다. publish 는 항상 개입하고,
+    // archive/unsort 는 대상에 PUBLISHED 가 있었을 때만이다 — 변경 전에 재야 한다.
+    const hadPublished = action !== 'publish' && (await countPublishedAmong(unique)) > 0;
+
     await bulkUpdatePhotoStatus(unique, ACTION_TO_STATUS[action]);
 
-    // 일괄 공개/비공개는 작품 그리드(홈·스튜디오·로케이션)의 선별 결과를 바꾼다.
-    const { revalidated } = await revalidateWorksSurfaces();
+    const touchesPublic = action === 'publish' || hadPublished;
+    const { revalidated } = touchesPublic
+      ? await revalidateWorksSurfaces()
+      : { revalidated: false };
     return Response.json({ ok: true, count: unique.length, revalidated });
   } catch (err) {
     return errorResponse(err);

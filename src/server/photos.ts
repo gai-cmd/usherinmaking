@@ -423,6 +423,16 @@ export async function listDbPublishedPhotos(termSlug: string | null, take: numbe
   return rows.map(fromDb);
 }
 
+/**
+ * 재검증 판단용 — 대상 id 중 현재 PUBLISHED 인 행 수.
+ * 일괄 상태 변경 전에 재서, PUBLISHED 가 개입하지 않는 전환(UNSORTED↔ARCHIVED)이
+ * 공개 캐시를 불필요하게 폐기하지 않도록 한다. DB 미설정이면 0 (쓰기 자체가 막힌다).
+ */
+export async function countPublishedAmong(ids: string[]): Promise<number> {
+  if (!isDatabaseConfigured()) return 0;
+  return prisma.photo.count({ where: { id: { in: ids }, status: 'PUBLISHED' } });
+}
+
 /** 단건 조회. id 기준으로 DB를 먼저 보고, 없으면(또는 DB 미설정이면) 시드에서 찾는다. */
 export async function getPhoto(id: string): Promise<Photo | null> {
   if (isDatabaseConfigured()) {

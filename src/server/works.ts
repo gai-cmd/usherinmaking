@@ -1,4 +1,4 @@
-import { LOCALES } from '@/lib/i18n';
+import { LOCALES, path } from '@/lib/i18n';
 import type { WorkImage } from '@/lib/work-image';
 import { isAltComplete, type Photo } from '@/lib/photo-types';
 import { listDbPublishedPhotos } from '@/server/photos';
@@ -48,9 +48,16 @@ export async function getWorksImages(surface: WorksSurface): Promise<WorkImage[]
   // alt 를 비울 수 있어 한 번 더 거른다. 필터를 조회 상한 뒤에 걸면 최신 몇 장의 alt 가
   // 빈 것만으로 그리드 전체가 폴백으로 떨어지므로(GPT 교차 리뷰 P2), 여유분을 가져와
   // 거른 뒤 정원을 채운다. 3배 버퍼 안이 전부 불완전한 극단은 폴백으로 남는다.
-  const rows = (await listDbPublishedPhotos(termSlug, count * 3))
-    .filter((p) => isAltComplete(p.alt))
-    .slice(0, count);
+  let rows: Photo[];
+  try {
+    rows = (await listDbPublishedPhotos(termSlug, count * 3))
+      .filter((p) => isAltComplete(p.alt))
+      .slice(0, count);
+  } catch (err) {
+    // 공개 페이지가 DB 장애로 통째로 죽으면 안 된다. 폴백으로 계속 나간다 (page-images.ts와 같은 규칙).
+    console.error('[works] 사진 풀 조회 실패 — 폴백으로 렌더합니다', surface, err);
+    return fallback;
+  }
   if (rows.length < count) return fallback;
   return rows.map((p) => ({ src: displaySrc(p), alt: p.alt }));
 }
@@ -66,12 +73,14 @@ export async function revalidateWorksSurfaces(): Promise<{
   revalidated: boolean;
   routes: string[];
 }> {
-  const routes = LOCALES.flatMap((l) => [`/${l}`, `/${l}/studio`, `/${l}/location`]);
+  // 경로는 반드시 path() 로 조립한다 — ROUTE_SEGMENT 가 로케일별로 갈라져도 (en plan→plans 전례) 따라간다.
+  const routes = LOCALES.flatMap((l) => [path(l, 'home'), path(l, 'studio'), path(l, 'location')]);
   try {
     const { revalidatePath } = await import('next/cache');
     for (const r of routes) revalidatePath(r);
     return { revalidated: true, routes };
-  } catch {
+  } catch (err) {
+    console.error('[works] 재검증 실패', err);
     return { revalidated: false, routes };
   }
 }

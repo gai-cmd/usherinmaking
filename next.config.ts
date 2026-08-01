@@ -8,8 +8,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // 인스타 수집분을 자사 스토리지로 이관하기 전 임시 참조 (구현 시 자사 도메인으로 교체)
       { protocol: 'https', hostname: 'usherinmaking.vercel.app' },
-      // 관리자 업로드 사진(Vercel Blob) — 이미지 슬롯·작품 그리드가 DB 사진을 그릴 때 필요
-      { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
+      // 관리자 업로드 사진(Vercel Blob) — 이미지 슬롯·작품 그리드가 DB 사진을 그릴 때 필요.
+      // 와일드카드(*.public.blob…)는 타인의 스토어까지 이미지 최적화기에 허용해 열린 프록시가
+      // 되므로 금지 — 이 프로젝트의 스토어(store_1TWhNaMSDw7uymz2) 서브도메인 하나만 고정한다.
+      { protocol: 'https', hostname: '1twhnamsdw7uymz2.public.blob.vercel-storage.com' },
     ],
   },
   async redirects() {
