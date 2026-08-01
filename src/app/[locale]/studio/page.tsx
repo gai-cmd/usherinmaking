@@ -10,6 +10,7 @@ import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/li
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
+import { getWorksImages } from '@/server/works';
 import { ACCESS, FLOW, HERO, PLANS, SET_COPY, WORKS } from './content';
 import s from './page.module.css';
 
@@ -53,9 +54,11 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
   if (!isLocale(locale)) notFound();
 
   const address = resolvedAddress(locale);
-  const [text, images] = await Promise.all([
+  const [text, images, works] = await Promise.all([
     getPageCopy('studio', locale),
     resolvePageImages('studio'),
+    // 작품 그리드 — 'studio' 태그 사진이 정원(5장)을 채우면 사진 풀, 아니면 코드 배열.
+    getWorksImages('studio'),
   ]);
 
   // 히어로와 찾아오시는 길 사진은 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
@@ -259,11 +262,11 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
         }
       >
         <ul className={s.works}>
-          {WORKS.images.map((src) => (
-            <li key={src} className={s.work}>
+          {works.map((work) => (
+            <li key={work.src} className={s.work}>
               <Image
-                src={src}
-                alt={WORKS.alt[locale]}
+                src={work.src}
+                alt={work.alt[locale]}
                 fill
                 sizes="(max-width: 767px) 50vw, 20vw"
                 className={s.workImage}

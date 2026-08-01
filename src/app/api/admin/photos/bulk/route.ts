@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { requireAdmin } from '@/server/auth';
 import { errorResponse, ValidationError } from '@/server/errors';
 import { bulkUpdatePhotoStatus, type PhotoStatus } from '@/server/photos';
+import { revalidateWorksSurfaces } from '@/server/works';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,7 +36,10 @@ export async function POST(req: Request) {
     const unique = [...new Set(ids)];
 
     await bulkUpdatePhotoStatus(unique, ACTION_TO_STATUS[action]);
-    return Response.json({ ok: true, count: unique.length });
+
+    // 일괄 공개/비공개는 작품 그리드(홈·스튜디오·로케이션)의 선별 결과를 바꾼다.
+    const { revalidated } = await revalidateWorksSurfaces();
+    return Response.json({ ok: true, count: unique.length, revalidated });
   } catch (err) {
     return errorResponse(err);
   }

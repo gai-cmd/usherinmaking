@@ -10,6 +10,7 @@ import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
+import { getWorksImages } from '@/server/works';
 import { ARCHIVE, CATEGORIES, DETAILS, HERO, WORKS } from './content';
 import s from './page.module.css';
 
@@ -48,9 +49,11 @@ export default async function LocationPage({ params }: { params: Promise<{ local
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  const [text, images] = await Promise.all([
+  const [text, images, works] = await Promise.all([
     getPageCopy('location', locale),
     resolvePageImages('location'),
+    // 작품 그리드 — 'location' 태그 사진이 정원(5장)을 채우면 사진 풀, 아니면 코드 배열.
+    getWorksImages('location'),
   ]);
 
   // 히어로는 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
@@ -258,7 +261,7 @@ export default async function LocationPage({ params }: { params: Promise<{ local
         }
       >
         <ul className={s.works}>
-          {WORKS.images.map((image) => (
+          {works.map((image) => (
             <li key={image.src} className={s.work}>
               <Image
                 src={image.src}

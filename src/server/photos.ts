@@ -403,6 +403,26 @@ export async function listPhotos(filter: PhotoFilter = {}): Promise<Photo[]> {
   return rows;
 }
 
+/**
+ * 공개 작품 그리드용 조회. DB의 PUBLISHED 행만 보고 **시드로 폴백하지 않는다** —
+ * 그리드의 폴백(기존 코드 배열)은 호출측(@/server/works)이 판단한다. 여기서 시드로
+ * 떨어뜨리면 "DB 빈 상태에서 렌더 불변" 회귀 기준이 깨진다.
+ * termSlug 가 null 이면 태그 무관 전체에서 최신순으로 고른다.
+ */
+export async function listDbPublishedPhotos(termSlug: string | null, take: number): Promise<Photo[]> {
+  if (!isDatabaseConfigured()) return [];
+  const rows = await prisma.photo.findMany({
+    where: {
+      status: 'PUBLISHED',
+      ...(termSlug ? { terms: { some: { term: { slug: termSlug } } } } : {}),
+    },
+    include: PHOTO_INCLUDE,
+    orderBy: { takenAt: 'desc' },
+    take,
+  });
+  return rows.map(fromDb);
+}
+
 /** 단건 조회. id 기준으로 DB를 먼저 보고, 없으면(또는 DB 미설정이면) 시드에서 찾는다. */
 export async function getPhoto(id: string): Promise<Photo | null> {
   if (isDatabaseConfigured()) {

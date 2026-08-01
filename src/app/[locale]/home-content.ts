@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n';
+import type { WorkImage } from '@/lib/work-image';
 
 /**
  * 홈 본문 카피. ja / en / ko는 번역이 아니라 각각 독립된 본문이므로
@@ -361,9 +362,12 @@ export const HERO_IMAGE = {
   studio: '/images/studio/IMG_0766.png',
 } as const;
 
-/* ---------------- 최근 작품 (자사 도메인에서 직접 서빙 — 인스타 임베드 금지) ---------------- */
+/* ---------------- 최근 작품 (자사 도메인에서 직접 서빙 — 인스타 임베드 금지) ----------------
+ *
+ * 이 배열은 이제 "폴백"이다 — 관리자 사진 풀(PUBLISHED)이 그리드 정원을 채우면
+ * @/server/works 가 그쪽을 쓰고, 못 채우면 이 배열이 그대로 나간다. 지우지 마라. */
 
-export type WorkImage = { src: string; alt: Record<Locale, string> };
+export type { WorkImage } from '@/lib/work-image';
 
 export const RECENT_WORKS: WorkImage[] = [
   {

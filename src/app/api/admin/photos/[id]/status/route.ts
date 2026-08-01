@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { requireAdmin } from '@/server/auth';
 import { errorResponse, NotFoundError, ValidationError } from '@/server/errors';
 import { assertPublishable, getPhoto, updatePhotoStatus } from '@/server/photos';
+import { revalidateWorksSurfaces } from '@/server/works';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,7 +36,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
     assertPublishable(photo, parsed.data.status);
 
     await updatePhotoStatus(id, parsed.data.status);
-    return Response.json({ ok: true });
+
+    // 공개/비공개 전환은 작품 그리드(홈·스튜디오·로케이션)의 선별 결과를 바꾼다.
+    const { revalidated } = await revalidateWorksSurfaces();
+    return Response.json({ ok: true, revalidated });
   } catch (err) {
     return errorResponse(err);
   }

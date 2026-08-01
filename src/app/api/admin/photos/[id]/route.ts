@@ -8,6 +8,7 @@ import {
   setPhotoTerms,
   updatePhotoAlt,
 } from '@/server/photos';
+import { revalidateWorksSurfaces } from '@/server/works';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -75,7 +76,12 @@ export async function PATCH(req: Request, { params }: Ctx) {
     if (body.termIds) await setPhotoTerms(id, body.termIds);
     if (body.isCover) await setCoverPhoto(id);
 
-    return Response.json({ ok: true });
+    // alt·태그는 작품 그리드(홈·스튜디오·로케이션)의 선별과 표기에 쓰인다 —
+    // 저장만 하고 재검증을 빠뜨리면 "저장은 되는데 화면은 그대로"인 닫힌 고리가 된다.
+    const worksRevalidate =
+      body.alt || body.termIds ? await revalidateWorksSurfaces() : { revalidated: false };
+
+    return Response.json({ ok: true, revalidated: worksRevalidate.revalidated });
   } catch (err) {
     return errorResponse(err);
   }

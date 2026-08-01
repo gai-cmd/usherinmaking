@@ -1,15 +1,17 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { path, type Locale } from '@/lib/i18n';
-import { HOME, RECENT_WORKS } from '@/app/[locale]/home-content';
+import type { WorkImage } from '@/lib/work-image';
+import { HOME } from '@/app/[locale]/home-content';
 import s from './RecentWorks.module.css';
 
 /**
  * 인스타그램에서 고른 작품을 자사 도메인 이미지로 직접 서빙한다.
  * 임베드·아웃링크는 쓰지 않는다. 칩은 지금은 표시 전용이고,
  * 실제 필터링은 갤러리 페이지가 담당한다.
+ * 사진 목록은 페이지가 @/server/works 에서 골라 내려준다 — 폴백 판단은 거기서 한다.
  */
-export function RecentWorks({ locale }: { locale: Locale }) {
+export function RecentWorks({ locale, works }: { locale: Locale; works: WorkImage[] }) {
   const copy = HOME[locale].works;
 
   return (
@@ -23,7 +25,7 @@ export function RecentWorks({ locale }: { locale: Locale }) {
       </ul>
 
       <ul className={s.grid}>
-        {RECENT_WORKS.map((work) => (
+        {works.map((work) => (
           <li key={work.src} className={s.cell}>
             <Image
               src={work.src}

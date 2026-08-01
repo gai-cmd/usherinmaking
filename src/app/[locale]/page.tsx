@@ -14,6 +14,7 @@ import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/li
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
+import { getWorksImages } from '@/server/works';
 import {
   ANNIVERSARY_PLANS,
   LOCATION_NOTES,
@@ -123,11 +124,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // 관리자가 건 사진을 한 번에 읽는다. 행이 없는 자리는 지금 쓰던 경로가 그대로 나온다.
   // 세트 그리드는 스튜디오 페이지와 같은 사진이므로 그쪽 슬롯을 함께 읽는다 —
   // 한 장을 갈아끼웠는데 홈에만 옛 사진이 남는 어긋남을 만들지 않기 위해서다.
-  const [text, images, studioImages] = await Promise.all([
+  const [text, images, studioImages, works] = await Promise.all([
     // 관리자가 고친 문구. 손대지 않은 자리는 코드 기본값이 그대로 담겨 온다.
     getPageCopy('home', locale),
     resolvePageImages('home'),
     resolvePageImages('studio'),
+    // 최근 작품 그리드 — 사진 풀이 정원(4장)을 채우면 그쪽, 아니면 코드 배열.
+    getWorksImages('home'),
   ]);
 
   // 작가 소개 옆 사진도 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
@@ -295,7 +298,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {/* ---------- 최근 작품 ---------- */}
       <Section label={copy.works.label} title={text['works.title']} lead={text['works.lead']}>
-        <RecentWorks locale={locale} />
+        <RecentWorks locale={locale} works={works} />
       </Section>
 
       {/* ---------- PHOTOGRAPHER ---------- */}

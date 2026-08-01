@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // 인스타 수집분을 자사 스토리지로 이관하기 전 임시 참조 (구현 시 자사 도메인으로 교체)
       { protocol: 'https', hostname: 'usherinmaking.vercel.app' },
+      // 관리자 업로드 사진(Vercel Blob) — 이미지 슬롯·작품 그리드가 DB 사진을 그릴 때 필요
+      { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
     ],
   },
   async redirects() {

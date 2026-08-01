@@ -312,12 +312,21 @@ RESEND_FROM             발신 주소 (비우면 Resend 예시 주소)
 | dress | `collection.white/color/vintage/maternity` |
 | photographer | `portrait` · `gallery.1~3`(7/27 추가) |
 
-**아직 코드 배열이라 관리자에서 못 바꾸는 것 — 작품 그리드 3곳.**
-홈 `RECENT_WORKS`, 스튜디오 `WORKS.images`, 로케이션 `WORKS.images`.
+**작품 그리드 3곳 — 사진 풀 연결 완료 (8/1).**
+홈 `RECENT_WORKS`, 스튜디오 `WORKS.images`, 로케이션 `WORKS.images` 는 이제
+`@/server/works` 의 `getWorksImages(surface)` 를 읽는다. 선별 규칙:
 
-> 이 셋은 슬롯을 자리마다 파는 것보다 **이미 있는 큐레이션된 사진 풀
-> (`PUBLISHED_PHOTOS` · 관리자 사진 화면)을 읽게 하는 편이 맞다.** 한 번 고르면 세 곳이
-> 함께 따라오기 때문이다. 설계 변경이라 사용자와 논의한 뒤에 할 것.
+- 홈 = PUBLISHED 전체 최신 5장 · 스튜디오 = `studio` 태그 5장 · 로케이션 = `location` 태그 5장
+- **전부/전무 폴백**: DB 사진이 그리드 정원을 못 채우면 기존 코드 배열이 통째로 나온다
+  (절반만 채우면 두 소스에서 같은 사진이 겹칠 수 있고, DB 빈 상태 렌더 불변도 깨진다)
+- 사진 상태·태그·alt 변경 API 가 홈·스튜디오·로케이션 9경로를 revalidate 하고
+  `revalidated` 를 응답에 실어 보낸다 (이미지 슬롯과 같은 규칙)
+- next.config 에 Blob 도메인(`*.public.blob.vercel-storage.com`)을 remotePatterns 에 추가 —
+  없으면 업로드 사진이 next/image 에서 거부된다 (이미지 슬롯에도 잠재해 있던 문제)
+
+검증(8/1): ① DB 빈 상태 9페이지 정규화 대조 차이 0 + 대조군 DIFF 검출 확인,
+② 표식 사진 10건 주입 → 3표면 선별·렌더 산출물 모두 반영 확인 → 전량 삭제·폴백 복귀 확인.
+증거: `.moai/state/verify/works-grid-20260801/`.
 
 **검증 방법**(다음 세션도 이 방식을 쓸 것): 타입 통과는 동작 보증이 아니다. 두 방향을 다 본다 —
 ① DB 가 빈 상태에서 렌더 산출물이 변경 전과 같은가(회귀 없음), ② DB 에 값을 넣으면 화면이 바뀌는가(연결됨).
