@@ -464,6 +464,12 @@ RESEND_FROM             발신 주소 (비우면 Resend 예시 주소)
   curl -s -L "https://blog.naver.com/PostView.naver?blogId=usherinmaking&logNo=224359035554"
   ```
   본문은 `<p class="se-text-paragraph">`, 이미지는 `data-lazy-src` 로 뽑는다.
+  **미리보기 도구를 만들어 뒀다 — `node scripts/naver-journal-preview.mjs` (DB·Blob 에 아무것도 안 쓴다).**
+  8/1 전수 실행 결과: **50건 전부 성공 · 본문 평균 599자 · 이미지 합계 92장**
+  (결과 JSON: `.moai/state/verify/naver-journal-20260801/preview.json`).
+  다만 **그대로 자동 취입하면 안 된다** — 제목이 검색 키워드 나열이라 5건은 사람이 다시 써야 하고,
+  본문 200자 미만이 8건(1건은 0자·이미지뿐), 카테고리 자동 배정이 8건 미배정 + 오배정도 있다
+  (예: 가족스냅 글이 `dress` 로 잡힘). **선별·제목·카테고리는 사람 판단이 필요하다.**
   **다만 아직 반영하지 않은 이유는 세 가지다** — ⑴ 원고가 한국어뿐이라 3개 언어 독립 본문
   규칙(기계번역 금지)에 걸린다 ⑵ 이미지가 `postfiles.pstatic.net` 이라 "사진은 자사 도메인에서만"
   규칙상 내려받아 재업로드해야 한다 ⑶ 설계상 취입구가 관리자 「블로그에서 가져오기」 화면인데
