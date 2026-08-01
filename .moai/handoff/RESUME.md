@@ -96,7 +96,7 @@ done
 | | |
 |---|---|
 | 브랜치 | `feat/renewal-nextjs` — origin 푸시됨. **main 병합 안 함** |
-| 프로덕션 | https://usherinmaking.vercel.app — 배포 `qgs6wlr7y`(8/1 승격), HEAD 반영·내용 검증됨 |
+| 프로덕션 | https://usherinmaking.vercel.app — 배포 `onotiy7p2`(8/1 리뷰 수정 `477911a` 승격), 검증됨 |
 | 빌드 | `npm test` (tsc + eslint) **0 errors · 0 warnings**, `npm run build` 성공 |
 | 마지막 커밋 | `200b6d3` 작품 그리드 사진 풀 연결 + GPT 리뷰 P2 반영 (승격 완료) |
 
