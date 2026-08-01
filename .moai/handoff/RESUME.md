@@ -1,7 +1,7 @@
 # usherinmaking — 다음 세션 인계
 
 새 세션에서 이 파일부터 읽으면 이어받을 수 있다.
-마지막 갱신: 2026-07-27 · 커밋 `db6b0f4` 이후
+마지막 갱신: 2026-08-01 · 커밋 `200b6d3`(작품 그리드 사진 풀 연결) 이후 — 승격까지 완료
 
 ---
 
@@ -96,9 +96,9 @@ done
 | | |
 |---|---|
 | 브랜치 | `feat/renewal-nextjs` — origin 푸시됨. **main 병합 안 함** |
-| 프로덕션 | https://usherinmaking.vercel.app — 배포 `nwjrm16lr`, HEAD 반영·내용 검증됨 |
+| 프로덕션 | https://usherinmaking.vercel.app — 배포 `qgs6wlr7y`(8/1 승격), HEAD 반영·내용 검증됨 |
 | 빌드 | `npm test` (tsc + eslint) **0 errors · 0 warnings**, `npm run build` 성공 |
-| 마지막 커밋 | 로고 렌더 높이 + 인계 갱신 (전부 승격 완료) |
+| 마지막 커밋 | `200b6d3` 작품 그리드 사진 풀 연결 + GPT 리뷰 P2 반영 (승격 완료) |
 
 ## 계정 (중요)
 
