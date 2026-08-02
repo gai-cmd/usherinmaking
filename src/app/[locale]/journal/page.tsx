@@ -15,6 +15,7 @@ import {
 } from '@/content/journal';
 import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
 import { getPageCopy, toLines } from '@/server/page-content';
+import { getJournalContentPosts } from '@/server/journal-content';
 import s from './page.module.css';
 
 export function generateStaticParams() {
@@ -51,9 +52,11 @@ export default async function JournalPage({ params }: { params: Promise<{ locale
 
   const ui = JOURNAL_UI[locale];
   const text = await getPageCopy('journal', locale);
-  const featured = featuredPost(locale);
+  // 관리자·네이버 취입분은 DB 에 있다. 없으면 코드 시드가 그대로 나온다.
+  const all = await getJournalContentPosts();
+  const featured = featuredPost(locale, all);
   // 대표 글은 위에서 크게 보여주므로 그리드에서는 뺀다.
-  const rest = listPosts(locale).filter((p) => p.slug !== featured?.slug);
+  const rest = listPosts(locale, all).filter((p) => p.slug !== featured?.slug);
 
   return (
     <>
@@ -108,7 +111,7 @@ export default async function JournalPage({ params }: { params: Promise<{ locale
       )}
 
       <section className={s.listSection}>
-        <JournalList locale={locale} posts={rest} categories={usedCategories(locale)} />
+        <JournalList locale={locale} posts={rest} categories={usedCategories(locale, all)} />
       </section>
 
       <ContactCta locale={locale} />

@@ -14,10 +14,12 @@ import {
 import { ANNIVERSARY_PLANS, LOCATION_PLANS, STUDIO_PLANS, type Plan } from '@/content/site';
 import { SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
 import { getPageCopy } from '@/server/page-content';
+import { getJournalContentPosts } from '@/server/journal-content';
 import s from './page.module.css';
 
-export function generateStaticParams() {
-  return allPostParams();
+export async function generateStaticParams() {
+  // DB 에 취입된 글도 정적 생성 대상이다 — 시드만 보면 새 글이 404 가 된다.
+  return allPostParams(await getJournalContentPosts());
 }
 
 const TAX_LABEL: Record<Locale, string> = { ja: '税込', en: 'tax included', ko: '세금 포함' };
@@ -34,7 +36,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   if (!isLocale(locale)) return {};
-  const post = findPost(locale, slug);
+  const post = findPost(locale, slug, await getJournalContentPosts());
   if (!post) return {};
 
   return {
@@ -62,13 +64,14 @@ export default async function JournalPostPage({
   const { locale, slug } = await params;
   if (!isLocale(locale)) notFound();
 
-  const post = findPost(locale, slug);
+  const all = await getJournalContentPosts();
+  const post = findPost(locale, slug, all);
   if (!post) notFound();
 
   const ui = JOURNAL_UI[locale];
   const text = await getPageCopy('journal', locale);
   const plan = planByCode(post.planCode);
-  const related = relatedPosts(locale, post.slug, 3);
+  const related = relatedPosts(locale, post.slug, 3, all);
 
   // 글이 전부 샘플이라 BlogPosting 은 내보내지 않는다. 사실인 이동 경로만 구조화한다.
   const breadcrumb = {

@@ -536,32 +536,49 @@ export const JOURNAL_POSTS: JournalPost[] = [...JA_POSTS, ...EN_POSTS, ...KO_POS
 
 /* ---------------- 조회 헬퍼 ---------------- */
 
-/** 최신순 정렬. 'YYYY-MM'과 'YYYY-MM-DD'는 사전순 비교로도 최신순이 맞다. */
-export function listPosts(locale: Locale): JournalPost[] {
-  return JOURNAL_POSTS.filter((p) => p.locale === locale).sort((a, b) =>
+/**
+ * 최신순 정렬. 'YYYY-MM'과 'YYYY-MM-DD'는 사전순 비교로도 최신순이 맞다.
+ *
+ * `posts` 인자는 관리자/네이버 취입분이 담긴 DB 목록을 넣기 위한 자리다 —
+ * 생략하면 코드 시드를 본다. 공개 페이지는 `@/server/journal-content` 가 해석한 값을 넘긴다.
+ */
+export function listPosts(locale: Locale, posts: JournalPost[] = JOURNAL_POSTS): JournalPost[] {
+  return posts.filter((p) => p.locale === locale).sort((a, b) =>
     b.publishedAt.localeCompare(a.publishedAt),
   );
 }
 
-export function featuredPost(locale: Locale): JournalPost | undefined {
-  const posts = listPosts(locale);
-  return posts.find((p) => p.featured) ?? posts[0];
+export function featuredPost(locale: Locale, posts: JournalPost[] = JOURNAL_POSTS): JournalPost | undefined {
+  const rows = listPosts(locale, posts);
+  return rows.find((p) => p.featured) ?? rows[0];
 }
 
-export function findPost(locale: Locale, slug: string): JournalPost | undefined {
-  return JOURNAL_POSTS.find((p) => p.locale === locale && p.slug === slug);
+export function findPost(
+  locale: Locale,
+  slug: string,
+  posts: JournalPost[] = JOURNAL_POSTS,
+): JournalPost | undefined {
+  return posts.find((p) => p.locale === locale && p.slug === slug);
 }
 
 /** 필터 칩 목록은 실제로 글이 있는 카테고리에서 뽑는다 — 눌러도 빈 목록이 되는 칩을 만들지 않는다. */
-export function usedCategories(locale: Locale): JournalCategory[] {
+export function usedCategories(
+  locale: Locale,
+  posts: JournalPost[] = JOURNAL_POSTS,
+): JournalCategory[] {
   const order: JournalCategory[] = ['studio', 'location', 'dress', 'tips', 'anniversary'];
-  const used = new Set(listPosts(locale).map((p) => p.category));
+  const used = new Set(listPosts(locale, posts).map((p) => p.category));
   return order.filter((c) => used.has(c));
 }
 
-export function relatedPosts(locale: Locale, slug: string, limit = 3): JournalPost[] {
-  const current = findPost(locale, slug);
-  const rest = listPosts(locale).filter((p) => p.slug !== slug);
+export function relatedPosts(
+  locale: Locale,
+  slug: string,
+  limit = 3,
+  posts: JournalPost[] = JOURNAL_POSTS,
+): JournalPost[] {
+  const current = findPost(locale, slug, posts);
+  const rest = listPosts(locale, posts).filter((p) => p.slug !== slug);
   if (!current) return rest.slice(0, limit);
   // 같은 카테고리를 앞으로, 모자라면 최신 글로 채운다.
   const same = rest.filter((p) => p.category === current.category);
@@ -570,8 +587,10 @@ export function relatedPosts(locale: Locale, slug: string, limit = 3): JournalPo
 }
 
 /** generateStaticParams 용 — locale × slug 전개 */
-export function allPostParams(): { locale: Locale; slug: string }[] {
-  return JOURNAL_POSTS.map((p) => ({ locale: p.locale, slug: p.slug }));
+export function allPostParams(
+  posts: JournalPost[] = JOURNAL_POSTS,
+): { locale: Locale; slug: string }[] {
+  return posts.map((p) => ({ locale: p.locale, slug: p.slug }));
 }
 
 /** 'YYYY-MM-DD' → '2026.07.18', 'YYYY-MM' → '2026.07' */
