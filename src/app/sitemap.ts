@@ -83,10 +83,12 @@ async function galleryFilterEntries(now: Date): Promise<MetadataRoute.Sitemap> {
 
 async function journalEntries(now: Date): Promise<MetadataRoute.Sitemap> {
   try {
-    const mod = (await import('@/content/journal')) as {
-      JOURNAL_POSTS?: { slug: string; locale: string; publishedAt?: string }[];
+    // 공개 화면과 같은 곳을 본다 — 사이트맵만 코드 시드를 보면 관리자·취입 글이
+    // 사이트에는 떠 있는데 사이트맵에는 없어, 검색엔진이 새 글을 발견하지 못한다.
+    const mod = (await import('@/server/journal-content')) as {
+      getJournalContentPosts?: () => Promise<{ slug: string; locale: string; publishedAt?: string }[]>;
     };
-    const posts = mod.JOURNAL_POSTS;
+    const posts = await mod.getJournalContentPosts?.();
     if (!Array.isArray(posts)) return [];
 
     const known = posts.filter((p) => (LOCALES as readonly string[]).includes(p.locale));
