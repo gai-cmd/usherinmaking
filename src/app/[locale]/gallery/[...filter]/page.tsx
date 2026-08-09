@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { ContactCta } from '@/components/ContactCta';
 import { GalleryView } from '@/components/gallery/GalleryView';
 import { GALLERY } from '@/components/gallery/content';
-import { filterPhotos } from '@/content/photos';
+import { filterBy, getPublishedPhotos } from '@/server/photos-content';
 import {
   AXIS_ORDER,
   parseFilter,
@@ -48,7 +48,7 @@ export async function generateMetadata({
 
   const segments = selectionSegments(selection);
   const label = selectionLabel(selection, locale);
-  const count = filterPhotos(segments).length;
+  const count = filterBy(await getPublishedPhotos(), segments).length;
 
   const description: Record<Locale, string> = {
     ja: `${label}の写真 ${count}件。${GALLERY.definition.ja}`,

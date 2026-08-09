@@ -1,23 +1,30 @@
 import Link from 'next/link';
 import { path, type Locale } from '@/lib/i18n';
 import { getPageCopy } from '@/server/page-content';
-import { PUBLISHED_PHOTOS, filterPhotos } from '@/content/photos';
+import { filterBy, getPublishedPhotos, groupByShoot, type PhotoContent } from '@/server/photos-content';
 import { selectionSegments, termsFor, type Selection } from '@/content/taxonomy';
 import { FilterBar } from './FilterBar';
-import { PhotoGrid } from './PhotoGrid';
+import { ShootGrid } from './ShootGrid';
 import { GALLERY, countLabel, moreLabel } from './content';
 import s from './GalleryView.module.css';
 
 export const PAGE_SIZE = 15;
 
-/** 칩에 붙는 숫자 — 현재 선택에 그 term을 더했을 때 남는 사진 수 */
-function placeCounts(locale: Locale, selection: Selection): Record<string, number> {
+/**
+ * 칩에 붙는 숫자 — 현재 선택에 그 term을 더했을 때 남는 사진 수.
+ * 사진 목록을 인자로 받는다: DB 조회를 칩마다 반복하지 않기 위해서다.
+ */
+function placeCounts(
+  photos: PhotoContent[],
+  locale: Locale,
+  selection: Selection,
+): Record<string, number> {
   const base = selectionSegments(selection);
-  const counts: Record<string, number> = { __all: PUBLISHED_PHOTOS.length };
+  const counts: Record<string, number> = { __all: photos.length };
 
   for (const term of termsFor('place', locale)) {
     const segments = base.filter((slug) => slug !== selection.place?.slug);
-    counts[term.slug] = filterPhotos([...segments, term.slug]).length;
+    counts[term.slug] = filterBy(photos, [...segments, term.slug]).length;
   }
 
   return counts;
@@ -38,9 +45,14 @@ export async function GalleryView({
 }) {
   const text = await getPageCopy('gallery', locale);
   const segments = selectionSegments(selection);
-  const photos = filterPhotos(segments);
-  const shown = photos.slice(0, PAGE_SIZE * page);
-  const hasMore = shown.length < photos.length;
+  // DB 우선 · 시드 폴백. 한 번만 읽고 아래 필터·집계가 그 결과를 나눠 쓴다.
+  const all = await getPublishedPhotos();
+  const photos = filterBy(all, segments);
+  // 낱장을 촬영 단위로 접는다 — 목록의 한 칸이 사진 한 장이 아니라 촬영 한 건이 된다.
+  // 페이지 단위도 촬영 기준이다: "15장 더" 가 아니라 "촬영 15건 더".
+  const shoots = groupByShoot(photos);
+  const shown = shoots.slice(0, PAGE_SIZE * page);
+  const hasMore = shown.length < shoots.length;
   const currentPath = path(locale, 'gallery', ...segments);
 
   return (
@@ -54,11 +66,11 @@ export async function GalleryView({
         </div>
       </header>
 
-      <FilterBar locale={locale} selection={selection} counts={placeCounts(locale, selection)} />
+      <FilterBar locale={locale} selection={selection} counts={placeCounts(all, locale, selection)} />
 
       <div className={`u-wrap ${s.status}`}>
         <p className={s.count}>
-          <span className="u-num">{countLabel(photos.length, locale)}</span>
+          <span className="u-num">{countLabel(shoots.length, locale)}</span>
           <span className={s.pathHint}>{currentPath}</span>
         </p>
         <p className={s.sort}>{GALLERY.sort}</p>
@@ -66,7 +78,7 @@ export async function GalleryView({
 
       <div className={`u-wrap ${s.body}`}>
         {shown.length > 0 ? (
-          <PhotoGrid locale={locale} photos={shown} columns={5} priorityCount={5} />
+          <ShootGrid locale={locale} shoots={shown} columns={4} priorityCount={4} />
         ) : (
           <p className={`u-body ${s.empty}`}>{text['empty']}</p>
         )}
@@ -74,7 +86,7 @@ export async function GalleryView({
         {hasMore && (
           <p className={s.more}>
             <Link href={`${currentPath}?page=${page + 1}`} className="u-btn" data-tap>
-              {moreLabel(shown.length + PAGE_SIZE > photos.length ? photos.length : shown.length + PAGE_SIZE, photos.length, locale)}
+              {moreLabel(shown.length + PAGE_SIZE > shoots.length ? shoots.length : shown.length + PAGE_SIZE, shoots.length, locale)}
             </Link>
           </p>
         )}

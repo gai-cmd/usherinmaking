@@ -164,6 +164,71 @@ export const TERMS: Term[] = [
     parent: 'season',
     label: { ja: 'サンセット', en: 'Sunset', ko: '노을' },
   },
+
+  /* ---- mood: 월별 아카이브가 쓰는 날씨 term ----
+   *
+   * 로케이션 페이지의 월별 아카이브는 `clear-day` / `cloudy-day` / `cherry-blossom` / `rain`
+   * 을 가리키는데 여기에 그 slug 가 없어서 링크 5개가 빈 페이지로 떨어져 있었다.
+   * 위의 sunny / cloudy 와 뜻이 겹치지만 **주소를 바꾸면 이미 걸린 링크가 깨지므로**
+   * 화면이 쓰는 이름을 정본으로 삼고, 사진에는 두 이름을 함께 붙인다(같은 뜻이므로 충돌이 없다).
+   */
+  {
+    key: 'mood-clear-day',
+    taxonomy: 'mood',
+    slug: 'clear-day',
+    order: 8,
+    parent: 'season',
+    label: { ja: '晴れの日', en: 'Sunny days', ko: '맑은 날' },
+  },
+  {
+    key: 'mood-cloudy-day',
+    taxonomy: 'mood',
+    slug: 'cloudy-day',
+    order: 9,
+    parent: 'season',
+    label: { ja: '曇りの日', en: 'Cloudy days', ko: '흐린 날' },
+  },
+  {
+    key: 'mood-cherry-blossom',
+    taxonomy: 'mood',
+    slug: 'cherry-blossom',
+    order: 10,
+    parent: 'season',
+    label: { ja: '桜', en: 'Cherry blossom', ko: '벚꽃' },
+  },
+  {
+    key: 'mood-rain',
+    taxonomy: 'mood',
+    slug: 'rain',
+    order: 11,
+    parent: 'season',
+    label: { ja: '雨天', en: 'Rain', ko: '비 오는 날' },
+  },
+
+  /* ---- mood: 촬영 월 ----
+   *
+   * 월별 아카이브 타일 12개가 `month-01` … `month-12` 를 가리킨다.
+   * "계절마다 빛이 달라진다"는 것이 이 아카이브의 주장이므로, 월은 계절(season) 하위에 둔다.
+   */
+  ...Array.from({ length: 12 }, (_, i) => {
+    const n = i + 1;
+    const mm = String(n).padStart(2, '0');
+    return {
+      key: `mood-month-${mm}`,
+      taxonomy: 'mood' as const,
+      slug: `month-${mm}`,
+      order: 20 + n,
+      parent: 'season',
+      label: {
+        ja: `${n}月`,
+        en: [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December',
+        ][i],
+        ko: `${n}월`,
+      },
+    };
+  }),
 ];
 
 /** URL에 쓰이는 축 순서 */

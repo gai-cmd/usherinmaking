@@ -23,7 +23,19 @@ export type JournalImage = {
 export type JournalBlock =
   | { kind: 'p'; text: string }
   | { kind: 'quote'; text: string }
-  | { kind: 'pair'; images: [JournalImage, JournalImage]; caption: string };
+  | { kind: 'pair'; images: [JournalImage, JournalImage]; caption: string }
+  /**
+   * 본문 중간의 사진 한 장. 시안의 2컷 비교(`pair`)와 달리 취입 글이 쓰는 블록이다.
+   * DB 본문은 한 덩이 문자열이라 `pair` 를 되살릴 수 없지만, 한 장짜리는
+   * `![alt](src)` 한 줄로 왕복이 되므로 취입 글의 사진은 이 블록으로 실린다.
+   */
+  | { kind: 'figure'; image: JournalImage }
+  /**
+   * 본문 자체가 아닌 곁말 — 취입 글 첫 줄의 출처 표시가 이것이다.
+   * DB 에서는 `*…*` 로 감싸 두고, 화면에서는 별표를 떼고 작게 흘려 쓴다.
+   * (이 블록이 없던 동안 별표가 화면에 그대로 찍혔다.)
+   */
+  | { kind: 'note'; text: string };
 
 export type JournalPost = {
   slug: string;

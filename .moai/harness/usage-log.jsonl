@@ -27,3 +27,17 @@
 {"timestamp":"2026-07-26T13:27:06.066218Z","event_type":"tool_failure","subject":"mcp__claude-in-chrome__javascript_tool","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
 {"timestamp":"2026-07-26T13:40:23.741588Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
 {"timestamp":"2026-07-26T13:57:25.853111Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T04:26:40.266768Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T05:06:15.535491Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T05:07:22.957828Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T12:12:00.2099Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T12:12:12.713895Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T12:13:59.679397Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T12:14:09.490505Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T12:14:16.030062Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T12:16:19.38535Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-01T12:16:28.392168Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-02T01:07:53.723817Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-09T05:52:07.930591Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-09T06:19:04.50658Z","event_type":"tool_failure","subject":"WebFetch","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}
+{"timestamp":"2026-08-09T11:46:56.080517Z","event_type":"tool_failure","subject":"Bash","context_hash":"UnknownFailure","tier_increment":0,"schema_version":"v2.1"}

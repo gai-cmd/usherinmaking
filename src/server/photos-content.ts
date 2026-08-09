@@ -1,0 +1,184 @@
+import { isDatabaseConfigured, prisma } from '@/server/db';
+import { PUBLISHED_PHOTOS, type Photo, type PhotoStatus } from '@/content/photos';
+import { TERMS } from '@/content/taxonomy';
+import type { Locale } from '@/lib/i18n';
+
+/** `content/photos.ts` 와 같은 모양. 그쪽은 export 하지 않으므로 여기서 다시 쓴다. */
+type L10n = Record<Locale, string>;
+
+/**
+ * 공개 갤러리가 읽는 사진 목록. **DB 우선 · 시드 폴백.**
+ *
+ * 이 모듈이 없던 동안 갤러리·월별 아카이브는 `@/content/photos` 의 코드 시드만 봤다.
+ * 관리자 업로드와 인스타 수집은 DB(Photo)에 쓰는데 화면은 그걸 읽지 않아,
+ * "저장은 되는데 사이트는 그대로"인 닫힌 고리였다 — 저널이 `journal-content.ts` 로 푼 것과 같은 계열이다.
+ *
+ * DB 행은 화면 타입보다 정보가 조금 다르다(분류가 관계 테이블에 있고, 날짜가 시각이다).
+ * 아래 해석기가 그 차이를 메운다.
+ */
+
+/**
+ * 화면 타입 + 촬영 묶음 정보.
+ *
+ * `shootKey` 는 같은 촬영에서 나온 사진끼리 공유하는 이름이고, `shootOrder` 는 그 안의 순서다
+ * (표지 0, 본문 사진 1부터). 갤러리가 "촬영 1건 = 카드 1개"로 보이는 근거가 이 두 값이다.
+ * 낱장으로 올린 사진은 `shootKey` 가 비어 있고, 그때는 그 한 장이 곧 하나의 묶음이다.
+ */
+export type PhotoContent = Photo & {
+  shootKey: string | null;
+  shootOrder: number;
+};
+
+/** 같은 촬영에서 나온 사진 묶음. 갤러리 목록의 카드 한 장에 대응한다. */
+export type Shoot = {
+  /** 묶음 식별자. 낱장 사진은 자기 slug 가 곧 묶음 이름이 된다. */
+  key: string;
+  /** 목록에 내보일 대표 사진 — shootOrder 가 가장 앞선 것. */
+  cover: PhotoContent;
+  /** 표지를 포함한 묶음 전체. 순서대로. */
+  photos: PhotoContent[];
+};
+
+/** 슬러그 집합. DB 에 화면이 모르는 term 이 있어도 필터가 깨지지 않게 걸러낸다. */
+const KNOWN_SLUGS = new Set(TERMS.map((t) => t.slug));
+
+/**
+ * 코드 시드에는 촬영 묶음이 없다. 시드는 시안용 낱장 모음이라 묶을 근거가 없으므로
+ * 한 장이 한 묶음이 되도록 비워 둔다 — `groupByShoot` 가 그때 자기 slug 로 묶음을 만든다.
+ */
+const SEED: PhotoContent[] = PUBLISHED_PHOTOS.map((p) => ({ ...p, shootKey: null, shootOrder: 0 }));
+
+/** DB 는 시각을 들고 있고 화면은 문자열을 쓴다. 사이트 기준(JST) 날짜로 자른다. */
+function toDateString(d: Date): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+}
+
+/** alt / story 는 DB 에 Json 으로 들어간다. 세 언어가 다 없으면 그 자리를 비운다. */
+function toL10n(v: unknown): L10n {
+  const o = (v ?? {}) as Record<string, unknown>;
+  const pick = (k: string) => (typeof o[k] === 'string' ? (o[k] as string) : '');
+  return { ja: pick('ja'), en: pick('en'), ko: pick('ko') };
+}
+
+type Row = {
+  id: string;
+  slug: string | null;
+  shootKey: string | null;
+  shootOrder: number;
+  originalUrl: string;
+  width: number;
+  height: number;
+  alt: unknown;
+  story: unknown;
+  takenAt: Date;
+  status: string;
+  terms: { term: { slug: string } }[];
+};
+
+function fromDb(row: Row): PhotoContent | null {
+  if (!row.originalUrl) return null;
+  const alt = toL10n(row.alt);
+  // alt 가 한 언어도 없으면 그리지 않는다 — 대체 텍스트 없는 사진은 접근성 위반이다.
+  if (!alt.ko && !alt.ja && !alt.en) return null;
+
+  return {
+    id: row.id,
+    // 상세 주소로 쓰이는 값. 비어 있으면 id 로 떨어진다 — 주소 없는 사진을 만들지 않기 위해서다.
+    slug: row.slug ?? row.id,
+    shootKey: row.shootKey,
+    shootOrder: row.shootOrder,
+    src: row.originalUrl,
+    width: row.width,
+    height: row.height,
+    alt,
+    story: toL10n(row.story),
+    takenAt: toDateString(row.takenAt),
+    terms: row.terms.map((t) => t.term.slug).filter((s) => KNOWN_SLUGS.has(s)),
+    status: row.status as PhotoStatus,
+  };
+}
+
+/**
+ * 공개 화면이 부르는 유일한 진입점. DB 에 공개 사진이 한 장이라도 있으면 DB 가 이기고,
+ * 없거나 DB 가 없으면 코드 시드가 그대로 나간다(빈 갤러리를 만들지 않는다).
+ * 조회가 실패해도 공개 페이지를 죽이지 않는다.
+ */
+export async function getPublishedPhotos(): Promise<PhotoContent[]> {
+  if (!isDatabaseConfigured()) return SEED;
+  try {
+    const rows = await prisma.photo.findMany({
+      where: { status: 'PUBLISHED' },
+      include: { terms: { include: { term: true } } },
+      orderBy: { takenAt: 'desc' },
+    });
+    const photos = rows.map((r) => fromDb(r as unknown as Row)).filter((p): p is PhotoContent => p !== null);
+    return photos.length > 0 ? photos : SEED;
+  } catch (err) {
+    console.error('[photos-content] 조회 실패 — 시드로 렌더합니다', err);
+    return SEED;
+  }
+}
+
+/** 분류 조합으로 거른다. 빈 배열이면 전체. `content/photos.ts` 의 filterPhotos 와 같은 규칙이다. */
+export function filterBy(photos: PhotoContent[], termSlugs: string[]): PhotoContent[] {
+  if (termSlugs.length === 0) return photos;
+  return photos.filter((p) => termSlugs.every((slug) => p.terms.includes(slug)));
+}
+
+export function findBySlug(photos: PhotoContent[], slug: string): PhotoContent | undefined {
+  return photos.find((p) => p.slug === slug);
+}
+
+/**
+ * 사진 목록을 촬영 묶음으로 접는다. 목록에 넘어온 순서(최신순)를 그대로 이어받는다.
+ *
+ * `shootKey` 가 없는 사진은 자기 혼자 한 묶음이 된다 — 낱장으로 올린 사진을 잃지 않기 위해서다.
+ * 필터가 걸린 목록에 그대로 적용해도 된다: 걸러진 사진만으로 묶음이 만들어지므로,
+ * 예를 들어 "노을" 필터에서는 그 촬영 중 노을 사진만 묶여 나온다.
+ */
+export function groupByShoot(photos: PhotoContent[]): Shoot[] {
+  const order: string[] = [];
+  const bucket = new Map<string, PhotoContent[]>();
+
+  for (const p of photos) {
+    const key = p.shootKey ?? `single:${p.slug}`;
+    if (!bucket.has(key)) {
+      bucket.set(key, []);
+      order.push(key);
+    }
+    bucket.get(key)!.push(p);
+  }
+
+  return order.map((key) => {
+    const list = bucket.get(key)!.slice().sort((a, b) => a.shootOrder - b.shootOrder);
+    return { key, cover: list[0], photos: list };
+  });
+}
+
+/**
+ * 같은 촬영의 다른 사진.
+ *
+ * 예전에는 세트·계절(mood 축)이 겹치는 사진을 보여줬는데, 그것은 "비슷한 분위기"일 뿐
+ * 같은 촬영이라는 보장이 없었다. 묶음이 생긴 뒤로는 같은 촬영을 먼저 보여주고,
+ * 묶음이 없는 낱장 사진일 때만 예전처럼 분위기로 찾는다.
+ */
+export function sameSet(photos: PhotoContent[], photo: PhotoContent, limit = 4): PhotoContent[] {
+  if (photo.shootKey) {
+    const mates = photos
+      .filter((p) => p.shootKey === photo.shootKey && p.slug !== photo.slug)
+      .sort((a, b) => a.shootOrder - b.shootOrder);
+    if (mates.length) return mates.slice(0, limit);
+  }
+
+  const moods = TERMS.filter((t) => t.taxonomy === 'mood' && photo.terms.includes(t.slug)).map(
+    (t) => t.slug,
+  );
+  return photos
+    .filter((p) => p.slug !== photo.slug && p.terms.some((t) => moods.includes(t)))
+    .slice(0, limit);
+}

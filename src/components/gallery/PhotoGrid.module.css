@@ -23,6 +23,22 @@
   display: block;
   height: 300px;
   overflow: hidden;
+  /* 촬영 카드의 장수 표시를 얹기 위한 기준. 사진 한 장짜리 격자에는 영향이 없다. */
+  position: relative;
+}
+
+/* "사진 5장" — 이 카드가 낱장이 아니라 한 촬영임을 알리는 표시 */
+.count {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 3px 8px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
 }
 
 .grid[data-columns='4'] .link {

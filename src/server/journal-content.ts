@@ -26,22 +26,41 @@ const CATEGORIES: JournalCategory[] = ['studio', 'location', 'dress', 'tips', 'a
 const isCategory = (v: string): v is JournalCategory => (CATEGORIES as string[]).includes(v);
 const isLocale = (v: string): v is Locale => (LOCALES as readonly string[]).includes(v);
 
+/** 사진 한 장 블록의 직렬화 형태 — `![alt](src)` 한 줄. 마크다운 이미지 문법 그대로다. */
+const FIGURE_LINE = /^!\[([^\]]*)\]\((\S+)\)$/;
+
+/**
+ * 곁말 블록 — 문단 전체가 `*…*` 로 감싸인 것. 취입 글 첫 줄의 출처 표시가 이 모양이다.
+ * 양끝 별표를 떼어 화면에 노출되지 않게 한다(별표가 그대로 찍히던 것을 고친 자리다).
+ * 원문에 `***강조***` 처럼 여러 겹으로 쓰인 경우가 있어 별표는 몇 개든 벗긴다.
+ */
+const NOTE_LINE = /^\*+([^*][\s\S]*?[^*])\*+$/;
+
 /**
  * DB 의 본문 문자열을 블록으로 되돌린다. 직렬화 규칙(`server/journal.ts` 의 blocksToText)의 역이다:
- * 빈 줄로 문단을 나누고, `> ` 로 시작하는 문단은 인용으로 읽는다.
+ * 빈 줄로 문단을 나누고, `> ` 로 시작하면 인용, `![alt](src)` 한 줄이면 사진으로 읽는다.
+ *
+ * 사진을 별도 칼럼이 아니라 본문 문자열 안에 두는 이유: 사진이 문단 사이 **어디에** 놓였는지가
+ * 글의 흐름이기 때문이다. 배열을 따로 두면 순서를 잃는다.
  */
 function toBlocks(body: string): JournalBlock[] {
   return body
     .split(/\n{2,}/)
     .map((t) => t.trim())
     .filter(Boolean)
-    .map<JournalBlock>((t) =>
-      t.startsWith('> ') ? { kind: 'quote', text: t.slice(2).trim() } : { kind: 'p', text: t },
-    );
+    .map<JournalBlock>((t) => {
+      const fig = t.match(FIGURE_LINE);
+      if (fig) return { kind: 'figure', image: { src: fig[2], alt: fig[1] } };
+      if (t.startsWith('> ')) return { kind: 'quote', text: t.slice(2).trim() };
+      const note = t.match(NOTE_LINE);
+      if (note) return { kind: 'note', text: note[1].trim() };
+      return { kind: 'p', text: t };
+    });
 }
 
 /** 목록 카드용 발췌. DB 에 발췌 칼럼이 없으므로 첫 문단에서 만든다. */
 function toExcerpt(blocks: JournalBlock[]): string {
+  // 사진 블록은 발췌가 될 수 없다 — 글머리가 사진인 취입 글에서 발췌가 비는 것을 막는다.
   const first = blocks.find((b) => b.kind === 'p' || b.kind === 'quote');
   const text = first && 'text' in first ? first.text : '';
   return text.length > 90 ? `${text.slice(0, 90)}…` : text;

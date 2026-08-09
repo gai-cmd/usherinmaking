@@ -51,12 +51,26 @@ model Photo {
 
   isCover Boolean @default(false)
 
+  /// 갤러리 사진 상세의 주소(`/gallery/g/{slug}`).
+  /// DB 에는 있었는데 이 스키마에 빠져 있었다 — 그 상태로 `db push` 를 돌리면 145장의 주소가
+  /// 통째로 지워진다(2026-08-09 실측으로 잡았다). 실제 DB 정의(text, nullable, unique) 그대로 적는다.
+  slug String? @unique
+
+  /// 같은 촬영에서 나온 사진 묶음의 이름. 갤러리가 "촬영 1건 = 카드 1개"로 보여줄 때 쓴다.
+  /// 비어 있으면 그 사진 한 장이 곧 하나의 묶음이다(낱장 업로드).
+  /// 네이버에서 옮겨온 사진은 그 글의 slug 를 쓴다 — 어느 촬영인지가 곧 어느 글인지다.
+  shootKey String?
+
+  /// 묶음 안에서의 순서. 표지가 0, 본문 사진이 1부터. 원문의 사진 순서를 잃지 않기 위한 것이다.
+  shootOrder Int @default(0)
+
   terms PhotoTerm[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([status, takenAt])
+  @@index([shootKey, shootOrder])
 }
 
 /* ======================= 분류 (관리자가 축을 늘릴 수 있다) ======================= */

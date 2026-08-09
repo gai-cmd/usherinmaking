@@ -29,6 +29,17 @@ function planByCode(code: string): Plan | undefined {
   return [...STUDIO_PLANS, ...LOCATION_PLANS, ...ANNIVERSARY_PLANS].find((p) => p.code === code);
 }
 
+/**
+ * 표지 주소를 절대 URL 로 만든다.
+ *
+ * 표지가 두 형태로 섞여 있다: 시안 원고는 `/images/...` 상대 경로, 취입 글은 스토리지의
+ * 전체 URL 이다. 구조화 데이터와 OG 이미지는 절대 URL 을 요구하는데, 앞에 무조건
+ * 사이트 주소를 붙이면 전체 URL 이 `https://사이트https://스토리지…` 로 깨진다.
+ */
+function absoluteUrl(src: string): string {
+  return src.startsWith('http') ? src : `${SITE_URL}${src}`;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -51,7 +62,7 @@ export async function generateMetadata({
       description: post.excerpt,
       url: `${SITE_URL}${path(locale, 'journal', post.slug)}`,
       type: 'article',
-      images: [{ url: `${SITE_URL}${post.cover.src}`, alt: post.cover.alt }],
+      images: [{ url: absoluteUrl(post.cover.src), alt: post.cover.alt }],
     },
   };
 }
@@ -73,7 +84,46 @@ export default async function JournalPostPage({
   const plan = planByCode(post.planCode);
   const related = relatedPosts(locale, post.slug, 3, all);
 
-  // 글이 전부 샘플이라 BlogPosting 은 내보내지 않는다. 사실인 이동 경로만 구조화한다.
+  /**
+   * 실제 촬영 기록에만 BlogPosting 을 붙인다.
+   *
+   * 오래 샘플 원고뿐이라 이 스키마를 내보내지 않았다 — 지어낸 글에 저자와 발행일을 선언하면
+   * 사실이 아닌 것을 구조화해 내보내는 셈이기 때문이다. 네이버에서 옮겨온 실제 기록이
+   * 들어오면서 조건이 달라졌으므로, **샘플이 아닌 글에만** 붙인다.
+   *
+   * `isBasedOn` 이 이 스키마의 요점이다. 같은 내용이 네이버에도 있으므로, 우리 쪽이
+   * 무단 복제가 아니라 원문을 밝힌 정리본임을 기계가 읽을 수 있게 선언한다.
+   */
+  const naverOrigin = post.body
+    .map((b) => ('text' in b ? b.text : ''))
+    .join(' ')
+    .match(/https:\/\/blog\.naver\.com\/\S+/)?.[0];
+
+  const blogPosting = post.isSample
+    ? null
+    : {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        description: post.excerpt,
+        image: absoluteUrl(post.cover.src),
+        datePublished: post.publishedAt,
+        inLanguage: locale,
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': `${SITE_URL}${path(locale, 'journal', post.slug)}`,
+        },
+        author: { '@type': 'Person', name: 'usherinmaking' },
+        publisher: {
+          '@type': 'Organization',
+          name: 'usherinmaking',
+          url: `${SITE_URL}${path(locale, 'home')}`,
+        },
+        // 촬영지는 사이트 전체가 오키나와·미야코지마로 한정되어 있어 사실이다.
+        contentLocation: { '@type': 'Place', name: 'Okinawa, Japan' },
+        ...(naverOrigin ? { isBasedOn: naverOrigin } : {}),
+      };
+
   const breadcrumb = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -101,6 +151,12 @@ export default async function JournalPostPage({
 
   return (
     <article>
+      {blogPosting && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPosting) }}
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
@@ -133,7 +189,21 @@ export default async function JournalPostPage({
       </header>
 
       <div className={s.cover}>
-        <Image src={post.cover.src} alt={post.cover.alt} fill priority sizes="100vw" />
+        {/*
+          fill 이 아니라 폭·높이를 주고 CSS 로 원본 비율을 살린다 — fill 은 부모의 고정 높이를
+          채우려 사진을 잘라낸다. width/height 는 첫 렌더의 자리를 잡기 위한 값이고,
+          실제 표시 비율은 .coverImg 의 height:auto 가 원본에서 가져온다.
+          sizes 는 CSS 의 max-width(800px)와 맞춘다 — 100vw 로 두면 표시 폭보다 큰 파일을 받아온다.
+        */}
+        <Image
+          src={post.cover.src}
+          alt={post.cover.alt}
+          width={1600}
+          height={1067}
+          priority
+          sizes="(max-width: 800px) 100vw, 800px"
+          className={s.coverImg}
+        />
       </div>
 
       <div className={s.body}>
@@ -150,6 +220,27 @@ export default async function JournalPostPage({
               <blockquote key={i} className={s.quote}>
                 {block.text}
               </blockquote>
+            );
+          }
+          if (block.kind === 'note') {
+            return (
+              <p key={i} className={s.note}>
+                {block.text}
+              </p>
+            );
+          }
+          if (block.kind === 'figure') {
+            return (
+              <figure key={i} className={s.figure}>
+                <Image
+                  src={block.image.src}
+                  alt={block.image.alt}
+                  width={1600}
+                  height={1067}
+                  sizes="(max-width: 767px) 100vw, 760px"
+                  className={s.figureImg}
+                />
+              </figure>
             );
           }
           return (

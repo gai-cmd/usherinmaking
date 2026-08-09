@@ -61,17 +61,39 @@
 
 /* 표지 사진도 본문과 같은 컨테이너 안에 둔다 — 사진만 화면 끝까지 가면
    아래 글과 좌우 축이 어긋난다. */
+/*
+ * 표지.
+ *
+ * 폭 상한이 1200px 이고 높이가 460px 로 고정이라, 원본이 그보다 작은 사진(네이버에서 옮겨온
+ * 글은 800px 이하다)이 1.5배 이상 늘어나 뭉개졌다. object-fit: cover 는 없는 픽셀을
+ * 만들어 주지 않는다 — 늘린 만큼 흐려진다.
+ *
+ * 그래서 폭 상한을 원본이 감당하는 크기로 낮췄다. 더 큰 사진으로 교체되면 이 값을 되돌리면
+ * 되고, 그때까지는 작게 선명한 편이 크게 흐린 것보다 낫다.
+ */
+/*
+ * 표지는 자르지 않는다 — 사진관의 표지 사진에서 잘려나간 인물은 그 자체로 결함이다.
+ * 높이를 460px 로 고정하고 object-fit: cover 를 걸던 방식은 800x460(1.74:1)과
+ * 비율이 다른 사진의 위아래를 베어냈다. 가로 사진(1.5:1)은 인물이 잘리고
+ * 세로 사진(2:3)은 얼굴만 남았다.
+ *
+ * 대신 원본 비율 그대로 두고 화면 높이로만 상한을 건다. 세로 사진은 높이에 맞춰
+ * 줄어들며 가운데 정렬되고, 가로 사진은 폭 상한(800px)에 맞춰 온전히 보인다.
+ */
 .cover {
-  position: relative;
-  height: 460px;
-  overflow: hidden;
-  background: var(--placeholder);
-  max-width: var(--content-max);
+  max-width: 800px;
   margin-inline: auto;
 }
 
-.cover img {
-  object-fit: cover;
+.coverImg {
+  display: block;
+  margin-inline: auto;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  /* 세로 사진이 한 화면을 넘겨 본문이 안 보이는 것을 막는 상한 */
+  max-height: 78vh;
+  background: var(--placeholder);
 }
 
 /* ---------- 본문 ---------- */
@@ -129,6 +151,31 @@
   font-size: 11.5px;
   line-height: 1.9;
   color: var(--muted);
+}
+
+/* 곁말 — 본문이 아니라 이 글의 출처를 밝히는 한 줄. 본문보다 작고 옅게 흘려 쓴다. */
+.note {
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 1.9;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.note + .p {
+  margin-top: 26px;
+}
+
+/* 본문 중간 사진 한 장 (취입 글). 세로 사진이 많아 높이를 고정하지 않고 원본 비율을 따른다. */
+.figure {
+  margin-top: 34px;
+}
+
+.figureImg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--placeholder);
 }
 
 /* ---------- 플랜 CTA ---------- */

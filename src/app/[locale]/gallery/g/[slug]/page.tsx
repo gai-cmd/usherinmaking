@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PhotoGrid } from '@/components/gallery/PhotoGrid';
 import { GALLERY } from '@/components/gallery/content';
-import { PUBLISHED_PHOTOS, findPhoto, sameSetPhotos, type Photo } from '@/content/photos';
+import type { Photo } from '@/content/photos';
+import { findBySlug, getPublishedPhotos, sameSet } from '@/server/photos-content';
 import { TERMS, termLabel } from '@/content/taxonomy';
 import {
   ANNIVERSARY_PLANS,
@@ -19,8 +20,9 @@ import s from './page.module.css';
 
 const ALL_PLANS: Plan[] = [...STUDIO_PLANS, ...LOCATION_PLANS, ...ANNIVERSARY_PLANS];
 
-export function generateStaticParams() {
-  return PUBLISHED_PHOTOS.map((photo) => ({ slug: photo.slug }));
+export async function generateStaticParams() {
+  // DB 에 올라간 사진도 정적 생성 대상이다 — 시드만 보면 새 사진이 404 가 된다.
+  return (await getPublishedPhotos()).map((photo) => ({ slug: photo.slug }));
 }
 
 function planOf(photo: Photo): Plan | undefined {
@@ -40,7 +42,7 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   if (!isLocale(locale)) return {};
 
-  const photo = findPhoto(slug);
+  const photo = findBySlug(await getPublishedPhotos(), slug);
   if (!photo) return {};
 
   return {
@@ -67,7 +69,8 @@ export default async function WorkDetailPage({
   const { locale, slug } = await params;
   if (!isLocale(locale)) notFound();
 
-  const photo = findPhoto(slug);
+  const all = await getPublishedPhotos();
+  const photo = findBySlug(all, slug);
   if (!photo) notFound();
 
   const text = await getPageCopy('gallery', locale);
@@ -75,7 +78,7 @@ export default async function WorkDetailPage({
   const plan = planOf(photo);
   const moods = moodTermsOf(photo);
   const chips = TERMS.filter((t) => photo.terms.includes(t.slug) && t.label[locale]);
-  const related = sameSetPhotos(photo, 4);
+  const related = sameSet(all, photo, 4);
   const taken = photo.takenAt.slice(0, 7).replace('-', '.');
 
   const imageObject = {

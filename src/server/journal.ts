@@ -79,6 +79,11 @@ function blocksToText(post: ContentPost): string {
     .map((b) => {
       if (b.kind === 'p') return b.text;
       if (b.kind === 'quote') return `> ${b.text}`;
+      // 사진 한 장은 마크다운 이미지 한 줄로 왕복한다 (journal-content.ts 의 toBlocks 가 역을 맡는다).
+      if (b.kind === 'figure') return `![${b.image.alt}](${b.image.src})`;
+      // 곁말은 `*…*` 로 감싸 왕복한다.
+      if (b.kind === 'note') return `*${b.text}*`;
+      // 2컷 비교(pair)는 시드 전용이라 문자열로 되살릴 수 없다. 캡션만 남긴다.
       return b.caption;
     })
     .filter((t) => t.trim().length > 0)
