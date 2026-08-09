@@ -47,8 +47,10 @@ export const LEAD: L10nLines = {
     'A house in Okinawa with white plaster walls, an arched window',
     'and a herringbone floor — hair, make-up and dresses, all in one place.',
   ],
+  // 일본어는 세 요소를 と、で 나열해 첫 줄이 길다. 한국어는 조사를 생략해
+  // 압축되며 혼자 짧아졌다. 아치 창 세트에 이미 적힌 샹들리에를 더해 맞춘다.
   ko: [
-    '흰 스타코 벽과 아치 창, 헤링본 바닥.',
+    '흰 스타코 벽과 아치 창, 헤링본 바닥과 샹들리에.',
     '오키나와의 빛이 그대로 들어오는 단독주택 스튜디오에서,',
     '헤어메이크업부터 드레스까지 이곳에서 준비해 촬영합니다.',
   ],

@@ -45,8 +45,11 @@ export const LEAD: L10nLines = {
     'Wedding photography and anniversary portraits,',
     'made outdoors in the light of your session day.',
   ],
+  // 첫 줄은 일본어(ウェディングフォトと、記念写真。)보다 짧아 혼자 함몰됐다.
+  // 기념사진 카테고리(가족 · 백일 · 돌 · 만삭 · 커플 · 기념일)를 풀어 써
+  // 일본어와 같은 짧-긴-짧 대칭으로 맞춘다.
   ko: [
-    '웨딩 스냅과 기념사진.',
+    '웨딩 스냅과, 기념일과 가족의 사진.',
     '촬영 당일의 빛과 날씨를 보고 장소를 함께 정하는,',
     '오키나와의 야외 로케이션 촬영입니다.',
   ],
