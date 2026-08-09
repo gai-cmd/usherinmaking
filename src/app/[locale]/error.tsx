@@ -10,7 +10,12 @@ import s from './error.module.css';
  * 로케일 안에서 렌더 중 오류가 났을 때 보이는 화면.
  *
  * error.tsx 는 Next.js 규약상 반드시 클라이언트 컴포넌트이고 params 를 받지 못한다.
- * 그래서 not-found.tsx 와 같은 방식으로 경로에서 로케일을 읽는다.
+ * 그래서 경로에서 로케일을 직접 읽는다 (usePathname).
+ *
+ * 참고: 같은 자리에 있던 [locale]/not-found.tsx 는 삭제했다. 루트 layout 이
+ * <html> 을 그리지 않는 구조(로케일 layout 이 그린다)라, Next 가 404 를 항상
+ * 루트 app/not-found.tsx 로 올려 중첩 not-found 가 렌더되지 않았다. error.tsx 는
+ * 에러 바운더리라 동작 방식이 달라 이 제약을 받지 않는다.
  *
  * 오류 원문(error.message · stack)은 화면에 절대 내보내지 않는다. 서버 오류 메시지에는
  * 내부 경로·쿼리·환경 정보가 섞여 나올 수 있다. 대신 Next 가 붙여 주는 digest 만 보여준다 —
