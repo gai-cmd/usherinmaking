@@ -11,8 +11,15 @@ import { DependencyUnavailableError } from '@/server/errors';
 
 /* ============================ 설정 ============================ */
 
-/** Instagram Login 으로 발급한 토큰이면 graph.instagram.com 으로 바꾼다. */
-const GRAPH_HOST = process.env.IG_GRAPH_HOST ?? 'graph.facebook.com';
+/**
+ * Instagram Login(계정 직접 연결)으로 발급한 토큰이 기본이다 — Basic Display 폐지 이후
+ * 이 경로가 표준이고, 토큰 자동 연장(refresh_access_token)도 이 호스트에만 있다.
+ * Facebook 페이지를 경유하는 앱이면 IG_GRAPH_HOST=graph.facebook.com 으로 되돌린다.
+ */
+const GRAPH_HOST = process.env.IG_GRAPH_HOST ?? 'graph.instagram.com';
+
+/** 토큰 연장 전용 호스트. 어느 GRAPH_HOST 를 쓰든 연장은 여기로만 간다. */
+const TOKEN_HOST = 'graph.instagram.com';
 /** 버전을 고정한다 — 생략하면 앱 기본 버전을 따라가 어느 날 조용히 깨진다. */
 const API_VERSION = process.env.IG_API_VERSION ?? 'v25.0';
 
@@ -145,6 +152,8 @@ export type InstagramMedia = {
   id: string;
   /** 소속 게시물 id. 단일 게시물이면 id 와 같다. */
   parentId: string;
+  /** 게시물 안에서의 순서. 캐러셀 자식은 0,1,2…, 단일 게시물은 항상 0. */
+  order: number;
   mediaUrl: string;
   caption: string | null;
   /** Graph API 가 준 ISO8601 문자열. 해석은 parseInstagramTimestamp 로. */
@@ -171,15 +180,18 @@ export function flattenInstagramMedia(items: IgApiItem[]): InstagramMedia[] {
     };
 
     if (item.media_type === 'CAROUSEL_ALBUM') {
+      // 순서는 API 가 준 배열 순서 그대로다 — 동영상을 건너뛰어도 남은 사진의 앞뒤는 유지된다.
+      let order = 0;
       for (const child of item.children?.data ?? []) {
         if (child.media_type !== 'IMAGE' || !child.id || !child.media_url) continue;
-        out.push({ id: child.id, mediaUrl: child.media_url, ...inherited });
+        out.push({ id: child.id, order, mediaUrl: child.media_url, ...inherited });
+        order += 1;
       }
       continue;
     }
 
     if (item.media_type !== 'IMAGE' || !item.media_url) continue;
-    out.push({ id: item.id, mediaUrl: item.media_url, ...inherited });
+    out.push({ id: item.id, order: 0, mediaUrl: item.media_url, ...inherited });
   }
 
   return out;
@@ -375,6 +387,49 @@ export async function fetchInstagramMedia(
  * 토큰이 지금 살아 있는지만 확인한다(1페이지 · 1건).
  * 관리자 화면의 "연결 확인" 버튼이 전량 수집을 돌리지 않고도 답을 얻는 경로다.
  */
+/* ============================ 토큰 연장 ============================ */
+
+/** 연장 결과. expiresAt 은 지금 시각 + expires_in 으로 계산한 값이다. */
+export type RefreshedToken = { accessToken: string; expiresAt: Date };
+
+/**
+ * 장기 토큰을 60일 더 연장한다.
+ *
+ * 조건이 둘 있다: 토큰이 발급 후 24시간이 지났어야 하고, 아직 만료되지 않았어야 한다.
+ * 만료된 뒤에는 이 경로가 없다 — 사람이 앱 대시보드에서 재발급하는 수밖에 없다.
+ * 그래서 호출측(server/ig-token.ts)은 만료 직전이 아니라 여유를 두고 미리 부른다.
+ *
+ * 실패는 던진다. 연장 실패가 곧 수집 실패는 아니므로(기존 토큰이 아직 살아 있다)
+ * 호출측이 잡아서 로그만 남기고 진행한다.
+ */
+export async function refreshLongLivedToken(accessToken: string): Promise<RefreshedToken> {
+  const url = `https://${TOKEN_HOST}/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(accessToken)}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  } catch (cause) {
+    throw new InstagramApiError(
+      'network',
+      `토큰 연장 요청에 실패했습니다: ${cause instanceof Error ? cause.message : String(cause)}`,
+    );
+  }
+
+  const body: unknown = await res.json().catch(() => null);
+  if (!res.ok) throw toError(res.status, body, retryAfterSeconds(res));
+
+  const token = (body as { access_token?: unknown } | null)?.access_token;
+  const expiresIn = (body as { expires_in?: unknown } | null)?.expires_in;
+  if (typeof token !== 'string' || !token || typeof expiresIn !== 'number') {
+    // 200 인데 형태가 다르면 연장된 척하고 옛 토큰을 새 만료일로 덮어쓸 위험이 있다.
+    throw new InstagramApiError('http', '토큰 연장 응답을 해석할 수 없습니다.', {
+      httpStatus: res.status,
+    });
+  }
+
+  return { accessToken: token, expiresAt: new Date(Date.now() + expiresIn * 1000) };
+}
+
 export async function checkInstagramToken(
   creds: InstagramCredentials,
 ): Promise<{ ok: true } | { ok: false; failure: InstagramFailure; message: string }> {
