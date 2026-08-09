@@ -133,6 +133,14 @@ html[lang^='ko'] body {
   letter-spacing: -0.015em;
 }
 
+/* 리드문만 일본어와 같은 400 으로 되돌린다. 산돌고딕 Light(300)는 같은 26px 에서
+   히라기노 Regular 보다 획이 얇아(잉크 밀도 0.23 대 0.31) 한국어 리드문만 흐리게
+   보였다. 셀렉터를 .u-lead 로 한정해, u-display 를 쓰는 대형 타이틀은 300 을 지킨다. */
+:lang(ko) .u-lead,
+[lang^='ko'] .u-lead {
+  font-weight: 400;
+}
+
 /* 라틴용 트래킹(.4em)을 한글에 그대로 쓰면 글자가 흩어진다. 한국어에서만 줄인다.
    단 u-label 은 영문 대문자 라벨(STUDIO PLAN)이라 원래 트래킹을 유지한다. */
 :lang(ko) .u-h2,
