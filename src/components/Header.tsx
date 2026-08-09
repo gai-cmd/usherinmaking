@@ -7,7 +7,7 @@ import { useState } from 'react';
 import {
   LOCALES,
   LOCALE_SHORT,
-  NAV,
+  navFor,
   UI,
   path,
   type Locale,
@@ -54,7 +54,7 @@ export function Header({ locale, page }: { locale: Locale; page?: PageKey }) {
 
       <nav id="site-nav" className={s.nav} data-open={open || undefined}>
         <ul className={s.navList}>
-          {NAV.map((item) => (
+          {navFor(locale).map((item) => (
             <li key={item.key}>
               <Link
                 href={path(locale, item.key)}

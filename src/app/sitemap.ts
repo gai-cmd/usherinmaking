@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { LOCALES, SITE_URL, path, type Locale, type PageKey } from '@/lib/i18n';
+import { JOURNAL_LOCALES, LOCALES, SITE_URL, path, type Locale, type PageKey } from '@/lib/i18n';
 
 // 갤러리 필터가 쿼리스트링이 아니라 경로이므로, 필터 조합 하나하나가 독립 URL이다.
 // 여기서 누락되면 그 조합은 색인되지 않는다.
@@ -17,10 +17,15 @@ const PAGES: { key: PageKey; priority: number }[] = [
   { key: 'tokushoho', priority: 0.2 },
 ];
 
-/** 모든 페이지에 hreflang 상호 지정 + x-default */
+/** 그 페이지가 실제로 존재하는 언어. 촬영후기만 한국어 전용이다. */
+function localesFor(key: PageKey): readonly Locale[] {
+  return key === 'journal' ? JOURNAL_LOCALES : LOCALES;
+}
+
+/** 페이지가 있는 언어끼리만 hreflang 상호 지정 */
 function withAlternates(key: PageKey, ...rest: string[]) {
   const languages: Record<string, string> = {};
-  for (const l of LOCALES) languages[l] = `${SITE_URL}${path(l, key, ...rest)}`;
+  for (const l of localesFor(key)) languages[l] = `${SITE_URL}${path(l, key, ...rest)}`;
   return languages;
 }
 
@@ -29,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
 
   for (const { key, priority } of PAGES) {
-    for (const locale of LOCALES) {
+    for (const locale of localesFor(key)) {
       entries.push({
         url: `${SITE_URL}${path(locale, key)}`,
         lastModified: now,
@@ -91,7 +96,9 @@ async function journalEntries(now: Date): Promise<MetadataRoute.Sitemap> {
     const posts = await mod.getJournalContentPosts?.();
     if (!Array.isArray(posts)) return [];
 
-    const known = posts.filter((p) => (LOCALES as readonly string[]).includes(p.locale));
+    // 촬영후기는 한국어에만 둔다(JOURNAL_LOCALES). 다른 언어판 행이 DB 에 남아 있어도
+    // 사이트맵에는 싣지 않는다 — 메뉴에서 뺀 페이지를 검색엔진에 제출하면 앞뒤가 맞지 않는다.
+    const known = posts.filter((p) => (JOURNAL_LOCALES as readonly string[]).includes(p.locale));
 
     // 같은 slug의 여러 언어판은 서로 hreflang으로 묶어야 한다.
     // 묶지 않으면 같은 글의 3개 언어판이 서로 경쟁하는 별개 페이지로 취급된다.

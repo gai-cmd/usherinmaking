@@ -13,7 +13,7 @@ import {
   listPosts,
   usedCategories,
 } from '@/content/journal';
-import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
+import { JOURNAL_LOCALES, LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { getJournalContentPosts } from '@/server/journal-content';
 import s from './page.module.css';
@@ -28,7 +28,8 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  if (!isLocale(locale)) return {};
+  // 촬영후기는 한국어에만 둔다 — 없는 언어판의 메타데이터를 내보내지 않는다.
+  if (!isLocale(locale) || !JOURNAL_LOCALES.includes(locale)) return {};
   const text = await getPageCopy('journal', locale);
   return {
     title: text['meta.title'],
@@ -48,7 +49,8 @@ export async function generateMetadata({
 
 export default async function JournalPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  if (!isLocale(locale)) notFound();
+  // 메뉴에서 감추는 것만으로는 부족하다 — 주소를 직접 친 사람과 크롤러에게도 없는 페이지여야 한다.
+  if (!isLocale(locale) || !JOURNAL_LOCALES.includes(locale)) notFound();
 
   const ui = JOURNAL_UI[locale];
   const text = await getPageCopy('journal', locale);

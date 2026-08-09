@@ -43,16 +43,33 @@ export function path(locale: Locale, page: PageKey, ...rest: string[]): string {
   return `/${[locale, seg, ...rest].filter(Boolean).join('/')}`;
 }
 
-/** 헤더 내비게이션 — 순서 고정, 라벨만 언어별 */
-export const NAV: { key: PageKey; label: Record<Locale, string> }[] = [
+/**
+ * 촬영후기가 존재하는 언어.
+ *
+ * 이 글들은 작가가 한국어로 쓴 촬영 기록이다. 기계적으로 옮긴 일본어·영어판을 두면
+ * 원문의 목소리가 사라진 글이 남고, 언어마다 정본이 갈려 어느 쪽이 진짜인지 흐려진다.
+ * 그래서 촬영후기는 한국어에만 둔다 — `NAVER_BLOG_NOTICE_LOCALE` 과 같은 판단이다.
+ *
+ * 이 값 하나가 내비게이션(헤더·푸터), hreflang, 사이트맵을 모두 통제한다.
+ * 다른 언어로도 열고 싶어지면 여기에 로케일을 더하면 된다.
+ */
+export const JOURNAL_LOCALES: readonly Locale[] = ['ko'];
+
+/** 헤더 내비게이션 — 순서 고정, 라벨만 언어별. `locales` 가 있으면 그 언어에서만 보인다. */
+export const NAV: { key: PageKey; label: Record<Locale, string>; locales?: readonly Locale[] }[] = [
   { key: 'studio', label: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' } },
   { key: 'location', label: { ja: 'LOCATION', en: 'LOCATION', ko: '로케이션' } },
   { key: 'dress', label: { ja: 'DRESS', en: 'DRESS', ko: '드레스' } },
   { key: 'plan', label: { ja: 'PLAN', en: 'PLANS', ko: '요금' } },
   { key: 'photographer', label: { ja: 'PHOTOGRAPHER', en: 'PHOTOGRAPHER', ko: '작가 소개' } },
-  { key: 'journal', label: { ja: 'JOURNAL', en: 'JOURNAL', ko: '촬영후기' } },
+  { key: 'journal', label: { ja: 'JOURNAL', en: 'JOURNAL', ko: '촬영후기' }, locales: JOURNAL_LOCALES },
   { key: 'contact', label: { ja: 'CONTACT', en: 'CONTACT', ko: '문의' } },
 ];
+
+/** 그 언어에서 실제로 보여줄 메뉴만. 헤더와 푸터가 같은 결과를 쓰도록 한 곳에서 거른다. */
+export function navFor(locale: Locale) {
+  return NAV.filter((item) => !item.locales || item.locales.includes(locale));
+}
 
 /** 언어 전환 버튼 표기 */
 export const LOCALE_LABEL: Record<Locale, string> = {
@@ -68,9 +85,13 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://usherinmaki
 
 /** hreflang 상호 지정용 alternates 맵 */
 export function alternates(page: PageKey, ...rest: string[]) {
+  // 언어가 제한된 페이지(촬영후기)는 있는 언어만 가리킨다 —
+  // 없는 주소를 hreflang 으로 선언하면 검색엔진이 404 를 대안 언어로 읽는다.
+  const available = page === 'journal' ? JOURNAL_LOCALES : LOCALES;
   const languages: Record<string, string> = {};
-  for (const l of LOCALES) languages[HTML_LANG[l]] = `${SITE_URL}${path(l, page, ...rest)}`;
-  languages['x-default'] = `${SITE_URL}${path(DEFAULT_LOCALE, page, ...rest)}`;
+  for (const l of available) languages[HTML_LANG[l]] = `${SITE_URL}${path(l, page, ...rest)}`;
+  const xDefault = available.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : available[0];
+  languages['x-default'] = `${SITE_URL}${path(xDefault, page, ...rest)}`;
   return languages;
 }
 

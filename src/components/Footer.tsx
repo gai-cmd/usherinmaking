@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { NAV, UI, path, type Locale } from '@/lib/i18n';
+import { navFor, UI, path, type Locale } from '@/lib/i18n';
 import { STUDIO_INFO } from '@/content/site';
 import s from './Footer.module.css';
 
@@ -26,7 +26,7 @@ export function Footer({ locale }: { locale: Locale }) {
 
         <nav aria-label="Footer">
           <ul className={s.links}>
-            {NAV.map((item) => (
+            {navFor(locale).map((item) => (
               <li key={item.key}>
                 <Link href={path(locale, item.key)} className={s.link} data-tap>
                   {item.label[locale]}

@@ -12,14 +12,16 @@ import {
   relatedPosts,
 } from '@/content/journal';
 import { ANNIVERSARY_PLANS, LOCATION_PLANS, STUDIO_PLANS, type Plan } from '@/content/site';
-import { SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { JOURNAL_LOCALES, SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
 import { getPageCopy } from '@/server/page-content';
 import { getJournalContentPosts } from '@/server/journal-content';
 import s from './page.module.css';
 
 export async function generateStaticParams() {
   // DB 에 취입된 글도 정적 생성 대상이다 — 시드만 보면 새 글이 404 가 된다.
-  return allPostParams(await getJournalContentPosts());
+  // 정적 생성도 한국어만 — 없는 언어판 페이지를 미리 만들 이유가 없다.
+  const posts = (await getJournalContentPosts()).filter((p) => JOURNAL_LOCALES.includes(p.locale));
+  return allPostParams(posts);
 }
 
 const TAX_LABEL: Record<Locale, string> = { ja: '税込', en: 'tax included', ko: '세금 포함' };
@@ -46,7 +48,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
   const { locale, slug } = await params;
-  if (!isLocale(locale)) return {};
+  if (!isLocale(locale) || !JOURNAL_LOCALES.includes(locale)) return {};
   const post = findPost(locale, slug, await getJournalContentPosts());
   if (!post) return {};
 
@@ -73,7 +75,8 @@ export default async function JournalPostPage({
   params: Promise<{ locale: string; slug: string }>;
 }) {
   const { locale, slug } = await params;
-  if (!isLocale(locale)) notFound();
+  // 촬영후기는 한국어 전용. DB 에 다른 언어판 행이 남아 있어도 화면에는 내보내지 않는다.
+  if (!isLocale(locale) || !JOURNAL_LOCALES.includes(locale)) notFound();
 
   const all = await getJournalContentPosts();
   const post = findPost(locale, slug, all);
