@@ -21,7 +21,7 @@ export function Footer({ locale }: { locale: Locale }) {
     <footer className={s.root}>
       <div className={s.inner}>
         <Link href={path(locale, 'home')} aria-label="usherinmaking">
-          <Image src="/brand/logo.png" alt="usherinmaking" width={195} height={48} className={s.logo} />
+          <Image src="/brand/logo.png" alt="usherinmaking" width={260} height={64} className={s.logo} />
         </Link>
 
         <nav aria-label="Footer">
@@ -33,11 +33,7 @@ export function Footer({ locale }: { locale: Locale }) {
                 </Link>
               </li>
             ))}
-            <li>
-              <Link href={path(locale, 'gallery')} className={s.link} data-tap>
-                GALLERY
-              </Link>
-            </li>
+            {/* 갤러리는 navFor 에 이미 들어 있다 — 별도 항목을 두면 두 번 나온다 */}
           </ul>
         </nav>
 

@@ -16,7 +16,8 @@
 }
 
 .logo {
-  height: 22px;
+  /* 헤더(64px)와 같은 급으로 — 22px 로는 서명이 읽히지도 않았다 */
+  height: 56px;
   width: auto;
   opacity: 0.9;
 }
