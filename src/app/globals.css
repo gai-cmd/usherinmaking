@@ -414,9 +414,12 @@ table {
   }
 }
 
-/* 모든 탭 타겟 최소 44px */
+/* 모든 탭 타겟 최소 44px.
+   단, 이미지를 품은 카드형 링크는 제외한다 — flex 로 바꾸면 세로 쌓임(figure→제목→설명)이
+   가로 행으로 붕괴해 제목이 낱자로 줄바꿈됐다(로케이션 촬영 종류 카드, 모바일 실측).
+   카드는 어차피 면적이 커서 44px 확보가 애초에 필요 없다. */
 @media (max-width: 767px) {
-  a[data-tap],
+  a[data-tap]:not(:has(img)),
   button[data-tap] {
     min-height: 44px;
     display: flex;
