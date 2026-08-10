@@ -21,7 +21,9 @@
 
 .link {
   display: block;
-  height: 300px;
+  /* 인스타그램 세로형(4:5)에 맞춘다. 높이를 픽셀로 고정하면 너비만 화면 따라 늘어나
+     넓은 화면에서 가로로 납작하게 잘렸다 — 세로 사진이 원본인데 가로로 보였던 원인. */
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   /* 촬영 카드의 장수 표시를 얹기 위한 기준. 사진 한 장짜리 격자에는 영향이 없다. */
   position: relative;
@@ -41,13 +43,7 @@
   pointer-events: none;
 }
 
-.grid[data-columns='4'] .link {
-  height: 170px;
-}
-
-.grid[data-columns='3'] .link {
-  height: 250px;
-}
+/* 칸 높이는 aspect-ratio 가 너비에서 계산한다 — 열 수마다 픽셀을 따로 잡을 필요가 없다. */
 
 .image {
   width: 100%;
@@ -72,9 +68,4 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .link,
-  .grid[data-columns='4'] .link,
-  .grid[data-columns='3'] .link {
-    height: 220px;
-  }
 }

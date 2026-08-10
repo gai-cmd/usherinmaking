@@ -69,9 +69,8 @@ export function FilterBar({
                       data-tap
                     >
                       {termLabel(term, locale)}
-                      {taxonomy.key === 'place' && (
-                        <span className={`u-num ${s.count}`}>{counts[term.slug] ?? 0}</span>
-                      )}
+                      {/* 숫자는 모든 축에 붙는다 — 몇 장이 나올지 보여야 누르고 싶어진다 */}
+                      <span className={`u-num ${s.count}`}>{counts[term.slug] ?? 0}</span>
                     </Link>
                   </span>
                 );

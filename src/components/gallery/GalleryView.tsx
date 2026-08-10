@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { path, type Locale } from '@/lib/i18n';
 import { getPageCopy } from '@/server/page-content';
 import { filterBy, getPublishedPhotos, groupByShoot, type PhotoContent } from '@/server/photos-content';
-import { selectionSegments, termsFor, type Selection } from '@/content/taxonomy';
+import { TAXONOMIES, selectionSegments, termsFor, type Selection } from '@/content/taxonomy';
 import { FilterBar } from './FilterBar';
 import { ShootGrid } from './ShootGrid';
 import { GALLERY, countLabel, moreLabel } from './content';
@@ -14,7 +14,7 @@ export const PAGE_SIZE = 15;
  * 칩에 붙는 숫자 — 현재 선택에 그 term을 더했을 때 남는 사진 수.
  * 사진 목록을 인자로 받는다: DB 조회를 칩마다 반복하지 않기 위해서다.
  */
-function placeCounts(
+function termCounts(
   photos: PhotoContent[],
   locale: Locale,
   selection: Selection,
@@ -22,9 +22,13 @@ function placeCounts(
   const base = selectionSegments(selection);
   const counts: Record<string, number> = { __all: photos.length };
 
-  for (const term of termsFor('place', locale)) {
-    const segments = base.filter((slug) => slug !== selection.place?.slug);
-    counts[term.slug] = filterBy(photos, [...segments, term.slug]).length;
+  // 모든 축에 숫자를 붙인다 — 눌러 봐야 아는 칩은 눌리지 않는다.
+  // 같은 축의 기존 선택은 빼고 센다: 칩을 누르면 그 축이 갈아끼워지는 동작과 같은 셈법이다.
+  for (const taxonomy of TAXONOMIES) {
+    for (const term of termsFor(taxonomy.key, locale)) {
+      const segments = base.filter((slug) => slug !== selection[taxonomy.key]?.slug);
+      counts[term.slug] = filterBy(photos, [...segments, term.slug]).length;
+    }
   }
 
   return counts;
@@ -66,7 +70,7 @@ export async function GalleryView({
         </div>
       </header>
 
-      <FilterBar locale={locale} selection={selection} counts={placeCounts(all, locale, selection)} />
+      <FilterBar locale={locale} selection={selection} counts={termCounts(all, locale, selection)} />
 
       <div className={`u-wrap ${s.status}`}>
         <p className={s.count}>
