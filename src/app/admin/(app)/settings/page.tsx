@@ -1,15 +1,7 @@
 import { notFound } from 'next/navigation';
-import { AdminButton, Badge, NotWired, PageHeader, Panel } from '@/components/admin';
-import { LOCALES, LOCALE_LABEL, type Locale } from '@/lib/i18n';
-import {
-  canShowNaverNotice,
-  getSiteSettings,
-  listOutstandingItems,
-  validateChannelOrder,
-  CHANNEL_LABEL,
-  REQUIRED_PRIMARY,
-  type ChannelSetting,
-} from '@/server/settings';
+import { Badge, PageHeader, Panel } from '@/components/admin';
+import { getSiteSettings, listOutstandingItems } from '@/server/settings';
+import { ChannelLinksForm } from './ChannelLinksForm';
 import s from './settings.module.css';
 import { checkAdminPageAccess } from '@/server/auth';
 
@@ -30,19 +22,13 @@ export default async function AdminSettingsPage() {
 
   const [settings, outstanding] = await Promise.all([getSiteSettings(), listOutstandingItems()]);
 
-  const ordered = (locale: Locale): ChannelSetting[] =>
-    [...settings.channels[locale]].sort((a, b) => a.order - b.order);
 
   return (
     <>
       <PageHeader
         title="설정"
         description="사이트 정보와 언어별 상담 채널을 관리합니다. 핸들과 링크는 바꿀 수 있지만, 언어별 1순위 채널은 업무 규칙이라 어기면 경고가 남습니다."
-        actions={
-          <AdminButton variant="primary" disabled title="저장 경로가 아직 연결되지 않았습니다">
-            저장
-          </AdminButton>
-        }
+        actions={null}
       />
 
       <div className={s.body}>
@@ -132,97 +118,17 @@ export default async function AdminSettingsPage() {
 
           {/* ---------------- 언어별 상담 채널 ---------------- */}
           <Panel title="언어별 상담 채널" aside={<span className={s.eyebrow}>CHANNEL</span>}>
-            <div className={s.channels}>
-              {LOCALES.map((locale: Locale) => {
-                const list = ordered(locale);
-                const warnings = validateChannelOrder(
-                  locale,
-                  list.map((c) => c.id),
-                );
-                const ruleBroken = warnings.some((w) => w.level === 'rule');
-
-                return (
-                  <div key={locale} className={ruleBroken ? s.channelBoxWarn : s.channelBox}>
-                    <div className={s.channelHead}>
-                      <b>{LOCALE_LABEL[locale]}</b>
-                      <span className={s.dim}>
-                        {list.map((c) => CHANNEL_LABEL[c.id]).join(' · ')}
-                      </span>
-                    </div>
-
-                    <div className={s.channelRule}>
-                      1순위 고정: <b>{CHANNEL_LABEL[REQUIRED_PRIMARY[locale]]}</b>
-                      {' · '}Instagram은 보조
-                    </div>
-
-                    <ul className={s.channelList}>
-                      {list.map((c, i) => (
-                        <li key={c.id} className={s.channelItem}>
-                          <span className={s.channelOrder}>{i + 1}</span>
-                          <span>{CHANNEL_LABEL[c.id]}</span>
-                          {c.handle ? <span className={s.dim}>{c.handle}</span> : null}
-                          {c.url ? (
-                            <Badge tone="default">링크 있음</Badge>
-                          ) : c.id === 'form' ? (
-                            <span className={s.dim}>내부 폼</span>
-                          ) : (
-                            <Badge tone="warn">링크 미설정</Badge>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-
-                    {warnings.length > 0 ? (
-                      <ul className={s.warnList}>
-                        {warnings.map((w, i) => (
-                          <li key={i} className={w.level === 'rule' ? s.warnRule : s.warnNotice}>
-                            {w.message}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                );
-              })}
-
-              <div className={s.channelCommon}>
-                공통: 문의 폼(DB 저장) · 이메일 주소는 노출하지 않음
-              </div>
-
-              <div className={s.channelBox}>
-                <div className={s.channelHead}>
-                  <b>네이버 블로그</b>
-                  <span className={s.dim}>
-                    {canShowNaverNotice('ko') ? '한국어 페이지에만 노출' : ''}
-                  </span>
-                </div>
-                <div className={s.channelRule}>
-                  안내 노출 언어: {LOCALE_LABEL[settings.naverBlog.noticeLocale]} 전용
-                </div>
-                <ul className={s.channelList}>
-                  <li className={s.channelItem}>
-                    <span>블로그 URL</span>
-                    {settings.naverBlog.url ? (
-                      <code className={s.code}>{settings.naverBlog.url}</code>
-                    ) : (
-                      <Badge tone="warn">미설정</Badge>
-                    )}
-                  </li>
-                </ul>
-              </div>
+            <div className={s.channelRule}>
+              1순위는 언어별 업무 규칙으로 고정입니다 — KO 카카오톡 · JA LINE · EN 문의 폼, Instagram은
+              모든 언어에서 보조. 여기서는 핸들과 링크만 바꿉니다.
             </div>
+            <ChannelLinksForm
+              initialChannels={settings.channels}
+              initialNaverUrl={settings.naverBlog.url}
+            />
           </Panel>
         </div>
 
-        <NotWired
-          what="사이트 정보 · 상담 채널 저장"
-          hint={
-            <>
-              값은 환경변수와 <code className={s.code}>@/content/site</code> 에서 읽습니다.
-              prisma/schema.prisma 에 Settings 모델이 아직 없어, 모델 추가 후 열립니다.
-            </>
-          }
-        />
       </div>
     </>
   );

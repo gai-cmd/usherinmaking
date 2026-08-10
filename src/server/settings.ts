@@ -1,13 +1,14 @@
-import { NotImplementedError } from '@/server/errors';
 import { LOCALES, type Locale } from '@/lib/i18n';
 import { BRAND, STUDIO_INFO, TBC } from '@/content/site';
+import { prisma, isDatabaseConfigured } from '@/server/db';
 import type { L10n } from '@/server/translations';
 
 /**
  * 사이트 정보 · 언어별 상담 채널 설정.
  *
- * prisma/schema.prisma 에 Settings 모델이 아직 없다 (인계 보고의 스키마 갭).
- * 지금은 환경변수 + src/content/site.ts 를 읽고, 쓰기는 전부 막아 둔다.
+ * 저장은 Setting(key-value) 테이블의 JSON 두 건이다 — 관리자 저장값이 우선하고,
+ * 없거나 DB 가 죽어 있으면 환경변수 + src/content/site.ts 기본값으로 내려간다.
+ * 공개 페이지가 이 모듈을 읽으므로, 읽기는 어떤 경우에도 던지지 않는다.
  *
  * 두 가지는 설정으로도 못 바꾸는 규칙이다.
  *  1) 언어별 1순위 채널 (KO 카카오톡 / JA LINE / EN 문의 폼) — 업무 규칙이다.
@@ -91,7 +92,8 @@ function defaultChannels(): Record<Locale, ChannelSetting[]> {
   const instagram = (order: number): ChannelSetting => ({
     id: 'instagram',
     handle: `@${BRAND.instagram}`,
-    url: null,
+    // 계정명이 코드에 있으므로 링크도 기본으로 살아 있어야 한다 — 미설정과 다르다.
+    url: `https://www.instagram.com/${BRAND.instagram}/`,
     order,
   });
   return {
@@ -112,26 +114,85 @@ function defaultChannels(): Record<Locale, ChannelSetting[]> {
   };
 }
 
+/* ------------------------------------------------- Setting 테이블 JSON */
+
+const SITE_KEY = 'site-settings';
+const CHANNELS_KEY = 'channel-settings';
+
+/**
+ * Setting 한 건을 JSON 으로 읽는다. 공개 페이지 렌더 경로에 있으므로
+ * DB 부재·파손 JSON 은 전부 "저장값 없음"으로 취급하고 조용히 기본값으로 내려간다.
+ */
+async function readStored<T>(key: string): Promise<T | null> {
+  if (!isDatabaseConfigured()) return null;
+  try {
+    const row = await prisma.setting.findUnique({ where: { key }, select: { value: true } });
+    return row ? (JSON.parse(row.value) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeStored(key: string, value: unknown): Promise<void> {
+  const json = JSON.stringify(value);
+  await prisma.setting.upsert({
+    where: { key },
+    update: { value: json },
+    create: { key, value: json },
+  });
+}
+
+/** 저장된 채널 목록을 기본값 위에 얹는다 — 언어별로 저장된 언어만 갈아끼운다. */
+function mergeChannels(
+  stored: Partial<Record<Locale, ChannelSetting[]>> | null,
+): Record<Locale, ChannelSetting[]> {
+  const base = defaultChannels();
+  if (!stored) return base;
+  for (const l of LOCALES) {
+    const list = stored[l];
+    if (Array.isArray(list) && list.length > 0) base[l] = list;
+  }
+  return base;
+}
+
 export async function getSiteSettings(): Promise<SiteSettings> {
-  // Settings 모델이 없어 DB 우선 경로가 없다. 환경변수 + src/content/site.ts 가 원본이다.
+  // 우선순위: 관리자 저장값(Setting) > 환경변수 > 기본값. 관리자가 화면에서 고친 값이
+  // 배포 없이 이겨야 하므로 DB 가 맨 앞이다.
+  const [storedSite, storedChannels] = await Promise.all([
+    readStored<SiteSettingsInput>(SITE_KEY),
+    readStored<Partial<Record<Locale, ChannelSetting[]>>>(CHANNELS_KEY),
+  ]);
+
   const lat = Number(process.env.STUDIO_LAT);
   const lng = Number(process.env.STUDIO_LNG);
 
   return {
     brandName: BRAND.name,
     logoSvg: envOrNull('LOGO_SVG_PATH'),
-    address: { ja: envOrNull('STUDIO_ADDRESS_JA'), latin: envOrNull('STUDIO_ADDRESS_LATIN') },
-    fromAirport: envOrNull('STUDIO_FROM_AIRPORT'),
+    address: {
+      // 2026-08-10 확정 주소가 코드(STUDIO_INFO)에 있다 — 관리자 화면이 "(확인 필요)"를
+      // 계속 보여주면 공개 페이지와 어긋난다. env·저장값이 없어도 확정값으로 내려간다.
+      ja: storedSite?.addressJa ?? envOrNull('STUDIO_ADDRESS_JA') ?? STUDIO_INFO.address.ja,
+      latin: storedSite?.addressLatin ?? envOrNull('STUDIO_ADDRESS_LATIN') ?? STUDIO_INFO.address.en,
+    },
+    fromAirport: storedSite?.fromAirport ?? envOrNull('STUDIO_FROM_AIRPORT'),
     parking: STUDIO_INFO.parking,
     languages: STUDIO_INFO.languages,
     geo: {
-      lat: Number.isFinite(lat) && process.env.STUDIO_LAT ? lat : null,
-      lng: Number.isFinite(lng) && process.env.STUDIO_LNG ? lng : null,
+      lat: storedSite?.lat ?? (Number.isFinite(lat) && process.env.STUDIO_LAT ? lat : null),
+      lng: storedSite?.lng ?? (Number.isFinite(lng) && process.env.STUDIO_LNG ? lng : null),
     },
     // 값이 아니라 존재 여부만 본다.
     representativeEmail: { configured: Boolean(envOrNull('REPRESENTATIVE_EMAIL')) },
-    channels: defaultChannels(),
-    naverBlog: { url: envOrNull('NAVER_BLOG_URL'), noticeLocale: NAVER_NOTICE_LOCALE },
+    channels: mergeChannels(storedChannels),
+    naverBlog: {
+      // 블로그 주소는 공개된 확정 값이다(촬영후기 취입 스크립트의 BLOG_ID 와 같은 계정).
+      url:
+        storedSite?.naverBlogUrl ??
+        envOrNull('NAVER_BLOG_URL') ??
+        'https://blog.naver.com/usherinmaking',
+      noticeLocale: NAVER_NOTICE_LOCALE,
+    },
   };
 }
 
@@ -242,14 +303,21 @@ export type SiteSettingsInput = {
   naverBlogUrl?: string | null;
 };
 
-/*
- * 아래 두 쓰기 경로는 DB 연결 여부와 무관하게 막혀 있다.
- * schema.prisma 에 Settings 모델이 없어서 저장할 곳이 없다.
- * 지금 값들은 배포 환경변수로만 바뀐다 — 화면이 그렇게 안내해야 한다.
+/**
+ * 부분 갱신이다 — 넘어온 키만 갈아끼우고 나머지 저장값은 남긴다.
+ * null 은 "지운다"(환경변수·기본값으로 복귀), undefined 는 "건드리지 않는다".
  */
-
-export async function updateSiteSettings(_input: SiteSettingsInput): Promise<SiteSettings> {
-  throw new NotImplementedError('사이트 정보 저장 (schema.prisma 에 Settings 모델이 없습니다)');
+export async function updateSiteSettings(input: SiteSettingsInput): Promise<SiteSettings> {
+  const current = (await readStored<SiteSettingsInput>(SITE_KEY)) ?? {};
+  const next: SiteSettingsInput = { ...current };
+  for (const key of Object.keys(input) as (keyof SiteSettingsInput)[]) {
+    const value = input[key];
+    if (value === undefined) continue;
+    if (value === null) delete next[key];
+    else (next as Record<string, unknown>)[key] = value;
+  }
+  await writeStored(SITE_KEY, next);
+  return getSiteSettings();
 }
 
 export type ChannelUpdateInput = {
@@ -257,8 +325,11 @@ export type ChannelUpdateInput = {
   channels: { id: ChannelId; handle: string | null; url: string | null; order: number }[];
 };
 
-export async function updateChannels(_input: ChannelUpdateInput): Promise<ChannelSetting[]> {
-  // 순서 규칙 검사(validateChannelOrder)는 라우트에서 이미 돌지만,
-  // 통과하더라도 저장할 테이블이 없다.
-  throw new NotImplementedError('상담 채널 저장 (schema.prisma 에 Settings 모델이 없습니다)');
+export async function updateChannels(input: ChannelUpdateInput): Promise<ChannelSetting[]> {
+  // 순서 규칙 검사(validateChannelOrder)는 라우트가 이미 돌렸다. 여기서는 저장만 한다.
+  const stored = (await readStored<Partial<Record<Locale, ChannelSetting[]>>>(CHANNELS_KEY)) ?? {};
+  const list = input.channels.map((c) => ({ ...c }));
+  stored[input.locale] = list;
+  await writeStored(CHANNELS_KEY, stored);
+  return list;
 }
