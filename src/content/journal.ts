@@ -50,6 +50,11 @@ export type JournalPost = {
   planCode: string;
   /** 'YYYY-MM' 또는 'YYYY-MM-DD'. 시안이 날짜까지 준 글만 일 단위로 둔다. */
   publishedAt: string;
+  /**
+   * 'YYYY-MM-DD'. DB 에서 온 글만 갖는다 — 코드 시드는 고칠 때마다 배포되므로 갱신일이 없다.
+   * 구조화 데이터의 dateModified 와 사이트맵 lastModified 가 이 값을 쓴다.
+   */
+  updatedAt?: string;
   tags?: string[];
   featured?: boolean;
   /** 샘플 원고 표시. 실제 글은 이 필드를 생략한다. */

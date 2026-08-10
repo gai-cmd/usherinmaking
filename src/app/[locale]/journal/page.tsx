@@ -66,8 +66,9 @@ export default async function JournalPage({ params }: { params: Promise<{ locale
         <div className="u-wrap">
           <p className="u-label">{ui.eyebrow}</p>
           <h1 className={`u-display ${s.title}`}>{text['heading']}</h1>
-          {/* 글이 전부 샘플이라는 사실을 목록 맨 위에서 밝힌다 */}
-          <p className={s.sampleBadge}>{SAMPLE_BADGE[locale]}</p>
+          {/* 샘플이 남아 있을 때만 밝힌다. 실제 후기까지 "샘플"로 표시하면 사실과 다르고,
+              방문자에게도 검색·AI 엔진에도 이 페이지 전체를 못 믿을 것으로 만든다. */}
+          {all.some((p) => p.isSample) && <p className={s.sampleBadge}>{SAMPLE_BADGE[locale]}</p>}
           <p className={s.lead}>
             {toLines(text['lead']).map((line, i) => (
               <span key={line}>

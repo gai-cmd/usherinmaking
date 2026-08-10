@@ -76,6 +76,7 @@ type Row = {
   planCode: string | null;
   isSample: boolean;
   publishedAt: Date | null;
+  updatedAt: Date;
 };
 
 /** DB 는 시각을 들고 있고 화면은 문자열을 쓴다. 사이트 기준(JST) 날짜로 자른다. */
@@ -105,6 +106,7 @@ function fromDb(row: Row): JournalContentPost | null {
     cover: { src: row.cover, alt: row.title },
     planCode: row.planCode ?? '',
     publishedAt: row.publishedAt ? toDateString(row.publishedAt) : '',
+    updatedAt: toDateString(row.updatedAt),
     ...(row.isSample ? { isSample: true as const } : {}),
   };
 }

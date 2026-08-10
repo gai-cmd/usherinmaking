@@ -111,6 +111,8 @@ export default async function JournalPostPage({
         description: post.excerpt,
         image: absoluteUrl(post.cover.src),
         datePublished: post.publishedAt,
+        // 갱신일이 없으면 오래된 글인지 최근 손본 글인지 검색·AI 엔진이 구분하지 못한다.
+        ...(post.updatedAt ? { dateModified: post.updatedAt } : {}),
         inLanguage: locale,
         mainEntityOfPage: {
           '@type': 'WebPage',

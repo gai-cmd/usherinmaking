@@ -44,6 +44,14 @@ const UA =
 const args = process.argv.slice(2);
 const DRY = args.includes('--dry');
 const LIMIT = Number(args[args.indexOf('--limit') + 1]) || 10;
+// 기본은 최근 1년. 오래된 글일수록 사진 해상도와 문체가 지금 사이트와 어긋난다.
+const SINCE =
+  args[args.indexOf('--since') + 1]?.match(/^\d{4}-\d{2}-\d{2}$/)?.[0] ??
+  new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+// 얇은 글 기준. 기본값(400자·3장)은 SEO 판단 문서에서 온 값이라 함부로 낮추지 않는다 —
+// 낮출 때는 무엇을 얻고 무엇을 잃는지 세어 보고 정한다.
+const MIN_CHARS = Number(args[args.indexOf('--min-chars') + 1]) || 400;
+const MIN_IMAGES = Number(args[args.indexOf('--min-images') + 1]) || 3;
 
 /* ---------------------------------------------------------------- 원문 읽기 */
 
@@ -76,15 +84,32 @@ async function listPage(n) {
   return parseLoose(t);
 }
 
+/**
+ * 원문을 문단·사진이 **섞인 순서 그대로** 읽는다.
+ *
+ * 문단과 사진을 각각 훑으면 배열 두 개가 나오고 그 사이 순서를 잃는다 — 사진이 어느 문단
+ * 뒤에 있었는지가 사라진다. 정규식 하나로 한 번만 훑으면 matchAll 이 문서 순서대로 주므로
+ * 흐름이 보존된다. paras · images 는 기존 호출부를 위해 그 결과에서 뽑아 둔다.
+ */
 async function fetchPost(logNo) {
   const html = await get(`https://blog.naver.com/PostView.naver?blogId=${BLOG_ID}&logNo=${logNo}`);
-  const paras = [...html.matchAll(/<p class="se-text-paragraph[^"]*"[^>]*>([\s\S]*?)<\/p>/g)]
-    .map((m) => stripTags(m[1]))
-    .filter(Boolean);
-  const images = [...new Set([...html.matchAll(/data-lazy-src="([^"]+)"/g)].map((m) => m[1]))].filter((u) =>
-    /postfiles|blogfiles/.test(u),
-  );
-  return { paras, images };
+  const BLOCK = /<p class="se-text-paragraph[^"]*"[^>]*>([\s\S]*?)<\/p>|data-lazy-src="([^"]+)"/g;
+  const nodes = [];
+  const seen = new Set();
+  for (const m of html.matchAll(BLOCK)) {
+    if (m[1] !== undefined) {
+      const text = stripTags(m[1]);
+      if (text) nodes.push({ kind: 'p', text });
+    } else if (m[2] && /postfiles|blogfiles/.test(m[2]) && !seen.has(m[2])) {
+      seen.add(m[2]); // 같은 사진이 썸네일·본문으로 두 번 실린다
+      nodes.push({ kind: 'img', url: m[2] });
+    }
+  }
+  return {
+    nodes,
+    paras: nodes.filter((n) => n.kind === 'p').map((n) => n.text),
+    images: nodes.filter((n) => n.kind === 'img').map((n) => n.url),
+  };
 }
 
 /* ---------------------------------------------------------------- 정리 규칙 */
@@ -134,9 +159,24 @@ const slugOf = (category, date, logNo) => `${category}-${date.slice(0, 7)}-${Str
  * "오키나와에서 진행한"이 붙었다. 장소·촬영 종류를 코드가 단정하면 없는 사실을 만든다.
  * 원문 첫 문단이 대개 그 역할을 하므로, 요약 문장은 사람이 넣을 때까지 비워 둔다.
  */
-function buildBody(paras, meta) {
+function buildBody(nodes, meta, blobUrlOf) {
+  const out = [];
+  let n = 0;
+  for (const node of nodes) {
+    if (node.kind === 'p') {
+      out.push(node.text);
+      continue;
+    }
+    // 표지로 이미 쓴 사진과 내려받기에 실패한 사진은 null 로 돌아온다.
+    const url = blobUrlOf(node.url);
+    if (!url) continue;
+    n += 1;
+    // alt 는 제목 + 순번까지만 쓴다. 사진을 보지 않고 장면을 지어내면 없는 사실이 된다 —
+    // 본문 문단을 alt 로 돌려쓰는 것도 같은 이유로 하지 않는다(그 문단은 사진 설명이 아니다).
+    out.push(`![${meta.title} 사진 ${n}](${url})`);
+  }
   const source = `> 이 글은 작가가 네이버 블로그에 남긴 촬영 기록(${meta.date})을 옮겨 정리한 것입니다. 원문: ${meta.link}`;
-  return [...paras, source].join('\n\n');
+  return [...out, source].join('\n\n');
 }
 
 const KIND_BY_CATEGORY = {
@@ -180,9 +220,9 @@ const main = async () => {
       naverCategory: cats.get(String(p.categoryNo)) ?? '',
       date: isoDate(p.addDate),
     }))
-    .filter((r) => r.date && r.date >= '2016-01-01' && ['스냅', '웨딩룩'].includes(r.naverCategory));
+    .filter((r) => r.date && r.date >= SINCE && ['스냅', '웨딩룩'].includes(r.naverCategory));
 
-  console.log(`후보 ${candidates.length}건 (2016년 이후 · 스냅/웨딩룩) → 상위에서 ${LIMIT}건 선별\n`);
+  console.log(`후보 ${candidates.length}건 (${SINCE} 이후 · 스냅/웨딩룩) → 상위에서 ${LIMIT}건 선별\n`);
 
   const picked = [];
   for (const c of candidates) {
@@ -197,6 +237,9 @@ const main = async () => {
     await new Promise((r) => setTimeout(r, 350));
 
     const paras = post.paras.slice(1); // 첫 문단은 제목 반복
+    // 흐름 배열에서도 그 문단 하나를 뺀다. paras 와 어긋나면 글자수 판정과 본문이 달라진다.
+    const firstP = post.nodes.findIndex((nd) => nd.kind === 'p');
+    const nodes = post.nodes.filter((_, i) => i !== firstP);
     const chars = paras.join('').length;
     // ⑤ 얇은 글 제외 — SEO 판단 근거 문서의 기준 그대로
     const text = `${c.titleRaw} ${paras.join(' ')}`;
@@ -210,12 +253,12 @@ const main = async () => {
       console.log(`  제외 ${c.date} (오키나와 ${okinawaHits}회 vs 타지역 ${elsewhereHits}회) ${c.titleRaw.slice(0, 26)}`);
       continue;
     }
-    if (chars < 400 || post.images.length < 3) {
+    if (chars < MIN_CHARS || post.images.length < MIN_IMAGES) {
       console.log(`  제외 ${c.date} (본문 ${chars}자 · 이미지 ${post.images.length}장) ${c.titleRaw.slice(0, 30)}`);
       continue;
     }
     const category = categoryOf(c.naverCategory, text);
-    picked.push({ ...c, paras, images: post.images, chars, category });
+    picked.push({ ...c, paras, nodes, images: post.images, chars, category });
     console.log(`  선택 ${c.date} · ${category} · ${chars}자 · 이미지 ${post.images.length}장`);
   }
 
@@ -227,32 +270,51 @@ const main = async () => {
     const title = cleanTitle(p.titleRaw);
     const slug = slugOf(p.category, p.date, p.logNo);
     const link = `https://blog.naver.com/${BLOG_ID}/${p.logNo}`;
-    const body = buildBody(p.paras, {
+    const meta = {
+      title,
       date: p.date,
       dateLabel: `${p.date.slice(0, 4)}년 ${Number(p.date.slice(5, 7))}월`,
       kind: KIND_BY_CATEGORY[p.category],
       link,
-    });
+    };
+    const coverSrc = p.images[0];
 
     if (DRY) {
-      console.log(`[dry] ${slug}\n      제목: ${title}\n      표지: ${p.images[0].slice(0, 70)}…\n      본문 ${body.length}자`);
+      // 실제로 올리지 않으므로 표지 외 사진은 전부 들어간다고 보고 자릿수만 센다.
+      const body = buildBody(p.nodes, meta, (src) => (src === coverSrc ? null : 'blob://dry'));
+      const inBody = p.images.length - 1;
+      console.log(
+        `[dry] ${slug}\n      제목: ${title}\n      표지: ${coverSrc.slice(0, 70)}…\n      본문 ${body.length}자 · 본문 사진 ${inBody}장`,
+      );
       continue;
     }
 
-    // ④ 표지 이미지를 자사 스토리지로 옮긴다. 네이버 직링크는 규칙 위반이고 언제든 끊긴다.
-    const res = await fetch(p.images[0], { headers: { 'User-Agent': UA, Referer: link } });
-    if (!res.ok) {
-      console.log(`  이미지 실패 ${slug} — HTTP ${res.status}, 건너뜀`);
+    // ④ 사진을 **전부** 자사 스토리지로 옮긴다. 네이버 직링크는 규칙 위반이고 언제든 끊긴다.
+    //    표지 한 장만 옮기던 때에는 본문이 글자만 남아 원문의 흐름이 사라졌다.
+    const uploaded = new Map();
+    for (const [i, src] of p.images.entries()) {
+      const r = await fetch(src, { headers: { 'User-Agent': UA, Referer: link } });
+      if (!r.ok) {
+        console.log(`  사진 실패 ${slug} #${i + 1} — HTTP ${r.status}, 이 장만 건너뜀`);
+        continue;
+      }
+      const upOne = await uploadMedia({
+        bytes: await r.arrayBuffer(),
+        filename: `naver-${p.logNo}-${i + 1}.jpg`,
+        mimeType: r.headers.get('content-type')?.split(';')[0] || 'image/jpeg',
+        uploadedBy: 'naver-journal-import',
+        source: 'manual',
+      });
+      uploaded.set(src, upOne.asset.url);
+      await new Promise((rs) => setTimeout(rs, 200)); // 원문 서버에 몰아치지 않는다
+    }
+    if (!uploaded.has(coverSrc)) {
+      console.log(`  표지 실패 ${slug} — 건너뜀`);
       continue;
     }
-    const bytes = await res.arrayBuffer();
-    const up = await uploadMedia({
-      bytes,
-      filename: `naver-${p.logNo}.jpg`,
-      mimeType: res.headers.get('content-type')?.split(';')[0] || 'image/jpeg',
-      uploadedBy: 'naver-journal-import',
-      source: 'manual',
-    });
+    const up = { asset: { url: uploaded.get(coverSrc) } };
+    // 표지는 본문 위에 따로 크게 걸리므로 본문에서는 뺀다 — 같은 사진이 연달아 두 번 나온다.
+    const body = buildBody(p.nodes, meta, (src) => (src === coverSrc ? null : (uploaded.get(src) ?? null)));
 
     await prisma.journalPost.upsert({
       where: { slug_locale: { slug, locale: 'ko' } },
