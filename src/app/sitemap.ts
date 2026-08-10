@@ -48,6 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 갤러리 필터 조합과 작품/저널 상세는 각 콘텐츠 모듈에서 읽어 확장한다.
   // 모듈이 아직 없거나 형태가 달라도 사이트맵 생성 자체는 실패하지 않아야 한다.
   entries.push(...(await galleryFilterEntries(now)));
+  entries.push(...(await photoEntries(now)));
   entries.push(...(await journalEntries(now)));
 
   return entries;
@@ -86,12 +87,48 @@ async function galleryFilterEntries(now: Date): Promise<MetadataRoute.Sitemap> {
   }
 }
 
+/**
+ * 작품 상세(/gallery/g/<slug>). 필터 조합만 싣던 동안 이 페이지들은 사이트맵에 없었다 —
+ * 목록에서 링크는 되지만, 사진이 늘어날수록 발견이 늦어지고 색인에서 누락된다.
+ * 사진은 언어를 가리지 않으므로(저널과 달리) 모든 로케일을 서로 hreflang 으로 묶는다.
+ */
+async function photoEntries(now: Date): Promise<MetadataRoute.Sitemap> {
+  try {
+    // 공개 화면과 같은 곳을 본다. 사이트맵만 다른 소스를 보면 화면과 어긋난다.
+    const { getPublishedPhotos } = await import('@/server/photos-content');
+    const photos = await getPublishedPhotos();
+    if (!Array.isArray(photos)) return [];
+
+    const out: MetadataRoute.Sitemap = [];
+    for (const photo of photos) {
+      if (!photo?.slug) continue;
+      const languages: Record<string, string> = {};
+      for (const l of LOCALES) languages[l] = `${SITE_URL}${path(l, 'gallery', 'g', photo.slug)}`;
+
+      for (const locale of LOCALES) {
+        out.push({
+          url: `${SITE_URL}${path(locale, 'gallery', 'g', photo.slug)}`,
+          lastModified: now,
+          changeFrequency: 'monthly',
+          priority: 0.4,
+          alternates: { languages },
+        });
+      }
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 async function journalEntries(now: Date): Promise<MetadataRoute.Sitemap> {
   try {
     // 공개 화면과 같은 곳을 본다 — 사이트맵만 코드 시드를 보면 관리자·취입 글이
     // 사이트에는 떠 있는데 사이트맵에는 없어, 검색엔진이 새 글을 발견하지 못한다.
     const mod = (await import('@/server/journal-content')) as {
-      getJournalContentPosts?: () => Promise<{ slug: string; locale: string; publishedAt?: string }[]>;
+      getJournalContentPosts?: () => Promise<
+        { slug: string; locale: string; publishedAt?: string; updatedAt?: string }[]
+      >;
     };
     const posts = await mod.getJournalContentPosts?.();
     if (!Array.isArray(posts)) return [];
@@ -118,7 +155,9 @@ async function journalEntries(now: Date): Promise<MetadataRoute.Sitemap> {
 
       return {
         url: `${SITE_URL}${path(p.locale as Locale, 'journal', p.slug)}`,
-        lastModified: p.publishedAt ? new Date(p.publishedAt) : now,
+        // 갱신일이 있으면 그것이 정답이다. 발행일을 쓰면 나중에 고친 글이 옛날 글로 보여
+        // 재크롤 우선순위가 밀린다. 둘 다 없는 시드 글만 현재 시각으로 둔다.
+        lastModified: p.updatedAt ? new Date(p.updatedAt) : p.publishedAt ? new Date(p.publishedAt) : now,
         changeFrequency: 'monthly' as const,
         priority: 0.4,
         alternates: { languages },

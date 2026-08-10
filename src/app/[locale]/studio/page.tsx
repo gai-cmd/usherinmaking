@@ -208,7 +208,12 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
             <div className={s.accessRow}>
               <dt>{ACCESS.labels.address[locale]}</dt>
               <dd>
-                {ACCESS.region[locale]} <span className={s.tbc}>{TBC[locale]}</span>
+                {/* 주소를 받기 전에는 예전처럼 지역 + 확인필요 토큰으로 남는다 */}
+                {address ?? (
+                  <>
+                    {ACCESS.region[locale]} <span className={s.tbc}>{TBC[locale]}</span>
+                  </>
+                )}
               </dd>
             </div>
             <div className={s.accessRow}>

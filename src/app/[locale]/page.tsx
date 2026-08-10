@@ -24,7 +24,6 @@ import {
   STUDIO_PLANS,
   STUDIO_SETS,
   STUDIO_INFO,
-  TBC,
 } from '@/content/site';
 import { HOME } from './home-content';
 import s from './page.module.css';
@@ -58,7 +57,9 @@ export async function generateMetadata({
       title: `${title} | usherinmaking`,
       description,
       url: `${SITE_URL}${path(locale, 'home')}`,
-      images: [{ url: '/brand/logo.png' }],
+      // 투명 PNG 를 그대로 공유하면 어두운 배경 앱에서 검정 로고가 묻힌다.
+      // 배경을 깐 1200x630 카드로 따로 둔다 — 크기도 OG 권장비(1.91:1)에 맞다.
+      images: [{ url: '/brand/og.png', width: 1200, height: 630, alt: 'usherinmaking' }],
     },
   };
 }
@@ -77,11 +78,18 @@ function jsonLd(locale: Locale) {
       url: `${SITE_URL}${path(locale, 'home')}`,
       logo: `${SITE_URL}/brand/logo.png`,
       image: `${SITE_URL}/images/studio/IMG_0766.png`,
+      // 같은 주체가 운영하는 채널임을 검색·AI 엔진에 알린다. 갤러리 사진의 출처가
+      // 이 계정이므로, 연결이 없으면 같은 사진이 서로 무관한 두 곳에 있는 것으로 읽힌다.
+      sameAs: ['https://www.instagram.com/usherinmaking/'],
+      telephone: STUDIO_INFO.phoneIntl,
+      // 주소는 구성 요소를 쪼개서 넣는다. 한 줄로 뭉치면 지역 검색이 시·군을 읽어내지 못한다.
       address: {
         '@type': 'PostalAddress',
         addressCountry: 'JP',
         addressRegion: 'Okinawa',
-        streetAddress: TBC[locale],
+        addressLocality: 'Kitanakagusuku, Nakagami District',
+        postalCode: '901-2302',
+        streetAddress: '1868 Toguchi',
       },
       knowsLanguage: ['ja', 'en', 'ko'],
       amenityFeature: {
