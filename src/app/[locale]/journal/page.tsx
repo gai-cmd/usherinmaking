@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { ContactCta } from '@/components/ContactCta';
 import { JournalList } from '@/components/journal/JournalList';
 import {
@@ -50,7 +50,10 @@ export async function generateMetadata({
 export default async function JournalPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   // 메뉴에서 감추는 것만으로는 부족하다 — 주소를 직접 친 사람과 크롤러에게도 없는 페이지여야 한다.
-  if (!isLocale(locale) || !JOURNAL_LOCALES.includes(locale)) notFound();
+  if (!isLocale(locale)) notFound();
+  // 촬영후기가 없는 언어는 404 대신 그 언어의 홈으로 보낸다 — 한국어 페이지에서
+  // 언어를 바꾸면 이 주소로 오게 되는데, 막다른 화면을 보여줄 이유가 없다.
+  if (!JOURNAL_LOCALES.includes(locale)) redirect(path(locale, 'home'));
 
   const ui = JOURNAL_UI[locale];
   const text = await getPageCopy('journal', locale);

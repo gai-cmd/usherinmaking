@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import {
   CATEGORY_LABEL,
   JOURNAL_UI,
@@ -76,7 +76,9 @@ export default async function JournalPostPage({
 }) {
   const { locale, slug } = await params;
   // 촬영후기는 한국어 전용. DB 에 다른 언어판 행이 남아 있어도 화면에는 내보내지 않는다.
-  if (!isLocale(locale) || !JOURNAL_LOCALES.includes(locale)) notFound();
+  if (!isLocale(locale)) notFound();
+  // 목록 페이지와 같은 규칙 — 없는 언어판은 404 가 아니라 그 언어의 홈이다.
+  if (!JOURNAL_LOCALES.includes(locale)) redirect(path(locale, 'home'));
 
   const all = await getJournalContentPosts();
   const post = findPost(locale, slug, all);
