@@ -138,7 +138,8 @@ export async function getPublishedPhotos(): Promise<PhotoContent[]> {
   if (failedAt && Date.now() - failedAt < FAIL_TTL_MS) return SEED;
   try {
     const rows = await prisma.photo.findMany({
-      where: { status: 'PUBLISHED' },
+      // 갤러리는 작품 계정(main)만이다 — 드레스 컬렉션 사진이 여기 섞이면 안 된다.
+      where: { status: 'PUBLISHED', igAccount: 'main' },
       include: { terms: { include: { term: true } } },
       orderBy: { takenAt: 'desc' },
     });
@@ -151,6 +152,24 @@ export async function getPublishedPhotos(): Promise<PhotoContent[]> {
     failedAt = Date.now();
     console.error('[photos-content] 조회 실패 — 시드로 렌더합니다', err);
     return SEED;
+  }
+}
+
+/**
+ * 드레스 컬렉션(@usherindress 수집분). 갤러리와 저장소는 같고 계정으로만 갈린다.
+ * 아직 수집 전이면 빈 배열 — 드레스 페이지는 그때 기존 정적 컬렉션을 그대로 쓴다.
+ */
+export async function getDressPhotos(): Promise<PhotoContent[]> {
+  if (!isDatabaseConfigured()) return [];
+  try {
+    const rows = await prisma.photo.findMany({
+      where: { status: 'PUBLISHED', igAccount: 'dress' },
+      include: { terms: { include: { term: true } } },
+      orderBy: { takenAt: 'desc' },
+    });
+    return rows.map((r) => fromDb(r as unknown as Row)).filter((p): p is PhotoContent => p !== null);
+  } catch {
+    return [];
   }
 }
 

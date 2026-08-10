@@ -10,6 +10,8 @@ import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
 import * as C from './content';
 import s from './page.module.css';
+import g from '@/components/gallery/PhotoGrid.module.css';
+import { getDressPhotos } from '@/server/photos-content';
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -38,9 +40,10 @@ export default async function DressPage({ params }: { params: Promise<{ locale: 
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  const [text, images] = await Promise.all([
+  const [text, images, dressPhotos] = await Promise.all([
     getPageCopy('dress', locale),
     resolvePageImages('dress'),
+    getDressPhotos(),
   ]);
   // 히어로는 컬러 컬렉션과 같은 사진을 쓴다. 그쪽을 갈아끼우면 히어로도 따라간다.
   const hero = pickImage(
@@ -80,7 +83,29 @@ export default async function DressPage({ params }: { params: Promise<{ locale: 
             <p className="u-label">{C.COLLECTION.label}</p>
             <h2 className={`u-h2 ${s.collTitle}`}>{text['collection.title']}</h2>
           </div>
-          <DressCollection locale={locale} images={images} pendingNote={text['collection.pendingPhotos']} />
+          {/* @usherindress 수집분이 있으면 그것이 컬렉션이다. 아직 없으면(토큰 대기)
+              기존 정적 컬렉션이 그대로 나간다 — 빈 격자를 만들지 않는다. */}
+          {dressPhotos.length > 0 ? (
+            <ul className={g.grid} data-columns={4}>
+              {dressPhotos.map((photo, index) => (
+                <li key={photo.slug ?? photo.src} className={g.cell}>
+                  <span className={g.link}>
+                    <Image
+                      src={photo.src}
+                      alt={photo.alt[locale]}
+                      width={photo.width}
+                      height={photo.height}
+                      sizes="(max-width: 767px) 50vw, 25vw"
+                      className={g.image}
+                      priority={index < 4}
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <DressCollection locale={locale} images={images} pendingNote={text['collection.pendingPhotos']} />
+          )}
         </div>
       </section>
 
