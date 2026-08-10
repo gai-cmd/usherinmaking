@@ -9,11 +9,18 @@
 .definition {
   max-width: 46em;
   margin: 18px auto 0;
+  /* u-lead 기본 행간이 커서 아래 lead 와의 간격과 구분이 안 갔다 — 문단 안/밖 간격을 가른다 */
+  line-height: 1.85;
 }
 
 .lead {
   max-width: 660px;
-  margin: 12px auto 0;
+  margin: 16px auto 0;
+}
+
+/* 이어지는 줄들은 같은 문단이다. p 마다 여백을 주면 줄 하나가 문단처럼 떠 보인다 */
+.lead + .lead {
+  margin-top: 2px;
 }
 
 /* 데스크톱: 폼이 왼쪽 한 칸을 세로로 차지하고, 오른쪽에 채널·FAQ·스튜디오가 쌓인다.
@@ -187,13 +194,11 @@
   background: var(--bg);
 }
 
-.mapCanvas {
-  height: 170px;
-  background: repeating-linear-gradient(
-    45deg,
-    var(--placeholder) 0 14px,
-    #e2dbcd 14px 28px
-  );
+.mapFrame {
+  display: block;
+  width: 100%;
+  height: 220px;
+  border: 0;
 }
 
 .mapCaption {

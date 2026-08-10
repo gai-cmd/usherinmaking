@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { EnquiryForm } from '@/components/contact/EnquiryForm';
-import { CHANNELS, STUDIO_INFO, TBC, NAVER_BLOG_NOTICE_LOCALE } from '@/content/site';
+import { CHANNELS, STUDIO_INFO, NAVER_BLOG_NOTICE_LOCALE } from '@/content/site';
+import { getSiteSettings } from '@/server/settings';
 import { LOCALES, SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { CONTACT } from './content';
@@ -45,6 +46,10 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   if (!isLocale(locale)) notFound();
   const text = await getPageCopy('contact', locale);
 
+  // 라벨·문구는 코드(CHANNELS)가, 핸들·링크는 관리자 설정이 준다.
+  // 링크가 있는 채널만 실제 <a> 가 된다 — 없는 링크를 죽은 버튼으로 두지 않는다.
+  const settings = await getSiteSettings();
+  const urlById = new Map(settings.channels[locale].map((c) => [c.id, c.url]));
   const channels = CHANNELS[locale];
   const showNaverBlog = locale === NAVER_BLOG_NOTICE_LOCALE;
 
@@ -95,14 +100,29 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 </>
               );
 
+              const externalUrl = channel.id === 'form' ? null : (urlById.get(channel.id) ?? null);
+
               return (
                 <li key={channel.id}>
-                  {/* 폼은 같은 페이지 안이라 앵커로 잇는다. 외부 채널 주소는 아직 없다. */}
+                  {/* 폼은 같은 페이지 안이라 앵커로 잇는다. 외부 채널은 관리자 설정에
+                      링크가 있을 때만 <a> 가 된다 — 죽은 버튼을 만들지 않는다. */}
                   {channel.id === 'form' ? (
                     <a
                       href="#enquiry-form"
                       className={s.channel}
                       data-primary={channel.primary || undefined}
+                      data-tap
+                    >
+                      {body}
+                      <span className={s.channelOpen}>OPEN →</span>
+                    </a>
+                  ) : externalUrl ? (
+                    <a
+                      href={externalUrl}
+                      className={s.channel}
+                      data-primary={channel.primary || undefined}
+                      target="_blank"
+                      rel="noreferrer"
                       data-tap
                     >
                       {body}
@@ -117,14 +137,29 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
               );
             })}
 
-            {showNaverBlog && (
-              <li>
-                <div className={s.channel}>
-                  <span className={s.channelName}>{CONTACT.naverBlog.label[locale]}</span>
-                  <span className={s.channelNote}>{CONTACT.naverBlog.note[locale]}</span>
-                </div>
-              </li>
-            )}
+            {showNaverBlog &&
+              (settings.naverBlog.url ? (
+                <li>
+                  <a
+                    href={settings.naverBlog.url}
+                    className={s.channel}
+                    target="_blank"
+                    rel="noreferrer"
+                    data-tap
+                  >
+                    <span className={s.channelName}>{CONTACT.naverBlog.label[locale]}</span>
+                    <span className={s.channelNote}>{CONTACT.naverBlog.note[locale]}</span>
+                    <span className={s.channelOpen}>OPEN →</span>
+                  </a>
+                </li>
+              ) : (
+                <li>
+                  <div className={s.channel}>
+                    <span className={s.channelName}>{CONTACT.naverBlog.label[locale]}</span>
+                    <span className={s.channelNote}>{CONTACT.naverBlog.note[locale]}</span>
+                  </div>
+                </li>
+              ))}
           </ul>
 
           <p className={`u-meta ${s.noBooking}`}>{UI.noAutoBooking[locale]}</p>
@@ -160,7 +195,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         <section className={s.studio}>
           <h2 className={s.studioTitle}>{CONTACT.studioTitle[locale]}</h2>
           <p className={s.studioBody}>
-            {CONTACT.studioRegion[locale]} <span className={s.tbc}>{TBC[locale]}</span>
+            {STUDIO_INFO.address[locale]}
             <br />
             {STUDIO_INFO.parking[locale]}
             {DOT[locale]}
@@ -169,10 +204,15 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             {STUDIO_INFO.languages[locale]}
           </p>
 
-          {/* TODO(map): 주소 확정 후 Google 지도 iframe으로 교체한다. 확인 전에는 위치를 단정하지 않는다. */}
+          {/* 주소가 확정됐으므로 스튜디오 페이지와 같은 지도를 건다 */}
           <div className={s.map}>
-            <div className={s.mapCanvas} aria-hidden="true" />
-            <p className={s.mapCaption}>{CONTACT.mapCaption[locale]}</p>
+            <iframe
+              title={CONTACT.studioTitle[locale]}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(STUDIO_INFO.address[locale])}&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className={s.mapFrame}
+            />
           </div>
         </section>
       </div>
