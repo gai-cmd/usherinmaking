@@ -83,9 +83,13 @@ try {
     console.log('\n(dry-run: 아무것도 쓰지 않았습니다. 반영하려면 --apply)');
   } else {
     let done = 0;
-    for (const p of plan) {
-      await prisma.photo.update({ where: { id: p.id }, data: { slug: p.slug } });
-      done += 1;
+    const CHUNK = 50;
+    for (let i = 0; i < plan.length; i += CHUNK) {
+      const batch = plan.slice(i, i + CHUNK);
+      await prisma.$transaction(
+        batch.map((p) => prisma.photo.update({ where: { id: p.id }, data: { slug: p.slug } })),
+      );
+      done += batch.length;
     }
     console.log(`\n반영 완료: ${done}건`);
   }

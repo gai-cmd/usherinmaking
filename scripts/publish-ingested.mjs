@@ -63,11 +63,18 @@ try {
   if (!apply) {
     console.log('\n(dry-run: 아무것도 쓰지 않았습니다. 반영하려면 --apply)');
   } else {
-    for (const p of plan) {
-      await prisma.photo.update({
-        where: { id: p.id },
-        data: { alt: p.alt, ...(p.story ? { story: p.story } : {}), status: 'PUBLISHED' },
-      });
+    // 행마다 왕복하면 데이터 전송이 그만큼 늘어난다(2026-08-10 Neon 쿼터 소진).
+    // 한 트랜잭션에 묶어 왕복을 한 번으로 줄인다.
+    const CHUNK = 50;
+    for (let i = 0; i < plan.length; i += CHUNK) {
+      await prisma.$transaction(
+        plan.slice(i, i + CHUNK).map((p) =>
+          prisma.photo.update({
+            where: { id: p.id },
+            data: { alt: p.alt, ...(p.story ? { story: p.story } : {}), status: 'PUBLISHED' },
+          }),
+        ),
+      );
     }
     console.log(`\n반영 완료: ${plan.length}건 전시 전환`);
   }

@@ -104,12 +104,38 @@ function fromDb(row: Row): PhotoContent | null {
 }
 
 /**
+ * 조회 결과를 잠깐 들고 있는다.
+ *
+ * 갤러리는 정적 생성이라 사진 320장 × 3개 언어 = 960개 상세 페이지가 만들어지는데,
+ * 페이지마다 이 함수를 부르면 같은 320행을 960번 내려받는다. 빌드 1회에 수백 MB가 오가고,
+ * 실제로 Neon 데이터 전송 쿼터를 소진시켰다(2026-08-10, 빌드 로그의 53000 오류).
+ *
+ * 빌드 동안은 모듈이 살아 있으므로 한 번만 읽고 나눠 쓴다. 런타임에서는 TTL 만큼 늦게
+ * 반영될 수 있는데, 어차피 정적 페이지라 갱신은 재배포·재검증이 담당한다.
+ */
+const CACHE_TTL_MS = 60_000;
+/**
+ * 실패했을 때의 유예. DB 가 죽어 있으면 정적 생성 페이지 수백 개가 저마다 접속을 시도한다
+ * (2026-08-10 빌드에서 546회). 짧게 쉬었다 다시 본다 — 회복은 여전히 몇 초 안에 반영된다.
+ */
+const FAIL_TTL_MS = 5_000;
+let failedAt = 0;
+let cache: { at: number; data: PhotoContent[] } | null = null;
+
+/** 사진을 바꾼 직후 같은 프로세스에서 다시 읽어야 할 때 쓴다(관리자 저장 경로). */
+export function forgetPublishedPhotos(): void {
+  cache = null;
+}
+
+/**
  * 공개 화면이 부르는 유일한 진입점. DB 에 공개 사진이 한 장이라도 있으면 DB 가 이기고,
  * 없거나 DB 가 없으면 코드 시드가 그대로 나간다(빈 갤러리를 만들지 않는다).
  * 조회가 실패해도 공개 페이지를 죽이지 않는다.
  */
 export async function getPublishedPhotos(): Promise<PhotoContent[]> {
   if (!isDatabaseConfigured()) return SEED;
+  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.data;
+  if (failedAt && Date.now() - failedAt < FAIL_TTL_MS) return SEED;
   try {
     const rows = await prisma.photo.findMany({
       where: { status: 'PUBLISHED' },
@@ -117,8 +143,12 @@ export async function getPublishedPhotos(): Promise<PhotoContent[]> {
       orderBy: { takenAt: 'desc' },
     });
     const photos = rows.map((r) => fromDb(r as unknown as Row)).filter((p): p is PhotoContent => p !== null);
-    return photos.length > 0 ? photos : SEED;
+    const result = photos.length > 0 ? photos : SEED;
+    cache = { at: Date.now(), data: result };
+    return result;
   } catch (err) {
+    // 실패는 캐시하지 않는다 — 쿼터가 풀리거나 DB 가 돌아오면 다음 호출이 바로 성공해야 한다.
+    failedAt = Date.now();
     console.error('[photos-content] 조회 실패 — 시드로 렌더합니다', err);
     return SEED;
   }

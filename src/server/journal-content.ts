@@ -114,14 +114,41 @@ function fromDb(row: Row): JournalContentPost | null {
  * 없거나 DB 가 없으면 코드 시드가 그대로 나간다(빈 화면을 만들지 않는다).
  * 조회가 실패해도 공개 페이지를 죽이지 않는다 — 폴백으로 계속 나간다.
  */
+/**
+ * 조회 결과를 잠깐 들고 있는다.
+ *
+ * 저널도 정적 생성이라 글 하나를 그릴 때마다 이 함수를 부르는데, 그때마다 본문(body)까지
+ * 담긴 67행을 통째로 내려받는다. 사진 쪽과 같은 이유로 Neon 데이터 전송 쿼터를 먹는다
+ * (2026-08-10 빌드 로그의 53000 오류). 빌드 동안은 한 번만 읽고 나눠 쓴다.
+ */
+const CACHE_TTL_MS = 60_000;
+/**
+ * 실패했을 때의 유예. DB 가 죽어 있으면 정적 생성 페이지 수백 개가 저마다 접속을 시도한다
+ * (2026-08-10 빌드에서 546회). 짧게 쉬었다 다시 본다 — 회복은 여전히 몇 초 안에 반영된다.
+ */
+const FAIL_TTL_MS = 5_000;
+let failedAt = 0;
+let cache: { at: number; data: JournalContentPost[] } | null = null;
+
+/** 글을 바꾼 직후 같은 프로세스에서 다시 읽어야 할 때 쓴다. */
+export function forgetJournalContentPosts(): void {
+  cache = null;
+}
+
 export async function getJournalContentPosts(): Promise<JournalContentPost[]> {
   if (!isDatabaseConfigured()) return JOURNAL_POSTS;
+  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.data;
+  if (failedAt && Date.now() - failedAt < FAIL_TTL_MS) return JOURNAL_POSTS;
   try {
     const rows = await prisma.journalPost.findMany({ orderBy: { publishedAt: 'desc' } });
     if (rows.length === 0) return JOURNAL_POSTS;
     const posts = rows.map((r) => fromDb(r as Row)).filter((p): p is JournalContentPost => p !== null);
-    return posts.length > 0 ? posts : JOURNAL_POSTS;
+    const result = posts.length > 0 ? posts : JOURNAL_POSTS;
+    cache = { at: Date.now(), data: result };
+    return result;
   } catch (err) {
+    // 실패는 캐시하지 않는다 — DB 가 돌아오면 다음 호출이 바로 성공해야 한다.
+    failedAt = Date.now();
     console.error('[journal-content] 조회 실패 — 시드로 렌더합니다', err);
     return JOURNAL_POSTS;
   }
