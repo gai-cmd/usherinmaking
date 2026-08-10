@@ -32,7 +32,7 @@ import {
   probeImageDimensions,
   storeOriginal,
 } from '@/lib/image-pipeline';
-import { draftAltText, slugFromAlt, suggestCategories } from '@/server/ai-draft';
+import { slugFromAlt, suggestCategories } from '@/server/ai-draft';
 import type { AiSuggestion, Localized } from '@/server/photos';
 
 /* ============================ 예산 ============================ */
@@ -249,13 +249,54 @@ function isUniqueViolation(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
 }
 
+
+/* ============================ 문안 (원문 그대로) ============================ */
+
+/**
+ * 인스타 캡션의 첫 줄. 제목과 대체 텍스트로 쓴다.
+ *
+ * 캡션 전문은 평균 450자에 해시태그와 멘션이 섞여 있어서, 그대로 제목에 넣으면
+ * 상세 페이지 h1 이 해시태그 덩어리가 된다. 첫 줄만 쓰되 **문장은 손대지 않는다** —
+ * 자르기만 하고 고쳐 쓰지 않는 것이 "원문 그대로"의 경계다.
+ */
+function firstLineOf(caption: string | null): string {
+  if (!caption) return '';
+  for (const line of caption.split('\n')) {
+    const t = line.trim();
+    // 해시태그·멘션만 있는 줄은 제목이 될 수 없다. 사람이 쓴 첫 문장을 찾는다.
+    if (t && !/^[#@]/.test(t)) return t.length > 120 ? t.slice(0, 120) : t;
+  }
+  return '';
+}
+
+/**
+ * 3개 언어 모두 같은 원문을 넣는다. 번역하지 않는다.
+ *
+ * alt 가 3개 언어 다 차야 전시로 올라갈 수 있는데(assertPublishable), 번역을 하지 않기로
+ * 했으므로 같은 문장을 세 자리에 둔다. 언어별로 다른 글을 지어내는 것보다 정직하다.
+ */
+function altFromCaption(caption: string | null): Localized {
+  const line = firstLineOf(caption);
+  if (!line) return EMPTY_ALT;
+  return { ja: line, en: line, ko: line };
+}
+
+/** 캡션 전문. 상세 페이지 본문이 된다 — 자르지도 고치지도 않는다. */
+function storyFromCaption(caption: string | null): Localized | null {
+  const body = caption?.trim();
+  if (!body) return null;
+  return { ja: body, en: body, ko: body };
+}
+
 /* ============================ AI seam ============================ */
 
+
 export type AiDraft = {
-  /** false 면 alt 는 빈 값이고 aiSuggestion 은 null 이다. */
+  /** false 면 분류 제안이 없다. 문안(alt·story)은 AI 와 무관하게 원문에서 나온다. */
   configured: boolean;
   reason: string | null;
   alt: Localized;
+  story: Localized | null;
   aiSuggestion: AiSuggestion[] | null;
 };
 
@@ -266,6 +307,7 @@ export function isAiConfigured(): boolean {
 
 const AI_NOT_CONFIGURED: AiDraft = {
   configured: false,
+  story: null,
   reason: 'AI_API_KEY 가 설정되지 않아 분류·alt 초안을 건너뛰었습니다.',
   alt: EMPTY_ALT,
   aiSuggestion: null,
@@ -279,17 +321,20 @@ const AI_NOT_CONFIGURED: AiDraft = {
  * 지어낸 alt 를 채워 넣는 편이 훨씬 나쁘다.
  */
 async function draftPhotoMetadata(bytes: ArrayBuffer, caption: string | null): Promise<AiDraft> {
-  if (!isAiConfigured()) return AI_NOT_CONFIGURED;
+  // 문안은 인스타 원문을 그대로 쓴다. 번역하지 않는다 —
+  // 지어낸 문장보다 사진 주인이 쓴 말이 정확하고, 언어마다 다른 글을 만들 이유도 없다.
+  const alt = altFromCaption(caption);
+  const story = storyFromCaption(caption);
+
+  if (!isAiConfigured()) return { ...AI_NOT_CONFIGURED, alt, story };
 
   try {
-    const [suggestions, alt] = await Promise.all([
-      suggestCategories(bytes),
-      draftAltText(bytes, caption),
-    ]);
+    const suggestions = await suggestCategories(bytes);
     return {
       configured: true,
       reason: null,
       alt,
+      story,
       aiSuggestion: suggestions.map((s) => ({
         taxonomyId: s.taxonomyKey,
         termId: s.termSlug,
@@ -298,9 +343,10 @@ async function draftPhotoMetadata(bytes: ArrayBuffer, caption: string | null): P
       })),
     };
   } catch (err) {
+    // 분류 제안이 없어도 수집은 계속된다. 문안은 원문에서 이미 나왔다.
     const reason = err instanceof Error ? err.message : String(err);
-    console.warn('[ingest] AI 초안 생략', reason);
-    return { ...AI_NOT_CONFIGURED, reason };
+    console.warn('[ingest] 분류 제안 생략', reason);
+    return { ...AI_NOT_CONFIGURED, alt, story, reason };
   }
 }
 
@@ -374,6 +420,7 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
         status: 'UNSORTED',
         lowRes: isLowRes(width, height),
         alt: draft.alt as unknown as Prisma.InputJsonValue,
+        ...(draft.story ? { story: draft.story as unknown as Prisma.InputJsonValue } : {}),
         ...(slug ? { slug } : {}),
         // 게시물 하나가 촬영 한 건이다. 캐러셀 5장이 갤러리에서 5칸을 차지하지 않고
         // 한 묶음으로 접히도록, 부모 게시물 id 를 묶음 키로 쓴다.

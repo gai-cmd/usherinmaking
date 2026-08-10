@@ -1,4 +1,4 @@
-// 수집된 사진에 대한 AI 초안 — 분류 후보와 alt 문안.
+// 수집된 사진에 대한 AI 초안 — 분류 후보.
 //
 // 이 파일이 만드는 것은 전부 "초안"이다. 확정은 관리자 화면에서 사람이 한다.
 // 그 경계를 코드로도 지킨다: 여기서 나온 값은 Photo.aiSuggestion 과 alt 에만 들어가고,
@@ -6,16 +6,14 @@
 //
 // 계약 셋:
 //   1) 분류는 DB 에 실제로 있는 term 만 고른다. 없는 slug 를 지어내면 조용히 버린다.
-//   2) alt 는 3개 언어가 모두 채워질 때만 쓴다. 한 언어라도 비면 전부 버린다 —
-//      반쪽짜리 alt 는 assertPublishable 을 통과하지 못하고, 통과시켜서도 안 된다.
+//   2) 문안(alt·story)은 여기서 만들지 않는다. 인스타 원문을 그대로 쓰기로 했고,
+//      번역 워크플로우는 두지 않는다 — server/ingest 의 altFromCaption 참조.
 //   3) 실패는 던진다. 수집을 막지 않는 것은 호출측(server/ingest)의 책임이다.
 
 import Anthropic from '@anthropic-ai/sdk';
 import { isDatabaseConfigured, prisma } from '@/server/db';
 import { DependencyUnavailableError } from '@/server/errors';
-import { LOCALES, type Locale } from '@/lib/i18n';
 import type { CategorySuggestion } from '@/lib/image-pipeline';
-import type { Localized } from '@/lib/photo-types';
 
 /* ============================ 설정 ============================ */
 
@@ -199,79 +197,6 @@ function parseSuggestions(content: unknown, valid: Set<string>): CategorySuggest
 }
 
 /* ============================ alt 문안 ============================ */
-
-const ALT_SCHEMA = {
-  type: 'object',
-  properties: {
-    ja: { type: 'string' },
-    en: { type: 'string' },
-    ko: { type: 'string' },
-  },
-  required: ['ja', 'en', 'ko'],
-  additionalProperties: false,
-} as const;
-
-/**
- * 3개 언어 alt 초안.
- *
- * 캡션은 참고만 한다 — 인스타 캡션에는 해시태그와 인사말이 섞여 있어서 그대로 옮기면
- * 대체 텍스트가 아니라 광고 문구가 된다. 보이는 것을 쓰되, 인물의 이름·감정·관계처럼
- * 사진만으로 알 수 없는 것은 쓰지 않는다.
- */
-export async function draftAltText(
-  bytes: ArrayBuffer,
-  caption: string | null,
-): Promise<Localized> {
-  const image = imageBlock(await toVisionJpeg(bytes));
-  const hint = caption?.trim()
-    ? `\n\nThe Instagram caption was:\n"""\n${caption.trim().slice(0, 500)}\n"""\nUse it only as a hint. Do not copy hashtags, greetings, or promotional wording.`
-    : '';
-
-  const response = await client().messages.create({
-    model: MODEL,
-    max_tokens: 1024,
-    system:
-      'You write alt text for photographs on a wedding photography website. ' +
-      'Describe what is visible, plainly and without marketing language.',
-    output_config: { format: { type: 'json_schema', schema: ALT_SCHEMA } },
-    messages: [
-      {
-        role: 'user',
-        content: [
-          image,
-          {
-            type: 'text',
-            text:
-              `Write alt text for this photograph in Japanese (ja), English (en), and Korean (ko).${hint}\n\n` +
-              'Rules:\n' +
-              '- One sentence per language, under 120 characters.\n' +
-              '- Describe the setting, the light, and what the subjects are doing.\n' +
-              '- Do not invent names, emotions, relationships, or places you cannot see.\n' +
-              '- Do not begin with "A photo of" or its equivalent in any language.\n' +
-              '- Each language is written natively, not translated word for word.',
-          },
-        ],
-      },
-    ],
-  });
-
-  const raw = parseJsonBlock(response.content) as Record<string, unknown> | null;
-  const alt = {} as Localized;
-
-  for (const locale of LOCALES) {
-    const value = raw?.[locale];
-    if (typeof value !== 'string' || value.trim().length === 0) {
-      // 한 언어라도 비면 나머지도 쓰지 않는다 — 반쪽짜리 alt 는 전시를 막고, 막는 게 맞다.
-      throw new DependencyUnavailableError('AI alt 초안이 3개 언어를 모두 채우지 못했습니다.', {
-        seam: 'draftAltText',
-        missing: locale,
-      });
-    }
-    alt[locale as Locale] = value.trim();
-  }
-
-  return alt;
-}
 
 /* ============================ slug ============================ */
 
