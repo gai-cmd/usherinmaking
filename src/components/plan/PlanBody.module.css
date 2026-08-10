@@ -94,7 +94,8 @@
 }
 
 .hairBody {
-  margin-top: 4px;
+  /* dd 의 브라우저 기본 들여쓰기(40px)를 지운다 — 가격 줄만 어중간하게 밀려 보였다 */
+  margin: 4px 0 0;
   font-size: 13px;
   line-height: 1.9;
   color: var(--text-body);
@@ -214,9 +215,11 @@
 
 .notes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* 문답 수가 늘어도 균등하게 나뉜다. 좁아지면 스스로 한 단으로 접힌다 */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 36px;
   margin-top: 22px;
+  align-items: start;
 }
 
 .q {

@@ -261,15 +261,18 @@ export async function PlanBody({ locale }: { locale: Locale }) {
         <div className="u-wrap">
           <p className="u-label">{C.NOTES.label[locale]}</p>
           <h2 className={`u-h2 ${s.optTitle}`}>{text['notes.title']}</h2>
+          {/* 질문 하나가 칸 하나다. 2단에 3문답을 흘리면 왼쪽만 일찍 끝나 어긋나 보인다 */}
           <div className={s.notes}>
-            <div>
+            <div className={s.note}>
               {questions && <h3 className={s.q}>{questions[0]}</h3>}
               <p className={s.a}>{text['notes.cancel']}</p>
               <p className={`u-num ${s.scale}`}>{text['notes.cancelScale']}</p>
             </div>
-            <div>
+            <div className={s.note}>
               {questions && <h3 className={s.q}>{questions[1]}</h3>}
               <p className={s.a}>{C.NOTES.rain[locale]}</p>
+            </div>
+            <div className={s.note}>
               {questions && <h3 className={s.q}>{questions[2]}</h3>}
               <p className={s.a}>{C.NOTES.typhoon[locale]}</p>
               <p className={s.aSub}>{C.NOTES.typhoonSub[locale]}</p>
