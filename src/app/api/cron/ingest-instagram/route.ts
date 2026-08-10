@@ -31,6 +31,8 @@ export async function GET(req: Request) {
   const body = {
     run: result.run,
     skipped: result.skipped,
+    // 하한(INGEST_SINCE)보다 오래되어 제외한 건수 — 0 이 아니면 의도된 제외다.
+    tooOld: result.tooOld,
     // 0 이 아니면 예산에 걸려 남은 것이다. 다음 실행이 이어받는다.
     remaining: result.remaining,
     aiUnavailable: result.aiUnavailable,

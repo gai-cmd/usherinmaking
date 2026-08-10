@@ -59,6 +59,8 @@ export const JOURNAL_LOCALES: readonly Locale[] = ['ko'];
 export const NAV: { key: PageKey; label: Record<Locale, string>; locales?: readonly Locale[] }[] = [
   { key: 'studio', label: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' } },
   { key: 'location', label: { ja: 'LOCATION', en: 'LOCATION', ko: '로케이션' } },
+  // 스튜디오·로케이션에서 찍은 것을 한데 모아 보는 페이지라 그 둘 바로 뒤에 둔다.
+  { key: 'gallery', label: { ja: 'GALLERY', en: 'GALLERY', ko: '갤러리' } },
   { key: 'dress', label: { ja: 'DRESS', en: 'DRESS', ko: '드레스' } },
   { key: 'plan', label: { ja: 'PLAN', en: 'PLANS', ko: '요금' } },
   { key: 'photographer', label: { ja: 'PHOTOGRAPHER', en: 'PHOTOGRAPHER', ko: '작가 소개' } },

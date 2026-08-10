@@ -4,10 +4,11 @@ import { errorResponse, ValidationError } from '@/server/errors';
 import {
   isAiConfigured,
   listIngestRuns,
-  missingRunEnv,
+  missingRunRequirements,
   previewInstagramIngest,
   runInstagramIngest,
 } from '@/server/ingest';
+import { inspectToken } from '@/server/ig-token';
 import { isDatabaseConfigured } from '@/server/db';
 
 export const runtime = 'nodejs';
@@ -22,14 +23,25 @@ export const maxDuration = 300;
  * 가드는 CRON_SECRET 이 아니라 requireAdmin 이다 — 사람이 누르는 버튼이기 때문이다.
  */
 
-/** 준비 상태. 값은 절대 싣지 않고 "무엇이 비었는지"만 알린다. */
-function readiness() {
-  const missingEnv = missingRunEnv();
+/**
+ * 준비 상태. 값은 절대 싣지 않고 "무엇이 비었는지"만 알린다.
+ * 토큰도 마찬가지다 — 만료일과 남은 일수만 나가고 토큰 원문은 어느 필드에도 없다.
+ */
+async function readiness() {
+  const missingEnv = await missingRunRequirements();
+  const token = isDatabaseConfigured() ? await inspectToken() : null;
+
   return {
     ready: missingEnv.length === 0 && isDatabaseConfigured(),
     missingEnv,
     databaseConfigured: isDatabaseConfigured(),
     aiConfigured: isAiConfigured(),
+    token: token && {
+      stored: token.stored,
+      expiresAt: token.expiresAt?.toISOString() ?? null,
+      daysLeft: token.daysLeft,
+      expired: token.expired,
+    },
   };
 }
 
@@ -44,7 +56,7 @@ export async function GET(req: Request) {
     if (!parsed.success) throw new ValidationError('limit 은 1~100 사이의 정수여야 합니다.');
 
     return Response.json({
-      ...readiness(),
+      ...(await readiness()),
       runs: await listIngestRuns(parsed.data ?? 10),
     });
   } catch (err) {
@@ -75,7 +87,7 @@ export async function POST(req: Request) {
     }
 
     if (parsed.data.preview) {
-      return Response.json({ preview: await previewInstagramIngest(), ...readiness() });
+      return Response.json({ preview: await previewInstagramIngest(), ...(await readiness()) });
     }
 
     const result = await runInstagramIngest({
@@ -86,6 +98,8 @@ export async function POST(req: Request) {
     const body = {
       run: result.run,
       skipped: result.skipped,
+    // 하한(INGEST_SINCE)보다 오래되어 제외한 건수 — 0 이 아니면 의도된 제외다.
+    tooOld: result.tooOld,
       remaining: result.remaining,
       aiUnavailable: result.aiUnavailable,
     };

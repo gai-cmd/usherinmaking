@@ -14,15 +14,14 @@ import { recordActivity } from '@/server/activity';
 import { AppError, DependencyUnavailableError } from '@/server/errors';
 import {
   fetchInstagramMedia,
-  instagramCredentialsFromEnv,
   InstagramApiError,
   missingInstagramEnv,
   parseInstagramTimestamp,
   type InstagramMedia,
 } from '@/lib/instagram';
+import { getInstagramCredentials, inspectToken } from '@/server/ig-token';
 import {
   downloadOriginal,
-  draftAltText,
   encodeRenditions,
   isBlobConfigured,
   isLowRes,
@@ -32,8 +31,8 @@ import {
   planRenditions,
   probeImageDimensions,
   storeOriginal,
-  suggestCategories,
 } from '@/lib/image-pipeline';
+import { draftAltText, slugFromAlt, suggestCategories } from '@/server/ai-draft';
 import type { AiSuggestion, Localized } from '@/server/photos';
 
 /* ============================ 예산 ============================ */
@@ -51,6 +50,31 @@ const DEFAULT_MAX_ITEMS = Number(process.env.INGEST_MAX_ITEMS ?? 25);
 /** 벽시계 예산. maxDuration(300초)보다 넉넉히 앞서 끊어 기록을 남길 시간을 남긴다. */
 const TIME_BUDGET_MS = Number(process.env.INGEST_TIME_BUDGET_MS ?? 240_000);
 
+/**
+ * 이 날짜보다 오래된 게시물은 수집하지 않는다 (YYYY-MM-DD, 비우면 제한 없음).
+ *
+ * 계정에 11년치가 쌓여 있는데 초기 몇 해는 인스타 자체가 640px 정사각형이라
+ * 갤러리에 쓸 수 없다. 받아 봐야 스토리지만 먹고 관리자 화면만 어지럽힌다.
+ * 하한을 넘기는 것은 "안 받는다"이지 "실패"가 아니므로 failed 로 세지 않는다.
+ */
+function ingestSince(): Date | null {
+  const raw = process.env.INGEST_SINCE?.trim();
+  if (!raw) return null;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) {
+    // 오타를 조용히 무시하면 "왜 옛날 사진이 들어오지" 로 한참 헤맨다.
+    console.warn('[ingest] INGEST_SINCE 를 날짜로 읽지 못해 무시합니다:', raw);
+    return null;
+  }
+  return d;
+}
+
+/** 하한 이후인가. 시각을 못 읽는 항목은 버리지 않고 통과시킨다 — 판단 불가를 배제로 바꾸지 않는다. */
+function isOnOrAfter(timestamp: string, since: Date): boolean {
+  const t = parseInstagramTimestamp(timestamp);
+  return t === null || t.getTime() >= since.getTime();
+}
+
 /** 원본 URL 에서 확장자를 못 읽었을 때. IG 의 IMAGE 미디어는 실제로 JPEG 로 온다. */
 const FALLBACK_EXT = 'jpg';
 
@@ -59,11 +83,22 @@ const EMPTY_ALT: Localized = { ja: '', en: '', ko: '' };
 /* ============================ 준비 상태 ============================ */
 
 /**
+ * 토큰이 DB(Setting)에 보관된 뒤에는 IG_ACCESS_TOKEN 환경변수가 더 이상 요구사항이 아니다.
+ * 씨앗을 심고 나면 그 변수를 지워도 수집이 돈다 — 그러니 없다고 미비로 세지 않는다.
+ */
+function excludeStoredToken(missing: string[], hasStoredToken: boolean): string[] {
+  return hasStoredToken ? missing.filter((k) => k !== 'IG_ACCESS_TOKEN') : missing;
+}
+
+/**
  * 목록 조회만 하는 데 필요한 것. 미리보기가 쓴다.
  * 저장을 하지 않으므로 스토리지 토큰은 여기 없다.
  */
-export function missingFetchEnv(): string[] {
-  return [...new Set([...missingInstagramEnv(), ...missingPipelineEnv()])];
+export function missingFetchEnv(hasStoredToken = false): string[] {
+  return excludeStoredToken(
+    [...new Set([...missingInstagramEnv(), ...missingPipelineEnv()])],
+    hasStoredToken,
+  );
 }
 
 /**
@@ -73,10 +108,16 @@ export function missingFetchEnv(): string[] {
  * 업로드가 장마다 실패해서 "전건 실패"로 끝나는데, 그건 원인을 가린다.
  * 한 장도 내려받기 전에 여기서 끊고 무엇이 없는지 이름으로 말한다.
  */
-export function missingRunEnv(): string[] {
-  const missing = missingFetchEnv();
+export function missingRunEnv(hasStoredToken = false): string[] {
+  const missing = missingFetchEnv(hasStoredToken);
   if (!isBlobConfigured()) missing.push('BLOB_READ_WRITE_TOKEN');
   return [...new Set(missing)];
+}
+
+/** 준비 상태를 DB 의 토큰까지 보고 판정한다. 관리자 화면과 크론이 함께 쓴다. */
+export async function missingRunRequirements(): Promise<string[]> {
+  if (!isDatabaseConfigured()) return missingRunEnv();
+  return missingRunEnv((await inspectToken()).stored);
 }
 
 /* ============================ 타입 ============================ */
@@ -101,6 +142,8 @@ export type IngestSummary = {
   run: IngestRunRecord;
   /** 이미 가지고 있어 건너뛴 건수 */
   skipped: number;
+  /** INGEST_SINCE 하한보다 오래되어 대상에서 뺀 건수. 설정이 없으면 항상 0. */
+  tooOld: number;
   /** 예산 밖으로 남겨 둔 신규 건수. 0 이 아니면 다음 실행이 이어받는다. */
   remaining: number;
   /** AI 초안이 붙지 않은 이유. null 이면 붙었다. */
@@ -273,6 +316,25 @@ function extensionOf(url: string): string {
   }
 }
 
+/**
+ * 겹치지 않는 slug. 같은 문안이 이미 있으면 -2, -3 을 붙인다.
+ *
+ * slug 에는 unique 제약이 있어서 충돌하면 저장 자체가 실패한다. 사진 한 장 때문에
+ * 수집이 멎는 것보다, 뒤에 숫자를 붙여 주소를 하나 더 만드는 편이 낫다.
+ * 자리를 찾지 못하면 null — 그 사진은 id 를 주소로 쓴다(photoHref).
+ */
+async function uniqueSlug(altEn: string): Promise<string | null> {
+  const base = slugFromAlt(altEn);
+  if (!base) return null;
+
+  for (let n = 1; n <= 20; n += 1) {
+    const candidate = n === 1 ? base : `${base}-${n}`;
+    const taken = await prisma.photo.findUnique({ where: { slug: candidate }, select: { id: true } });
+    if (!taken) return candidate;
+  }
+  return null;
+}
+
 type ItemOutcome = 'created' | 'duplicate';
 
 /**
@@ -296,6 +358,7 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
   const variants = await encodeRenditions(bytes, planRenditions({ id: media.id, width, height }));
 
   const draft = await draftPhotoMetadata(bytes, media.caption);
+  const slug = await uniqueSlug(draft.alt.en);
 
   try {
     await prisma.photo.create({
@@ -311,6 +374,11 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
         status: 'UNSORTED',
         lowRes: isLowRes(width, height),
         alt: draft.alt as unknown as Prisma.InputJsonValue,
+        ...(slug ? { slug } : {}),
+        // 게시물 하나가 촬영 한 건이다. 캐러셀 5장이 갤러리에서 5칸을 차지하지 않고
+        // 한 묶음으로 접히도록, 부모 게시물 id 를 묶음 키로 쓴다.
+        shootKey: media.parentId,
+        shootOrder: media.order,
         ...(draft.aiSuggestion
           ? { aiSuggestion: draft.aiSuggestion as unknown as Prisma.InputJsonValue }
           : {}),
@@ -366,7 +434,7 @@ async function failWith(
   aiUnavailable: string | null,
 ): Promise<IngestResult> {
   const closed = await finishRun(run, { fetched: 0, created: 0, failed: 0, error: error.message });
-  return { ok: false, trigger, run: closed, error, skipped: 0, remaining: 0, aiUnavailable };
+  return { ok: false, trigger, run: closed, error, skipped: 0, tooOld: 0, remaining: 0, aiUnavailable };
 }
 
 /**
@@ -391,8 +459,18 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
 
   const run = await startRun();
 
+  // 토큰을 먼저 확보한다 — 만료가 가까우면 여기서 연장되고, 그 결과가 아래 판정의 근거가 된다.
+  const token = await getInstagramCredentials();
+  if (token.refreshed) {
+    await recordActivity({
+      actor: 'system',
+      action: 'Instagram 액세스 토큰 자동 연장',
+      detail: { expiresAt: token.state.expiresAt?.toISOString() ?? null },
+    });
+  }
+
   // 자격 증명 · 스토리지. 하나라도 없으면 한 장도 건드리지 않고 끝낸다.
-  const missing = missingRunEnv();
+  const missing = missingRunEnv(token.state.stored);
   if (missing.length > 0) {
     const error = new DependencyUnavailableError(
       `인스타그램 수집에 필요한 환경변수가 없습니다: ${missing.join(', ')}`,
@@ -401,9 +479,15 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
     return failWith(trigger, run, error, aiUnavailable);
   }
 
-  const creds = instagramCredentialsFromEnv();
+  const creds = token.credentials;
   if (!creds) {
-    const error = new DependencyUnavailableError('인스타그램 자격 증명을 읽지 못했습니다.');
+    // 만료가 가장 흔한 경우다. 왜 못 쓰는지를 문장에 담아야 운영자가 할 일을 안다.
+    const error = new DependencyUnavailableError(
+      token.state.expired
+        ? 'Instagram 액세스 토큰이 만료되었습니다. 앱 대시보드에서 장기 토큰을 재발급한 뒤 IG_ACCESS_TOKEN 을 교체해 주세요.'
+        : '인스타그램 자격 증명을 읽지 못했습니다.',
+      token.state.expired ? { tokenExpired: true } : undefined,
+    );
     return failWith(trigger, run, error, aiUnavailable);
   }
 
@@ -411,6 +495,7 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
   let created = 0;
   let failed = 0;
   let skipped = 0;
+  let tooOld = 0;
   let remaining = 0;
 
   try {
@@ -418,11 +503,17 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
     fetched = media.length;
 
     const known = await knownIgMediaIds();
-    const fresh = media.filter((m) => !known.has(m.id));
-    skipped = fetched - fresh.length;
+    const since = ingestSince();
+    const inWindow = since ? media.filter((m) => isOnOrAfter(m.timestamp, since)) : media;
+    tooOld = media.length - inWindow.length;
 
-    // 오래된 것부터 넣는다. 중간에 예산이 끊겨도 "어디까지 왔는지"가 시간순으로 이어진다.
-    fresh.sort((a, b) => (a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0));
+    const fresh = inWindow.filter((m) => !known.has(m.id));
+    skipped = inWindow.length - fresh.length;
+
+    // 최신부터 넣는다. 오늘 올린 게시물이 다음 회차에 바로 들어와야 "자동 업데이트"가 되고,
+    // 예산에 걸려 남은 과거분은 회차를 거듭하며 뒤로 채워진다.
+    // 중복 방지가 id 기준이라 순서를 바꿔도 재실행은 여전히 안전하다.
+    fresh.sort((a, b) => (a.timestamp > b.timestamp ? -1 : a.timestamp < b.timestamp ? 1 : 0));
 
     const maxItems = Math.max(1, options.maxItems ?? DEFAULT_MAX_ITEMS);
 
@@ -447,10 +538,10 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
     await recordActivity({
       actor,
       action: `Instagram 동기화 — 신규 ${created}건 수집`,
-      detail: { trigger, fetched, created, failed, skipped, remaining },
+      detail: { trigger, fetched, created, failed, skipped, tooOld, remaining },
     });
 
-    return { ok: true, trigger, run: closed, skipped, remaining, aiUnavailable };
+    return { ok: true, trigger, run: closed, skipped, tooOld, remaining, aiUnavailable };
   } catch (err) {
     // 목록 조회 자체가 실패한 경우가 대부분이다(토큰 만료 · 한도 초과).
     const error =
@@ -468,7 +559,7 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
       console.error('[ingest] 예기치 못한 실패', err);
     }
 
-    return { ok: false, trigger, run: closed, error, skipped, remaining, aiUnavailable };
+    return { ok: false, trigger, run: closed, error, skipped, tooOld, remaining, aiUnavailable };
   }
 }
 
@@ -490,22 +581,31 @@ export type IngestPreview = {
  * 실행하지 않은 것을 실행 이력에 남기면 이력이 거짓말을 하게 된다.
  */
 export async function previewInstagramIngest(): Promise<IngestPreview> {
-  // 미리보기는 아무것도 저장하지 않으므로 스토리지 토큰까지 요구하지 않는다.
-  const missing = missingFetchEnv();
-  if (missing.length > 0) {
-    throw new DependencyUnavailableError(
-      `인스타그램 수집에 필요한 환경변수가 없습니다: ${missing.join(', ')}`,
-      { missingEnv: missing },
-    );
-  }
   if (!isDatabaseConfigured()) {
     throw new DependencyUnavailableError('DATABASE_URL 이 없어 중복 여부를 판단할 수 없습니다.', {
       missingEnv: ['DATABASE_URL'],
     });
   }
 
-  const creds = instagramCredentialsFromEnv();
-  if (!creds) throw new DependencyUnavailableError('인스타그램 자격 증명을 읽지 못했습니다.');
+  const token = await getInstagramCredentials();
+
+  // 미리보기는 아무것도 저장하지 않으므로 스토리지 토큰까지 요구하지 않는다.
+  const missing = missingFetchEnv(token.state.stored);
+  if (missing.length > 0) {
+    throw new DependencyUnavailableError(
+      `인스타그램 수집에 필요한 환경변수가 없습니다: ${missing.join(', ')}`,
+      { missingEnv: missing },
+    );
+  }
+
+  const creds = token.credentials;
+  if (!creds) {
+    throw new DependencyUnavailableError(
+      token.state.expired
+        ? 'Instagram 액세스 토큰이 만료되었습니다. 장기 토큰을 재발급한 뒤 IG_ACCESS_TOKEN 을 교체해 주세요.'
+        : '인스타그램 자격 증명을 읽지 못했습니다.',
+    );
+  }
 
   const media = await fetchInstagramMedia(creds);
   const known = await knownIgMediaIds();

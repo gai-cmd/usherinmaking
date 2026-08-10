@@ -425,24 +425,12 @@ export function variantUrls(variants: VariantMap | null | undefined): string[] {
   );
 }
 
+/**
+ * AI 가 제안한 분류 하나. 실제 생성은 server/ai-draft.ts 가 한다 —
+ * 이 파일은 blob·sharp 만 아는 순수 파이프라인이고, 분류는 DB 의 term 목록을 알아야 하기 때문이다.
+ * 타입만 여기 두는 이유는 파이프라인의 출력 형태이기 때문이다.
+ */
 export type CategorySuggestion = { taxonomyKey: string; termSlug: string; score: number };
-
-/** TODO(pipeline): AI 분류 제안. 어디까지나 제안이며 확정은 관리자가 한다. */
-export async function suggestCategories(_bytes: ArrayBuffer): Promise<CategorySuggestion[]> {
-  throw new DependencyUnavailableError('AI 분류 제공자가 연결되지 않았습니다.', {
-    seam: 'suggestCategories',
-  });
-}
-
-/** TODO(pipeline): alt 초안 3개 언어. 이것도 초안이며 관리자 확인 전에는 공개되지 않는다. */
-export async function draftAltText(
-  _bytes: ArrayBuffer,
-  _caption: string | null,
-): Promise<{ ja: string; en: string; ko: string }> {
-  throw new DependencyUnavailableError('AI alt 생성 제공자가 연결되지 않았습니다.', {
-    seam: 'draftAltText',
-  });
-}
 
 /** 크론이 실행 전에 확인하는 환경변수 목록. 비어 있으면 503으로 끊는다. */
 export function missingPipelineEnv(): string[] {
