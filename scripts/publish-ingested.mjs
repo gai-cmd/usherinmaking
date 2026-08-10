@@ -74,6 +74,10 @@ try {
             data: { alt: p.alt, ...(p.story ? { story: p.story } : {}), status: 'PUBLISHED' },
           }),
         ),
+        // Prisma 기본 제한은 5초다. 싱가포르 Neon 까지의 왕복이 얹히면 50건이 그 턱에 걸린다
+        // (실측 5,224ms 로 P2028 롤백). 묶음을 줄이면 왕복이 늘어 애초 목적과 어긋나므로
+        // 건수는 두고 제한만 넉넉히 잡는다.
+        { timeout: 60_000 },
       );
     }
     console.log(`\n반영 완료: ${plan.length}건 전시 전환`);
