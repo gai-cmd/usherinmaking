@@ -57,6 +57,7 @@ if (!accessToken || !userId) {
 const { fetchInstagramMedia } = await import('@/lib/instagram');
 const { downloadOriginal, probeImageDimensions, storeOriginal } = await import('@/lib/image-pipeline');
 const { prisma, isDatabaseConfigured } = await import('@/server/db');
+const { LOW_RES_MIN_LONG_EDGE } = await import('@/lib/image-contract');
 if (!isDatabaseConfigured()) {
   console.error('DATABASE_URL 이 없습니다.');
   process.exit(1);
@@ -119,6 +120,9 @@ try {
           variants: [],
           width,
           height,
+          // 관리자 화면의 원본 교체 유도 신호. 여기서 안 넣으면 기본값 false 로 남아
+          // 실제로 작은 사진이 경고 없이 지나간다(드레스 수집분 46건이 그랬다).
+          lowRes: Math.max(width, height) < LOW_RES_MIN_LONG_EDGE,
           caption: m.caption ?? null,
           takenAt: new Date(m.timestamp),
           // alt 없이 PUBLISH 하지 않는다 — 작품 갤러리와 같은 접근성 규칙이다.

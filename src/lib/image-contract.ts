@@ -13,8 +13,15 @@ export type RenditionWidth = (typeof RENDITION_WIDTHS)[number];
 export const RENDITION_FORMATS = ['avif', 'webp'] as const;
 export type RenditionFormat = (typeof RENDITION_FORMATS)[number];
 
-/** 장변이 이 값 미만이면 저해상도. 관리자 화면에서 원본 교체를 유도한다. */
-export const LOW_RES_MIN_LONG_EDGE = 2000;
+/**
+ * 장변이 이 값 미만이면 저해상도. 관리자 화면에서 원본 교체를 유도한다.
+ *
+ * 1600 인 이유: 인스타 API 가 주는 원본이 1440×1920 이 상한이라(그 이상은 인스타 서버에도
+ * 없다) 2000 기준에서는 수집분 전체가 경고로 떠 신호 구실을 못 했다. 웹 표시 최대 폭은
+ * 상세 히어로 760px(레티나 2배 1520px)이므로 1920 세로 원본은 실제로 충분하다.
+ * 기준을 1600 으로 낮춰, 정말 작은 것(예: 720×960)만 원본 교체 대상으로 남긴다.
+ */
+export const LOW_RES_MIN_LONG_EDGE = 1600;
 
 /** 인코딩 품질. AVIF는 같은 화질을 더 낮은 수치로 낸다. */
 export const RENDITION_QUALITY: Record<RenditionFormat, number> = { avif: 50, webp: 72 };
