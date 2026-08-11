@@ -196,9 +196,26 @@
 }
 
 /* ---------- 상세 패널 ---------- */
+/*
+ * 목록을 내려도 상세는 따라온다.
+ *
+ * 사진을 고르고 아래로 스크롤하면 편집 패널이 화면 밖으로 나가 버려, 고른 사진을
+ * 보면서 다음 사진을 찾는 일이 불가능했다. sticky 로 붙여 둔다.
+ *
+ * align-self 를 flex-start 로 내리는 것이 핵심이다 — 부모가 align-items: stretch 라
+ * 패널이 컨테이너 높이만큼 늘어나면 붙을 여백 자체가 없어 sticky 가 동작하지 않는다.
+ * 패널 자체 내용(캡션·분류·3개 언어 alt)이 화면보다 길 수 있으므로 자기 스크롤을 갖는다.
+ */
 .detail {
   width: 320px;
   flex: none;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  /* 패널 끝까지 내린 뒤 계속 굴려도 뒤의 목록이 딸려 움직이지 않게 한다 */
+  overscroll-behavior: contain;
   background: var(--a-panel);
   border-left: 1px solid var(--a-line);
   padding: 16px 18px 32px;
@@ -364,8 +381,12 @@
     flex-direction: column;
   }
 
+  /* 좁은 화면은 위아래로 쌓이므로 붙일 자리가 없다 — 고정을 풀고 원래대로 흐르게 둔다 */
   .detail {
     width: 100%;
+    position: static;
+    max-height: none;
+    overflow-y: visible;
     border-left: 0;
     border-top: 1px solid var(--a-line);
   }
