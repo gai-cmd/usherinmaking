@@ -10,7 +10,7 @@ import { listPhotos, missingAltLocales } from '@/server/photos';
 import { listAllFilterUrls, listUntranslatedTerms } from '@/server/taxonomy';
 
 import { LeadEditor } from './LeadEditor';
-import { LEAD_REQUIRED_PAGES, PAGE_LABEL, countLeads, listLeadRows } from './leads';
+import { LEAD_REQUIRED_PAGES, PAGE_LABEL, listLeadRows } from './leads';
 import s from './seo.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -34,8 +34,11 @@ export default async function SeoPage({ searchParams }: { searchParams: SearchPa
     : LEAD_REQUIRED_PAGES[0];
   const locale = sp.locale && isLocale(sp.locale) ? sp.locale : 'ja';
 
-  const rows = listLeadRows();
-  const leads = countLeads();
+  // 리드문은 이제 페이지 문구(코드 기본값 + 관리자 덮어쓰기)를 실제로 읽는다.
+  // 한 번 읽어 두 곳에서 나눠 쓴다 — getPageCopy 는 요청 단위 캐시라 중복 조회가 아니다.
+  const rows = await listLeadRows();
+  const leadsMissing = rows.filter((r) => r.lead === null);
+  const leads = { written: rows.length - leadsMissing.length, total: rows.length, missing: leadsMissing };
 
   const [missingAltPhotos, faqs, unansweredFaqs, schemaReadyFaqs, untranslatedTerms, filterUrls] =
     await Promise.all([
@@ -159,6 +162,8 @@ export default async function SeoPage({ searchParams }: { searchParams: SearchPa
                 pageLabel={selectedRow.pageLabel}
                 locale={selectedRow.locale}
                 initial={selectedRow.lead ?? ''}
+                slot={selectedRow.slot}
+                editHref={selectedRow.editHref}
               />
             </>
           ) : null}

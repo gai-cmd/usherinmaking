@@ -152,6 +152,22 @@
   color: var(--a-muted-2);
 }
 
+/** 고치는 자리는 이 화면이 아니라 페이지 문구 편집기다 — 거기로 보내는 링크. */
+.leadEditLink {
+  font-size: 12px;
+  line-height: 1;
+  padding: 8px 14px;
+  border: 1px solid var(--a-ink);
+  color: var(--a-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.leadEditLink:hover {
+  background: var(--a-ink);
+  color: var(--a-panel);
+}
+
 /* ---------- 누락 목록 ---------- */
 
 .panelAside {
