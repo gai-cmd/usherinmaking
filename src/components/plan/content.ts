@@ -337,7 +337,7 @@ export const FLOW = {
   title: {
     ja: 'ご契約の流れ',
     en: 'Booking steps',
-    ko: '예약까지의 순서',
+    ko: '예약 절차',
   } satisfies L10n,
   steps: {
     ja: [
@@ -357,10 +357,10 @@ export const FLOW = {
       'Session day and balance payment',
     ],
     ko: [
-      '촬영 상담 (카카오톡 · 문의 폼)',
-      '계약금 입금 (총액의 50%)',
-      '계약서 작성 및 확인 (서명)',
-      '촬영 당일 · 잔금 결제',
+      '상담 (카카오톡 amipaek · 문의 폼)',
+      '계약금 입금 (촬영 플랜의 50%)',
+      '계약서 작성 · 예약 확정',
+      '잔금 입금 · 촬영일',
     ],
   } satisfies L10nList,
   /** 2번 단계에만 붙는 보조 문장 */
