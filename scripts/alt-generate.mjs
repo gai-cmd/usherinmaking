@@ -137,12 +137,20 @@ async function applyResults() {
   if (bad.length) console.log(`  불완전(세 언어 미충족): ${bad.slice(0, 5).join(', ')}${bad.length > 5 ? ' …' : ''}`);
 
   let updated = 0;
+  let gone = 0;
   for (const item of items) {
-    await prisma.photo.update({ where: { id: item.id }, data: { alt: item.alt } });
-    updated += 1;
-    if (updated % 100 === 0) console.log(`  ${updated}/${items.length}`);
+    try {
+      await prisma.photo.update({ where: { id: item.id }, data: { alt: item.alt } });
+      updated += 1;
+    } catch (e) {
+      // P2025 = 그 사이 행이 사라졌다(다른 세션의 삭제·보관 정리와 겹칠 수 있다).
+      // 한 장 때문에 나머지 수백 장의 alt 를 버리지 않는다 — 건너뛰고 끝에 보고한다.
+      if (e.code === 'P2025') gone += 1;
+      else throw e;
+    }
+    if ((updated + gone) % 100 === 0) console.log(`  ${updated + gone}/${items.length}`);
   }
-  console.log(`반영 완료: ${updated}건`);
+  console.log(`반영 완료: ${updated}건${gone ? ` · 대상 행 없음 ${gone}건(다른 세션이 지운 것으로 보임)` : ''}`);
 }
 
 try {
