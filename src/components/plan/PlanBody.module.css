@@ -7,9 +7,9 @@
   margin-top: 14px;
 }
 
+/* 폭을 ch 로 조이면 문장이 어중간한 곳에서 꺾인다 — u-wrap(1200px) 폭을 그대로 쓴다 */
 .lead {
   margin: 18px auto 34px;
-  max-width: 68ch;
   font-size: 13.5px;
   line-height: 2.1;
   color: var(--muted);
@@ -78,7 +78,6 @@
 .hairList {
   display: flex;
   flex-direction: column;
-  max-width: 72ch;
 }
 
 .hairRow {
@@ -176,38 +175,81 @@
 
 /* ---------- 계약 흐름 ---------- */
 
+/* 4단계를 가로 카드로 — 목록형은 본문에 묻혀 절차가 눈에 들어오지 않았다 */
 .flow {
-  display: flex;
-  flex-direction: column;
-  margin-top: 22px;
-  max-width: 68ch;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 30px;
 }
 
 .flowStep {
+  position: relative;
   display: flex;
-  gap: 16px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--hairline);
-  font-size: 13px;
-  line-height: 1.9;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 20px 22px;
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.8;
   color: var(--text-body);
 }
 
-.flowStep:last-child {
-  border-bottom: 0;
+/* 카드 사이 진행 화살표 — 마지막 카드 뒤에는 없다 */
+.flowStep:not(:last-child)::after {
+  content: '›';
+  position: absolute;
+  top: 50%;
+  right: -13px;
+  transform: translateY(-55%);
+  z-index: 1;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--brass);
 }
 
 .flowNo {
   flex: none;
-  width: 28px;
-  font-size: 20px;
-  line-height: 1.9;
+  font-size: 26px;
+  line-height: 1;
   color: var(--brass);
 }
 
 .flowSub {
   display: block;
   font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- ko 공통사항 안내 박스 ---------- */
+
+.koNotice {
+  margin-top: 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--brass);
+  background: var(--bg);
+}
+
+.koNoticeLabel {
+  margin-bottom: 8px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--brass);
+}
+
+.koNoticeList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--text-body);
+}
+
+.koNoticeList li::before {
+  content: '· ';
   color: var(--muted);
 }
 
@@ -274,6 +316,27 @@
   .notes {
     grid-template-columns: 1fr;
     gap: 24px;
+  }
+
+  /* 모바일은 세로로 쌓고 화살표는 카드 아래 가운데로 */
+  .flow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .flowStep {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 14px;
+    padding: 18px 18px 16px;
+  }
+
+  .flowStep:not(:last-child)::after {
+    top: auto;
+    right: auto;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
   }
 
   /* 표는 가로 스크롤 대신 행 단위 카드로 접는다 */

@@ -108,6 +108,9 @@ html:lang(ko) body,
 html[lang^='ko'] body {
   font-size: 15px;
   line-height: 1.95;
+  /* 한국어는 어절 단위로만 줄을 바꾼다 — '없/습니다' 식으로 단어가 갈라지면 읽기 리듬이 깨진다 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 :lang(ko) .u-body,

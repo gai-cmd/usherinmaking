@@ -166,7 +166,16 @@ function HairPanel({ locale }: { locale: Locale }) {
 
 /* ---------------- ko 전용 패널 (usherinmaking.com/korean 상품 구성) ---------------- */
 
-function KoPlansPanel({ plans, notes }: { plans: Plan[]; notes: string[] }) {
+function KoPlansPanel({
+  plans,
+  notes,
+  noticeLabel,
+}: {
+  plans: Plan[];
+  notes: string[];
+  /** 있으면 노트를 라벨 달린 안내 박스로 묶는다 — 맨줄 문장 나열은 성의 없어 보인다 */
+  noticeLabel?: string;
+}) {
   return (
     <div className="u-wrap">
       <div className={s.grid}>
@@ -176,11 +185,22 @@ function KoPlansPanel({ plans, notes }: { plans: Plan[]; notes: string[] }) {
           </div>
         ))}
       </div>
-      {notes.map((line) => (
-        <p key={line} className={s.panelNote}>
-          {line}
-        </p>
-      ))}
+      {noticeLabel ? (
+        <aside className={s.koNotice}>
+          <p className={s.koNoticeLabel}>{noticeLabel}</p>
+          <ul className={s.koNoticeList}>
+            {notes.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </aside>
+      ) : (
+        notes.map((line) => (
+          <p key={line} className={s.panelNote}>
+            {line}
+          </p>
+        ))
+      )}
     </div>
   );
 }
@@ -201,7 +221,7 @@ export async function PlanBody({ locale }: { locale: Locale }) {
           {
             id: 'etc',
             label: C.KO_TABS.etc,
-            panel: <KoPlansPanel plans={C.KO_ETC_PLANS} notes={C.KO_ETC_NOTES} />,
+            panel: <KoPlansPanel plans={C.KO_ETC_PLANS} notes={C.KO_ETC_NOTES} noticeLabel="공통사항" />,
           },
         ]
       : [
