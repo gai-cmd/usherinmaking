@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import type { Locale } from '@/lib/i18n';
 import type { Shoot } from '@/server/photos-content';
@@ -12,7 +12,9 @@ import s from './DressSets.module.css';
  * @usherindress 수집분을 인스타 게시물 그대로 **세트 카드**로 보여준다.
  *
  * 갤러리의 촬영 격자와 같은 문법이다 — 표지 한 장 + "사진 N장". 다른 점은 상세 페이지가
- * 없다는 것: 카드를 누르면 그 자리에서 세트가 펼쳐진다(드레스는 룩북이라 주소까지는 과하다).
+ * 없다는 것: 카드를 누르면 **모달**로 세트가 뜬다(드레스는 룩북이라 주소까지는 과하다).
+ * 목록 위쪽에 펼치는 방식은 버렸다 — 목록 중간에서 고른 세트를 보려고 다시 위로
+ * 스크롤해야 했기 때문이다. 모달은 어디서 눌러도 그 자리에서 열리고 닫힌다.
  * 분류는 세트 단위다 — 시각 분석이 게시물 하나에 하나의 판정을 내린다.
  */
 
@@ -54,6 +56,19 @@ export function DressSets({ locale, shoots }: { locale: Locale; shoots: Shoot[] 
     setOpenKey(null);
   };
 
+  // 모달이 뜬 동안 ESC 로 닫고, 뒤 페이지 스크롤을 잠근다 — 모달 안만 스크롤되게.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenKey(null);
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   return (
     <>
       <div className={f.filters} role="group">
@@ -79,31 +94,39 @@ export function DressSets({ locale, shoots }: { locale: Locale; shoots: Shoot[] 
         })}
       </div>
 
-      {/* 펼친 세트 — 게시물 하나의 사진 전부 */}
+      {/* 모달 — 게시물 하나의 사진 전부. 배경 클릭·ESC·닫기 버튼으로 닫는다. */}
       {open && (
-        <div className={s.openSet}>
-          <div className={s.openHead}>
-            <span className={s.openTitle}>{open.cover.alt[locale]}</span>
-            <button type="button" className={s.close} onClick={() => setOpenKey(null)} data-tap>
-              {CLOSE_LABEL[locale]} ✕
-            </button>
+        <div
+          className={s.overlay}
+          role="dialog"
+          aria-modal="true"
+          aria-label={open.cover.alt[locale]}
+          onClick={(e) => e.target === e.currentTarget && setOpenKey(null)}
+        >
+          <div className={s.modal}>
+            <div className={s.openHead}>
+              <span className={s.openTitle}>{open.cover.alt[locale]}</span>
+              <button type="button" className={s.close} onClick={() => setOpenKey(null)} data-tap>
+                {CLOSE_LABEL[locale]} ✕
+              </button>
+            </div>
+            <ul className={`${g.grid} ${s.modalGrid}`} data-columns={2}>
+              {open.photos.map((photo) => (
+                <li key={photo.id} className={g.cell}>
+                  <span className={g.link}>
+                    <Image
+                      src={photo.src}
+                      alt={photo.alt[locale]}
+                      width={photo.width}
+                      height={photo.height}
+                      sizes="(max-width: 767px) 92vw, 440px"
+                      className={g.image}
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className={g.grid} data-columns={4}>
-            {open.photos.map((photo) => (
-              <li key={photo.id} className={g.cell}>
-                <span className={g.link}>
-                  <Image
-                    src={photo.src}
-                    alt={photo.alt[locale]}
-                    width={photo.width}
-                    height={photo.height}
-                    sizes="(max-width: 767px) 50vw, 25vw"
-                    className={g.image}
-                  />
-                </span>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
 

@@ -8,11 +8,50 @@
   text-align: inherit;
 }
 
-.openSet {
-  margin-bottom: 28px;
+/* 모달 배경 — 목록 어디서 열어도 화면 그 자리에서 뜬다 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 18, 15, 0.55);
+}
+
+.modal {
+  width: min(920px, 100%);
+  max-height: min(86vh, 100%);
+  overflow-y: auto;
   padding: 16px;
   border: 1px solid var(--hairline);
-  background: var(--bg-alt);
+  background: var(--bg);
+}
+
+/* 모달 안은 2열 — PhotoGrid 에 2열 정의가 없어 여기서 직접 잡는다 */
+.modalGrid {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* 모달 안 사진은 4:5 크롭 대신 원본 비율 그대로 — 보는 게 목적이니 자르지 않는다 */
+.modalGrid span {
+  aspect-ratio: auto;
+}
+
+.modalGrid img {
+  height: auto;
+  object-fit: contain;
+}
+
+@media (max-width: 767px) {
+  .overlay {
+    padding: 10px;
+  }
+
+  .modalGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .openHead {
