@@ -328,6 +328,9 @@ const main = async () => {
   const { uploadMedia } = DRY ? { uploadMedia: null } : await import('@/server/media');
 
   for (const p of picked) {
+    // 한 글의 실패(이미지 업로드 오류 등)가 나머지 백여 건을 죽이지 않는다.
+    // 실패한 글은 다음 실행이 스킵 목록에 없으니 자연히 다시 시도된다.
+    try {
     const title = cleanTitle(p.titleRaw);
     const slug = slugOf(p.category, p.date, p.logNo);
     const link = `https://blog.naver.com/${BLOG_ID}/${p.logNo}`;
@@ -394,6 +397,9 @@ const main = async () => {
       },
     });
     console.log(`  넣음 ${slug} — ${title.slice(0, 40)}`);
+    } catch (e) {
+      console.log(`  실패 ${p.logNo} — ${(e?.message ?? String(e)).slice(0, 80)}`);
+    }
   }
 
   if (!DRY) {
