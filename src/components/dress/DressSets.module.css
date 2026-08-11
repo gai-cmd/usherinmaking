@@ -1,0 +1,56 @@
+.card {
+  /* 버튼이지만 보기는 갤러리 카드와 같다 */
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: inherit;
+}
+
+.openSet {
+  margin-bottom: 28px;
+  padding: 16px;
+  border: 1px solid var(--hairline);
+  background: var(--bg-alt);
+}
+
+.openHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.openTitle {
+  font-size: 13px;
+  color: var(--text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.close {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.moreWrap {
+  margin-top: 26px;
+  text-align: center;
+}
+
+.more {
+  padding: 12px 26px;
+  border: 1px solid var(--text);
+  background: none;
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}

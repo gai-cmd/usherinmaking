@@ -167,7 +167,15 @@ export async function getDressPhotos(): Promise<PhotoContent[]> {
       include: { terms: { include: { term: true } } },
       orderBy: { takenAt: 'desc' },
     });
-    return rows.map((r) => fromDb(r as unknown as Row)).filter((p): p is PhotoContent => p !== null);
+    return rows
+      .map((r) => {
+        const photo = fromDb(r as unknown as Row);
+        if (!photo) return null;
+        // 드레스 분류(dressCollection 축)는 DB 에만 있는 term 이라 fromDb 의
+        // KNOWN_SLUGS(갤러리 코드 택소노미) 필터에 걸러진다 — 원본 slug 로 되살린다.
+        return { ...photo, terms: (r as unknown as Row).terms.map((t) => t.term.slug) };
+      })
+      .filter((p): p is PhotoContent => p !== null);
   } catch {
     return [];
   }

@@ -42,7 +42,8 @@ async function exportBatches() {
 
   // 같은 촬영(shootKey)은 같은 배치에 두어야 에이전트가 앞뒤 사진을 근거로 판단할 수 있다.
   const photos = await prisma.photo.findMany({
-    where: { igMediaId: { not: null } },
+    // --account dress 를 주면 드레스 계정만. 기본은 작품(main) — 두 컬렉션을 섞어 뽑지 않는다.
+    where: { igMediaId: { not: null }, igAccount: args[args.indexOf('--account') + 1] || 'main' },
     orderBy: [{ shootKey: 'asc' }, { shootOrder: 'asc' }],
     select: { id: true, originalUrl: true, takenAt: true, shootKey: true },
   });

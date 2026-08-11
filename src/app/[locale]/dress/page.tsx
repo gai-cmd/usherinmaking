@@ -10,8 +10,8 @@ import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
 import * as C from './content';
 import s from './page.module.css';
-import g from '@/components/gallery/PhotoGrid.module.css';
-import { getDressPhotos } from '@/server/photos-content';
+import { getDressPhotos, groupByShoot } from '@/server/photos-content';
+import { DressSets } from '@/components/dress/DressSets';
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -86,23 +86,7 @@ export default async function DressPage({ params }: { params: Promise<{ locale: 
           {/* @usherindress 수집분이 있으면 그것이 컬렉션이다. 아직 없으면(토큰 대기)
               기존 정적 컬렉션이 그대로 나간다 — 빈 격자를 만들지 않는다. */}
           {dressPhotos.length > 0 ? (
-            <ul className={g.grid} data-columns={4}>
-              {dressPhotos.map((photo, index) => (
-                <li key={photo.slug ?? photo.src} className={g.cell}>
-                  <span className={g.link}>
-                    <Image
-                      src={photo.src}
-                      alt={photo.alt[locale]}
-                      width={photo.width}
-                      height={photo.height}
-                      sizes="(max-width: 767px) 50vw, 25vw"
-                      className={g.image}
-                      priority={index < 4}
-                    />
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <DressSets locale={locale} shoots={groupByShoot(dressPhotos)} />
           ) : (
             <DressCollection locale={locale} images={images} pendingNote={text['collection.pendingPhotos']} />
           )}
