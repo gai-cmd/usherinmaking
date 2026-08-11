@@ -105,10 +105,14 @@ async function photoEntries(now: Date): Promise<MetadataRoute.Sitemap> {
       const languages: Record<string, string> = {};
       for (const l of LOCALES) languages[l] = `${SITE_URL}${path(l, 'gallery', 'g', photo.slug)}`;
 
+      // 촬영일이 있으면 그것이 이 페이지의 갱신 신호다. 매 빌드 now 로 찍으면
+      // 모든 사진이 "방금 바뀐 것"처럼 보여 재크롤 우선순위 정보가 사라진다.
+      const lastModified = photo.takenAt ? new Date(photo.takenAt) : now;
+
       for (const locale of LOCALES) {
         out.push({
           url: `${SITE_URL}${path(locale, 'gallery', 'g', photo.slug)}`,
-          lastModified: now,
+          lastModified,
           changeFrequency: 'monthly',
           priority: 0.4,
           alternates: { languages },

@@ -2,6 +2,7 @@ import { isDatabaseConfigured, prisma } from '@/server/db';
 import { PUBLISHED_PHOTOS, type Photo, type PhotoStatus } from '@/content/photos';
 import { TERMS } from '@/content/taxonomy';
 import type { Locale } from '@/lib/i18n';
+import { parseCaption } from '@/lib/caption';
 
 /** `content/photos.ts` 와 같은 모양. 그쪽은 export 하지 않으므로 여기서 다시 쓴다. */
 type L10n = Record<Locale, string>;
@@ -27,6 +28,8 @@ type L10n = Record<Locale, string>;
 export type PhotoContent = Photo & {
   shootKey: string | null;
   shootOrder: number;
+  /** 인스타 캡션 원문 전문. 태그 칩·원문 접기 표시용. 수동 업로드는 null. */
+  caption: string | null;
 };
 
 /** 같은 촬영에서 나온 사진 묶음. 갤러리 목록의 카드 한 장에 대응한다. */
@@ -46,7 +49,12 @@ const KNOWN_SLUGS = new Set(TERMS.map((t) => t.slug));
  * 코드 시드에는 촬영 묶음이 없다. 시드는 시안용 낱장 모음이라 묶을 근거가 없으므로
  * 한 장이 한 묶음이 되도록 비워 둔다 — `groupByShoot` 가 그때 자기 slug 로 묶음을 만든다.
  */
-const SEED: PhotoContent[] = PUBLISHED_PHOTOS.map((p) => ({ ...p, shootKey: null, shootOrder: 0 }));
+const SEED: PhotoContent[] = PUBLISHED_PHOTOS.map((p) => ({
+  ...p,
+  shootKey: null,
+  shootOrder: 0,
+  caption: null,
+}));
 
 /** DB 는 시각을 들고 있고 화면은 문자열을 쓴다. 사이트 기준(JST) 날짜로 자른다. */
 function toDateString(d: Date): string {
@@ -65,6 +73,19 @@ function toL10n(v: unknown): L10n {
   return { ja: pick('ja'), en: pick('en'), ko: pick('ko') };
 }
 
+/**
+ * story 에 남아 있는 해시태그·멘션 제거. 새 수집분은 ingest 가 이미 정제해 저장하지만,
+ * 그 이전에 들어온 행은 캡션 전문(태그 포함)이 story 로 남아 있다. 백필 없이 읽는 자리에서
+ * 걷어내면 기존·신규가 같은 규칙으로 나간다 — 관리자가 story 를 고쳐 써도 태그만 빠진다.
+ */
+function cleanStory(story: L10n): L10n {
+  return {
+    ja: parseCaption(story.ja).body,
+    en: parseCaption(story.en).body,
+    ko: parseCaption(story.ko).body,
+  };
+}
+
 type Row = {
   id: string;
   slug: string | null;
@@ -75,14 +96,21 @@ type Row = {
   height: number;
   alt: unknown;
   story: unknown;
+  caption: string | null;
   takenAt: Date;
   status: string;
   terms: { term: { slug: string } }[];
 };
 
+/** alt 한 줄에서도 인라인 태그를 걷는다. 걷고 나서 비면 원래 값을 지킨다 — 빈 alt 가 더 나쁘다. */
+function cleanAltLine(v: string): string {
+  return parseCaption(v).body.split('\n')[0] || v;
+}
+
 function fromDb(row: Row): PhotoContent | null {
   if (!row.originalUrl) return null;
-  const alt = toL10n(row.alt);
+  const rawAlt = toL10n(row.alt);
+  const alt = { ja: cleanAltLine(rawAlt.ja), en: cleanAltLine(rawAlt.en), ko: cleanAltLine(rawAlt.ko) };
   // alt 가 한 언어도 없으면 그리지 않는다 — 대체 텍스트 없는 사진은 접근성 위반이다.
   if (!alt.ko && !alt.ja && !alt.en) return null;
 
@@ -96,7 +124,8 @@ function fromDb(row: Row): PhotoContent | null {
     width: row.width,
     height: row.height,
     alt,
-    story: toL10n(row.story),
+    story: cleanStory(toL10n(row.story)),
+    caption: row.caption ?? null,
     takenAt: toDateString(row.takenAt),
     terms: row.terms.map((t) => t.term.slug).filter((s) => KNOWN_SLUGS.has(s)),
     status: row.status as PhotoStatus,

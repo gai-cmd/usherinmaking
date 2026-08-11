@@ -15,6 +15,7 @@ import {
   type Plan,
 } from '@/content/site';
 import { SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
+import { captionDescription, topHashtags } from '@/lib/caption';
 import { getPageCopy } from '@/server/page-content';
 import s from './page.module.css';
 
@@ -45,9 +46,14 @@ export async function generateMetadata({
   const photo = findBySlug(await getPublishedPhotos(), slug);
   if (!photo) return {};
 
+  // 메타 설명은 태그 없는 문장 한 문단으로 제한한다. 캡션 전문이 그대로 흘러가면
+  // 검색 결과 스니펫이 해시태그 덩어리가 된다. story 는 이미 정제돼 있지만 길이는 여기서 자른다.
+  const description =
+    captionDescription(photo.caption) || captionDescription(photo.story[locale]);
+
   return {
     title: photo.alt[locale],
-    description: photo.story[locale],
+    description,
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'gallery', 'g', photo.slug)}`,
       languages: alternates('gallery', 'g', photo.slug),
@@ -55,7 +61,7 @@ export async function generateMetadata({
     openGraph: {
       type: 'article',
       title: photo.alt[locale],
-      description: photo.story[locale],
+      description,
       images: [{ url: photo.src, width: photo.width, height: photo.height }],
     },
   };
@@ -81,6 +87,10 @@ export default async function WorkDetailPage({
   const related = sameSet(all, photo, 4);
   const taken = photo.takenAt.slice(0, 7).replace('-', '.');
 
+  // 인스타 해시태그는 상위 소수만 태그 칩으로 보여준다. 수십 개를 본문에 그대로 두면
+  // 키워드 나열이 되고, 전부 버리면 검색 단서를 잃는다 — 앞쪽 태그가 게시물의 핵심이다.
+  const igTags = topHashtags(photo.caption);
+
   const imageObject = {
     '@context': 'https://schema.org',
     '@type': 'ImageObject',
@@ -92,7 +102,16 @@ export default async function WorkDetailPage({
     width: photo.width,
     height: photo.height,
     datePublished: photo.takenAt,
-    creator: { '@type': 'Organization', name: 'usherinmaking' },
+    // schema.org 표준 필드만 쓴다. keywords 는 정제된 상위 태그 — AI 검색 전용 스키마는 없다.
+    ...(igTags.length ? { keywords: igTags.join(', ') } : {}),
+    creator: {
+      '@type': 'Organization',
+      name: 'usherinmaking',
+      sameAs: [
+        'https://www.instagram.com/usherinmaking/',
+        'https://www.instagram.com/usherindress/',
+      ],
+    },
     copyrightHolder: { '@type': 'Organization', name: 'usherinmaking' },
   };
 
@@ -142,6 +161,25 @@ export default async function WorkDetailPage({
               </li>
             ))}
           </ul>
+
+          {igTags.length > 0 && (
+            <ul className={s.chips} aria-label="Instagram tags">
+              {igTags.map((tag) => (
+                <li key={tag}>
+                  <span className={s.chip}>#{tag}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {photo.caption && photo.caption.trim() !== photo.story[locale] && (
+            <details className="u-meta">
+              <summary>
+                {locale === 'ja' ? 'Instagram原文を見る' : locale === 'ko' ? '인스타그램 원문 보기' : 'View original Instagram caption'}
+              </summary>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{photo.caption}</p>
+            </details>
+          )}
         </div>
 
         <aside className={s.meta}>

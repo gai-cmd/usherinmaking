@@ -32,6 +32,7 @@ import {
   probeImageDimensions,
   storeOriginal,
 } from '@/lib/image-pipeline';
+import { parseCaption } from '@/lib/caption';
 import { slugFromAlt, suggestCategories } from '@/server/ai-draft';
 import type { AiSuggestion, Localized } from '@/server/photos';
 
@@ -260,13 +261,10 @@ function isUniqueViolation(err: unknown): boolean {
  * 자르기만 하고 고쳐 쓰지 않는 것이 "원문 그대로"의 경계다.
  */
 function firstLineOf(caption: string | null): string {
-  if (!caption) return '';
-  for (const line of caption.split('\n')) {
-    const t = line.trim();
-    // 해시태그·멘션만 있는 줄은 제목이 될 수 없다. 사람이 쓴 첫 문장을 찾는다.
-    if (t && !/^[#@]/.test(t)) return t.length > 120 ? t.slice(0, 120) : t;
-  }
-  return '';
+  // 정제된 본문의 첫 줄 — 문장 끝에 붙은 인라인 해시태그·멘션 기호까지 걷어낸 것.
+  // 이 값이 h1 과 이미지 alt 가 되므로, 태그 조각이 남으면 검색·접근성 양쪽에서 노이즈다.
+  const line = parseCaption(caption).body.split('\n')[0] ?? '';
+  return line.length > 120 ? line.slice(0, 120) : line;
 }
 
 /**
@@ -281,9 +279,13 @@ function altFromCaption(caption: string | null): Localized {
   return { ja: line, en: line, ko: line };
 }
 
-/** 캡션 전문. 상세 페이지 본문이 된다 — 자르지도 고치지도 않는다. */
+/**
+ * 상세 페이지 본문. 캡션에서 해시태그·멘션을 걷어낸 문장만 남긴다 — 문장은 고치지 않는다.
+ * 태그 덩어리가 본문·메타 설명에 그대로 실리면 키워드 나열로 읽혀 검색 품질을 깎는다.
+ * 원문 전문은 caption 컬럼에 그대로 남고, 태그는 화면이 caption 에서 따로 뽑아 쓴다.
+ */
 function storyFromCaption(caption: string | null): Localized | null {
-  const body = caption?.trim();
+  const body = parseCaption(caption).body;
   if (!body) return null;
   return { ja: body, en: body, ko: body };
 }

@@ -80,7 +80,11 @@ function jsonLd(locale: Locale) {
       image: `${SITE_URL}/images/studio/IMG_0766.png`,
       // 같은 주체가 운영하는 채널임을 검색·AI 엔진에 알린다. 갤러리 사진의 출처가
       // 이 계정이므로, 연결이 없으면 같은 사진이 서로 무관한 두 곳에 있는 것으로 읽힌다.
-      sameAs: ['https://www.instagram.com/usherinmaking/'],
+      // 작품 계정 + 드레스 계정 둘 다 이 브랜드의 공식 채널이다 — 엔티티 일관성 신호.
+      sameAs: [
+        'https://www.instagram.com/usherinmaking/',
+        'https://www.instagram.com/usherindress/',
+      ],
       telephone: STUDIO_INFO.phoneIntl,
       // 주소는 구성 요소를 쪼개서 넣는다. 한 줄로 뭉치면 지역 검색이 시·군을 읽어내지 못한다.
       address: {
