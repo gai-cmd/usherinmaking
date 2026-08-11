@@ -45,7 +45,6 @@ type HomeCopy = {
     label: string;
     title: string;
     lead: string;
-    filters: string[];
     viewAll: string;
   };
   photographer: { label: string; name: string; body: string[]; cta: string; alt: string };
@@ -115,7 +114,6 @@ export const HOME: Record<Locale, HomeCopy> = {
       label: 'LOCATION',
       title: '最近の作品',
       lead: 'Instagram の投稿から、掲載を選んだ作品を最新順に。',
-      filters: ['ALL', 'BEACH', 'FOREST', 'TOWN', 'SUNSET', 'FAMILY'],
       viewAll: 'VIEW ALL LOCATION',
     },
     photographer: {
@@ -210,7 +208,6 @@ export const HOME: Record<Locale, HomeCopy> = {
       label: 'LOCATION · FROM INSTAGRAM',
       title: 'Recent works',
       lead: 'A selection from our Instagram posts, newest first, hosted here on our own site.',
-      filters: ['ALL', 'WEDDING', 'SELF', 'FAMILY', 'MATERNITY', 'DATE'],
       viewAll: 'VIEW ALL WORKS',
     },
     photographer: {
@@ -314,7 +311,6 @@ export const HOME: Record<Locale, HomeCopy> = {
       label: 'GALLERY · 인스타그램에서 선별',
       title: '최근 작품',
       lead: '인스타그램에 올린 사진 중 보여드릴 작품만 골라, 저희 사이트에서 직접 보여드립니다.',
-      filters: ['전체', '웨딩', '셀프 웨딩', '가족', '만삭', '커플'],
       viewAll: '작품 전체 보기',
     },
     photographer: {
