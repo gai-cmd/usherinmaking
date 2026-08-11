@@ -43,7 +43,16 @@ async function exportBatches() {
   // 같은 촬영(shootKey)은 같은 배치에 두어야 에이전트가 앞뒤 사진을 근거로 판단할 수 있다.
   const photos = await prisma.photo.findMany({
     // --account dress 를 주면 드레스 계정만. 기본은 작품(main) — 두 컬렉션을 섞어 뽑지 않는다.
-    where: { igMediaId: { not: null }, igAccount: args[args.indexOf('--account') + 1] || 'main' },
+    // --unclassified 는 시각 분류가 아직 없는 사진만 뽑는다(장소 term 유무가 그 표지다) —
+    // 추가 수집 뒤 이미 분류된 사진을 다시 보는 낭비를 막는다.
+    where: {
+      igMediaId: { not: null },
+      // indexOf 가 -1 이면 args[0]('export')이 계정명으로 잡힌다 — 플래그 유무를 먼저 본다.
+      igAccount: args.includes('--account') ? args[args.indexOf('--account') + 1] : 'main',
+      ...(args.includes('--unclassified')
+        ? { terms: { none: { term: { slug: { in: ['studio', 'location'] } } } } }
+        : {}),
+    },
     orderBy: [{ shootKey: 'asc' }, { shootOrder: 'asc' }],
     select: { id: true, originalUrl: true, takenAt: true, shootKey: true },
   });
