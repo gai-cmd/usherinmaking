@@ -74,18 +74,9 @@ export const SEED_FAQS: Faq[] = [
     page: 'plan',
     sourceInquiryIds: ['inq-2026-0724-tanaka'],
   },
-  {
-    id: 'faq-family-attend',
-    question: {
-      ja: '両親も同席できますか？',
-      en: 'Can our parents come along?',
-      ko: '부모님도 함께 있어도 되나요?',
-    },
-    answer: { ja: '', en: '', ko: '' },
-    order: 2,
-    page: null,
-    sourceInquiryIds: ['inq-2026-0724-tanaka'],
-  },
+  // 2026-08-11: '両親も同席できますか？'(부모님 동석) 항목을 뺐다. 문의에서 뽑아 두었지만
+  // 답을 확정하지 않은 채 남아 있어서, 답변 없는 FAQ 로 SEO 점검에만 걸리고 있었다.
+  // 사장님 판단으로 질문 자체가 불필요하다고 정리했다. 되살릴 일이 생기면 답을 먼저 정할 것.
 ];
 
 /* ------------------------------------------------------------------ */
