@@ -147,6 +147,15 @@ function fromDb(row: Row): PhotoContent | null {
  * 반영될 수 있는데, 어차피 정적 페이지라 갱신은 재배포·재검증이 담당한다.
  */
 const CACHE_TTL_MS = 60_000;
+
+/**
+ * 정적 생성 중인가. `next build` 프로세스에만 이 값이 들어간다(실측 확인).
+ *
+ * 빌드와 런타임은 실패했을 때 옳은 행동이 반대다.
+ * 런타임은 무슨 일이 있어도 공개 페이지를 죽이지 않아야 하고(시드로라도 그린다),
+ * 빌드는 반대로 조용히 성공하면 안 된다 — 그 결과물이 그대로 발행되기 때문이다.
+ */
+const IS_BUILD = process.env.NEXT_PHASE === 'phase-production-build';
 /**
  * 실패했을 때의 유예. DB 가 죽어 있으면 정적 생성 페이지 수백 개가 저마다 접속을 시도한다
  * (2026-08-10 빌드에서 546회). 짧게 쉬었다 다시 본다 — 회복은 여전히 몇 초 안에 반영된다.
@@ -154,10 +163,55 @@ const CACHE_TTL_MS = 60_000;
 const FAIL_TTL_MS = 5_000;
 let failedAt = 0;
 let cache: { at: number; data: PhotoContent[] } | null = null;
+/**
+ * 마지막으로 성공한 조회 결과. TTL 이 지나도 버리지 않는다.
+ *
+ * 이것이 빌드를 지키는 장치다. 정적 생성은 generateStaticParams 가 DB 에서 뽑은 슬러그로
+ * 페이지 목록을 만들어 두는데, 렌더 도중 연결이 한 번 끊겨 시드로 떨어지면 그 슬러그가
+ * 목록에 없어 notFound() 가 되고 빌드가 통째로 멈춘다(2026-08-11 실패 3회의 원인).
+ * 한 번이라도 제대로 읽었다면 그 스냅샷으로 계속 그리는 편이 정확하다 —
+ * 시드는 시안용 몇 장이라, 그걸로 갤러리를 발행하면 사진이 사라진 사이트가 된다.
+ */
+let lastGood: PhotoContent[] | null = null;
+/** 진행 중인 조회. 동시에 들어온 호출은 새 쿼리를 열지 않고 이것을 함께 기다린다. */
+let inFlight: Promise<PhotoContent[]> | null = null;
 
 /** 사진을 바꾼 직후 같은 프로세스에서 다시 읽어야 할 때 쓴다(관리자 저장 경로). */
 export function forgetPublishedPhotos(): void {
   cache = null;
+  lastGood = null;
+  inFlight = null;
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * 사진 목록 한 번 읽기. 일시적 연결 끊김에는 짧게 물러났다 다시 건다.
+ *
+ * Neon 은 풀러 뒤에서 접속을 끊는 일이 있고("Connection terminated unexpectedly"),
+ * 정적 생성처럼 수백 페이지가 몰리는 구간에서 특히 그렇다.
+ */
+async function queryPublishedPhotos(attempts = 3): Promise<PhotoContent[]> {
+  let lastError: unknown = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const rows = await prisma.photo.findMany({
+        // 갤러리는 작품 계정(main)만이다 — 드레스 컬렉션 사진이 여기 섞이면 안 된다.
+        where: { status: 'PUBLISHED', igAccount: 'main' },
+        include: { terms: { include: { term: true } } },
+        orderBy: { takenAt: 'desc' },
+      });
+      return rows
+        .map((r) => fromDb(r as unknown as Row))
+        .filter((p): p is PhotoContent => p !== null);
+    } catch (err) {
+      lastError = err;
+      if (attempt < attempts) await sleep(300 * attempt);
+    }
+  }
+
+  throw lastError;
 }
 
 /**
@@ -168,21 +222,50 @@ export function forgetPublishedPhotos(): void {
 export async function getPublishedPhotos(): Promise<PhotoContent[]> {
   if (!isDatabaseConfigured()) return SEED;
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.data;
-  if (failedAt && Date.now() - failedAt < FAIL_TTL_MS) return SEED;
+  if (failedAt && Date.now() - failedAt < FAIL_TTL_MS) return lastGood ?? SEED;
+
+  // 정적 생성은 페이지 수백 개를 동시에 그린다. 이 문이 없으면 그 수만큼 쿼리가 한꺼번에
+  // 열려 접속이 고갈되고, 그 고갈이 다시 폴백을 부른다.
+  if (!inFlight) {
+    inFlight = queryPublishedPhotos()
+      .then((photos) => {
+        /*
+         * 조회는 성공했는데 0건인 경우.
+         *
+         * 런타임에서는 빈 갤러리를 만들지 않으려 시드로 그린다. 그러나 빌드에서 같은 일을 하면
+         * 시안용 사진 몇 장이 이 스튜디오의 작품인 양 발행된다 — 조용한 성공이 가장 나쁜 결과다.
+         * 전시 사진을 전부 보관 처리하면 실제로 이 상태가 만들어질 수 있어(관리자 일괄 보관),
+         * 빌드에서는 멈춰 세운다.
+         */
+        if (photos.length === 0 && IS_BUILD) {
+          throw new Error(
+            '전시(PUBLISHED) 상태인 작품 사진이 0건입니다. 시드로 갤러리를 발행하지 않기 위해 빌드를 멈춥니다.',
+          );
+        }
+        const result = photos.length > 0 ? photos : SEED;
+        cache = { at: Date.now(), data: result };
+        if (photos.length > 0) lastGood = result;
+        failedAt = 0;
+        return result;
+      })
+      .finally(() => {
+        inFlight = null;
+      });
+  }
+
   try {
-    const rows = await prisma.photo.findMany({
-      // 갤러리는 작품 계정(main)만이다 — 드레스 컬렉션 사진이 여기 섞이면 안 된다.
-      where: { status: 'PUBLISHED', igAccount: 'main' },
-      include: { terms: { include: { term: true } } },
-      orderBy: { takenAt: 'desc' },
-    });
-    const photos = rows.map((r) => fromDb(r as unknown as Row)).filter((p): p is PhotoContent => p !== null);
-    const result = photos.length > 0 ? photos : SEED;
-    cache = { at: Date.now(), data: result };
-    return result;
+    return await inFlight;
   } catch (err) {
     // 실패는 캐시하지 않는다 — 쿼터가 풀리거나 DB 가 돌아오면 다음 호출이 바로 성공해야 한다.
     failedAt = Date.now();
+    // 한 번이라도 제대로 읽었다면 그 스냅샷을 계속 쓴다. 시드로 내려가면 이미 목록에 오른
+    // 슬러그가 사라져 정적 생성이 notFound() 로 죽는다.
+    if (lastGood) {
+      console.error('[photos-content] 조회 실패 — 직전 스냅샷으로 렌더합니다', err);
+      return lastGood;
+    }
+    // 빌드에서 한 번도 못 읽었다면 기댈 스냅샷이 없다. 시드로 발행하느니 실패한다.
+    if (IS_BUILD) throw err;
     console.error('[photos-content] 조회 실패 — 시드로 렌더합니다', err);
     return SEED;
   }
@@ -192,26 +275,64 @@ export async function getPublishedPhotos(): Promise<PhotoContent[]> {
  * 드레스 컬렉션(@usherindress 수집분). 갤러리와 저장소는 같고 계정으로만 갈린다.
  * 아직 수집 전이면 빈 배열 — 드레스 페이지는 그때 기존 정적 컬렉션을 그대로 쓴다.
  */
+let dressCache: { at: number; data: PhotoContent[] } | null = null;
+let dressLastGood: PhotoContent[] | null = null;
+let dressInFlight: Promise<PhotoContent[]> | null = null;
+
 export async function getDressPhotos(): Promise<PhotoContent[]> {
   if (!isDatabaseConfigured()) return [];
-  try {
-    const rows = await prisma.photo.findMany({
-      where: { status: 'PUBLISHED', igAccount: 'dress' },
-      include: { terms: { include: { term: true } } },
-      orderBy: { takenAt: 'desc' },
-    });
-    return rows
-      .map((r) => {
-        const photo = fromDb(r as unknown as Row);
-        if (!photo) return null;
-        // 드레스 분류(dressCollection 축)는 DB 에만 있는 term 이라 fromDb 의
-        // KNOWN_SLUGS(갤러리 코드 택소노미) 필터에 걸러진다 — 원본 slug 로 되살린다.
-        return { ...photo, terms: (r as unknown as Row).terms.map((t) => t.term.slug) };
+  if (dressCache && Date.now() - dressCache.at < CACHE_TTL_MS) return dressCache.data;
+
+  if (!dressInFlight) {
+    dressInFlight = queryDressPhotos()
+      .then((data) => {
+        dressCache = { at: Date.now(), data };
+        if (data.length > 0) dressLastGood = data;
+        return data;
       })
-      .filter((p): p is PhotoContent => p !== null);
-  } catch {
+      .finally(() => {
+        dressInFlight = null;
+      });
+  }
+
+  try {
+    return await dressInFlight;
+  } catch (err) {
+    console.error('[photos-content] 드레스 조회 실패', err);
+    // 빈 배열은 "아직 수집 전"이라는 뜻이라 드레스 페이지가 정적 컬렉션으로 되돌아간다.
+    // 실패 때문에 그 경로로 새면 룩북 520여 장이 통째로 사라진 페이지가 발행된다.
+    if (dressLastGood) return dressLastGood;
+    if (IS_BUILD) throw err;
     return [];
   }
+}
+
+async function queryDressPhotos(attempts = 3): Promise<PhotoContent[]> {
+  let lastError: unknown = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const rows = await prisma.photo.findMany({
+        where: { status: 'PUBLISHED', igAccount: 'dress' },
+        include: { terms: { include: { term: true } } },
+        orderBy: { takenAt: 'desc' },
+      });
+      return rows
+        .map((r) => {
+          const photo = fromDb(r as unknown as Row);
+          if (!photo) return null;
+          // 드레스 분류(dressCollection 축)는 DB 에만 있는 term 이라 fromDb 의
+          // KNOWN_SLUGS(갤러리 코드 택소노미) 필터에 걸러진다 — 원본 slug 로 되살린다.
+          return { ...photo, terms: (r as unknown as Row).terms.map((t) => t.term.slug) };
+        })
+        .filter((p): p is PhotoContent => p !== null);
+    } catch (err) {
+      lastError = err;
+      if (attempt < attempts) await sleep(300 * attempt);
+    }
+  }
+
+  throw lastError;
 }
 
 /** 분류 조합으로 거른다. 빈 배열이면 전체. `content/photos.ts` 의 filterPhotos 와 같은 규칙이다. */
