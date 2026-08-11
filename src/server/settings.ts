@@ -88,12 +88,23 @@ function envOrNull(name: string): string | null {
   return v && v.trim().length > 0 ? v.trim() : null;
 }
 
+/**
+ * 확정된 상담 창구 링크 (2026-08-11 사장님 전달).
+ * env·관리자 저장값이 있으면 그쪽이 이기고, 없을 때 이 값으로 내려간다 —
+ * "미설정이라 죽은 버튼"을 만들지 않기 위한 코드 확정값이다(naverBlog 폴백과 같은 계열).
+ */
+const CONFIRMED_CHANNEL_URLS: Record<string, string> = {
+  line: 'https://line.me/ti/p/8Udy1kYg1l',
+  // 콘택트의 인스타 창구는 프로필이 아니라 DM 입구다 — ig.me 는 DM 화면을 바로 연다.
+  instagram: `https://ig.me/m/${BRAND.instagram}`,
+};
+
 function defaultChannels(): Record<Locale, ChannelSetting[]> {
   const instagram = (order: number): ChannelSetting => ({
     id: 'instagram',
     handle: `@${BRAND.instagram}`,
     // 계정명이 코드에 있으므로 링크도 기본으로 살아 있어야 한다 — 미설정과 다르다.
-    url: `https://www.instagram.com/${BRAND.instagram}/`,
+    url: CONFIRMED_CHANNEL_URLS.instagram,
     order,
   });
   return {
@@ -103,7 +114,7 @@ function defaultChannels(): Record<Locale, ChannelSetting[]> {
       { id: 'form', handle: null, url: null, order: 2 },
     ],
     ja: [
-      { id: 'line', handle: null, url: envOrNull('LINE_OFFICIAL_URL'), order: 0 },
+      { id: 'line', handle: null, url: envOrNull('LINE_OFFICIAL_URL') ?? CONFIRMED_CHANNEL_URLS.line, order: 0 },
       instagram(1),
       { id: 'form', handle: null, url: null, order: 2 },
     ],
@@ -150,7 +161,12 @@ function mergeChannels(
   if (!stored) return base;
   for (const l of LOCALES) {
     const list = stored[l];
-    if (Array.isArray(list) && list.length > 0) base[l] = list;
+    if (Array.isArray(list) && list.length > 0) {
+      // 저장값이 그 언어를 통째로 갈아끼우되, 링크가 비어 있는 항목은 코드 기본값
+      // (env·확정 URL)으로 메운다 — 관리자가 링크를 지운 채 저장해도 버튼이 죽지 않는다.
+      const defaults = new Map(base[l].map((c) => [c.id, c.url]));
+      base[l] = list.map((c) => ({ ...c, url: c.url ?? defaults.get(c.id) ?? null }));
+    }
   }
   return base;
 }
