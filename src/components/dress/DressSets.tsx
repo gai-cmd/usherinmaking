@@ -114,14 +114,26 @@ export function DressSets({ locale, shoots }: { locale: Locale; shoots: Shoot[] 
               {open.photos.map((photo) => (
                 <li key={photo.id} className={g.cell}>
                   <span className={g.link}>
-                    <Image
-                      src={photo.src}
-                      alt={photo.alt[locale]}
-                      width={photo.width}
-                      height={photo.height}
-                      sizes="(max-width: 767px) 92vw, 440px"
-                      className={g.image}
-                    />
+                    {/* 릴스는 펼친 자리에서 바로 재생한다 — 포스터만 보이면 정지 사진과 구별되지 않는다. */}
+                    {photo.mediaType === 'video' && photo.videoUrl ? (
+                      <video
+                        src={photo.videoUrl}
+                        poster={photo.src}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        className={g.image}
+                      />
+                    ) : (
+                      <Image
+                        src={photo.src}
+                        alt={photo.alt[locale]}
+                        width={photo.width}
+                        height={photo.height}
+                        sizes="(max-width: 767px) 92vw, 440px"
+                        className={g.image}
+                      />
+                    )}
                   </span>
                 </li>
               ))}
@@ -148,6 +160,11 @@ export function DressSets({ locale, shoots }: { locale: Locale; shoots: Shoot[] 
                 sizes="(max-width: 767px) 50vw, 25vw"
                 className={g.image}
               />
+              {shoot.cover.mediaType === 'video' && (
+                <span className={g.play} aria-hidden="true">
+                  ▶
+                </span>
+              )}
               {shoot.photos.length > 1 && (
                 <span className={g.count}>{COUNT_LABEL[locale](shoot.photos.length)}</span>
               )}
