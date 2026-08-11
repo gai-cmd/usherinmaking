@@ -40,7 +40,9 @@ const prisma = new PrismaClient({ adapter: new PrismaNeon({ connectionString }) 
 
 try {
   const rows = await prisma.photo.findMany({
-    where: { igMediaId: { not: null }, status: 'UNSORTED' },
+    // 작품 계정(main)만이다. 드레스 수집분(igAccount=dress)은 자기 스크립트
+    // (ingest-dress.mjs --publish)가 다룬다 — 여기서 쓸어 올리면 갤러리에 섞인다.
+    where: { igMediaId: { not: null }, status: 'UNSORTED', igAccount: 'main' },
     select: { id: true, caption: true },
   });
 
