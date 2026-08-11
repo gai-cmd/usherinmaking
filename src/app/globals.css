@@ -110,7 +110,16 @@ html[lang^='ko'] body {
   line-height: 1.95;
   /* 한국어는 어절 단위로만 줄을 바꾼다 — '없/습니다' 식으로 단어가 갈라지면 읽기 리듬이 깨진다 */
   word-break: keep-all;
-  overflow-wrap: break-word;
+  /*
+   * break-word 가 아니라 anywhere 여야 한다.
+   *
+   * 한국어 페이지에도 일본어 인스타 캡션이 그대로 실린다. 일본어는 띄어쓰기가 없어서
+   * keep-all 이 걸리면 문단 전체가 끊을 수 없는 한 덩어리가 되고, 그 길이가 그대로
+   * min-content 폭이 되어 그리드 칸을 밀어낸다 — 모바일에서 본문이 화면 밖으로 잘렸던 원인이다.
+   * break-word 는 min-content 계산에 반영되지 않아 이 상황을 못 막는다. anywhere 는 반영된다.
+   * 평소에는 여전히 띄어쓰기에서 끊기므로 한국어 어절은 그대로 보존된다.
+   */
+  overflow-wrap: anywhere;
 }
 
 :lang(ko) .u-body,
