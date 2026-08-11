@@ -8,6 +8,8 @@
 //   node scripts/alt-generate.mjs apply  --from '/tmp/uim-alt/result-*.json'
 //
 // export 는 기존 분류용 썸네일(/tmp/uim-classify*/img)을 재사용하고 없는 것만 내려받는다.
+// --account <main|dress> 로 계정을, --status <UNSORTED|PUBLISHED|ARCHIVED> 로 상태를 좁힌다
+// (추가 수집분만 판독할 때: export --account main --status UNSORTED).
 
 import { mkdir, writeFile, readFile, access, copyFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -42,6 +44,9 @@ async function exportBatches() {
     where: {
       igMediaId: { not: null },
       igAccount: args.includes('--account') ? args[args.indexOf('--account') + 1] : 'main',
+      // --status UNSORTED 처럼 상태로 좁힌다. 추가 수집분만 다시 판독할 때 쓴다 —
+      // 이미 3언어를 채운 사진까지 다시 뽑으면 그만큼의 판독이 통째로 낭비된다.
+      ...(args.includes('--status') ? { status: args[args.indexOf('--status') + 1] } : {}),
     },
     orderBy: [{ shootKey: 'asc' }, { shootOrder: 'asc' }],
     select: {
