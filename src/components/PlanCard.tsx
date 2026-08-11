@@ -16,7 +16,7 @@ export function PlanCard({ plan, locale }: { plan: Plan; locale: Locale }) {
         {plan.listPrice && (
           <span className={`u-num ${s.list}`}>¥{plan.listPrice.toLocaleString('en-US')}</span>
         )}
-        <span className="u-num">¥{plan.price.toLocaleString('en-US')}</span>
+        <span className="u-num">{plan.priceText ?? `¥${plan.price.toLocaleString('en-US')}`}</span>
         {plan.taxIncluded && <span className={s.tax}>{TAX_LABEL[locale]}</span>}
       </p>
 

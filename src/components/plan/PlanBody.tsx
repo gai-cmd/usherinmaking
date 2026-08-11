@@ -33,11 +33,16 @@ export async function planMetadata(locale: Locale): Promise<Metadata> {
 
 /** 스튜디오 요금은 모니터 가격이라 세금 포함 여부를 단정하지 않는다. */
 function serviceLd(locale: Locale) {
-  const offers = [...STUDIO_PLANS, ...LOCATION_PLANS, ...ANNIVERSARY_PLANS].map((plan) => ({
+  // ko 는 한국 고객 전용 상품(원화)만 판다 — JA/EN 플랜을 섞지 않는다.
+  const plans =
+    locale === 'ko'
+      ? [...C.KO_WEDDING_PLANS, ...C.KO_ETC_PLANS]
+      : [...STUDIO_PLANS, ...LOCATION_PLANS, ...ANNIVERSARY_PLANS];
+  const offers = plans.map((plan) => ({
     '@type': 'Offer',
     name: plan.title[locale],
     price: plan.price,
-    priceCurrency: 'JPY',
+    priceCurrency: plan.currency ?? 'JPY',
     valueAddedTaxIncluded: plan.taxIncluded,
     url: `${SITE_URL}${path(locale, 'plan')}`,
   }));
@@ -159,20 +164,56 @@ function HairPanel({ locale }: { locale: Locale }) {
   );
 }
 
+/* ---------------- ko 전용 패널 (usherinmaking.com/korean 상품 구성) ---------------- */
+
+function KoPlansPanel({ plans, notes }: { plans: Plan[]; notes: string[] }) {
+  return (
+    <div className="u-wrap">
+      <div className={s.grid}>
+        {plans.map((plan, i) => (
+          <div key={plan.code} className={`${s.cardSlot} ${i === 0 ? s.featured : ''}`}>
+            <PlanCard plan={plan} locale="ko" />
+          </div>
+        ))}
+      </div>
+      {notes.map((line) => (
+        <p key={line} className={s.panelNote}>
+          {line}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 /* ---------------- 본문 ---------------- */
 
 export async function PlanBody({ locale }: { locale: Locale }) {
   const text = await getPageCopy('plan', locale);
-  const tabs: PlanTab[] = [
-    { id: 'studio', label: C.TABS.studio[locale], panel: <StudioPanel locale={locale} text={text} /> },
-    { id: 'location', label: C.TABS.location[locale], panel: <LocationPanel locale={locale} text={text} /> },
-    {
-      id: 'anniversary',
-      label: C.TABS.anniversary[locale],
-      panel: <AnniversaryPanel locale={locale} text={text} />,
-    },
-    { id: 'hair', label: C.TABS.hair[locale], panel: <HairPanel locale={locale} /> },
-  ];
+  // ko 는 한국 고객 전용 상품(웨딩/기타 · 원화)이라 탭 구성 자체가 다르다.
+  const tabs: PlanTab[] =
+    locale === 'ko'
+      ? [
+          {
+            id: 'wedding',
+            label: C.KO_TABS.wedding,
+            panel: <KoPlansPanel plans={C.KO_WEDDING_PLANS} notes={[C.KO_WEDDING_NOTE]} />,
+          },
+          {
+            id: 'etc',
+            label: C.KO_TABS.etc,
+            panel: <KoPlansPanel plans={C.KO_ETC_PLANS} notes={C.KO_ETC_NOTES} />,
+          },
+        ]
+      : [
+          { id: 'studio', label: C.TABS.studio[locale], panel: <StudioPanel locale={locale} text={text} /> },
+          { id: 'location', label: C.TABS.location[locale], panel: <LocationPanel locale={locale} text={text} /> },
+          {
+            id: 'anniversary',
+            label: C.TABS.anniversary[locale],
+            panel: <AnniversaryPanel locale={locale} text={text} />,
+          },
+          { id: 'hair', label: C.TABS.hair[locale], panel: <HairPanel locale={locale} /> },
+        ];
 
   const questions = C.FAQ_QUESTIONS[locale];
   const faq = faqLd(locale);
@@ -234,6 +275,12 @@ export async function PlanBody({ locale }: { locale: Locale }) {
               ))}
             </tbody>
           </table>
+          {locale === 'ko' &&
+            C.KO_OPTION_NOTES.map((line) => (
+              <p key={line} className={s.optNote}>
+                {line}
+              </p>
+            ))}
         </div>
       </section>
 

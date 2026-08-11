@@ -1,8 +1,12 @@
-import { STUDIO_OPTIONS } from '@/content/site';
+import { STUDIO_OPTIONS, type Plan } from '@/content/site';
 import type { Locale } from '@/lib/i18n';
 
 type L10n = Record<Locale, string>;
 type L10nList = Record<Locale, string[]>;
+
+/** ko 전용 데이터를 Plan 타입에 맞추기 위한 채움 — ko 화면에서만 렌더된다. */
+const koOnly = (v: string): L10n => ({ ja: v, en: v, ko: v });
+const koOnlyList = (v: string[]): L10nList => ({ ja: v, en: v, ko: v });
 
 /**
  * PLAN 페이지 전용 카피.
@@ -21,7 +25,7 @@ export const HERO = {
   lead: {
     ja: 'スタジオとロケーション、それぞれのプランと、追加できるオプションをまとめています。ご予約はお問い合わせから承ります（オンラインの自動予約はありません）。',
     en: 'Studio and location sessions, and everything you can add to them. Bookings are arranged by message — there is no automatic online booking.',
-    ko: '스튜디오와 로케이션, 그리고 선택 사항을 정리했습니다. 예약은 상담으로만 확정되며, 온라인 자동 예약은 없습니다.',
+    ko: '웨딩 촬영과 기타 촬영, 그리고 선택 사항을 정리했습니다. 예약은 상담으로만 확정되며, 온라인 자동 예약은 없습니다.',
   } satisfies L10n,
 };
 
@@ -195,7 +199,7 @@ export const OPTION_SECTION = {
   head: {
     ja: ['OPTION', 'PRICE', '対象プラン ・ 備考'],
     en: ['ADD-ON', 'PRICE', 'APPLIES TO'],
-    ko: ['OPTION', 'PRICE', '대상 플랜 · 비고'],
+    ko: ['OPTION', 'PRICE', '비고'],
   } satisfies L10nList,
 };
 
@@ -211,6 +215,9 @@ export type OptionRow = { label: string; price: string; note: string };
  * 그 차이를 그대로 옮긴 것이다.
  */
 export function optionRows(locale: Locale): OptionRow[] {
+  // ko 는 한국 고객 전용 옵션 구성(원화)을 쓴다 — JA/EN 옵션 표와 별개.
+  if (locale === 'ko') return KO_OPTION_ROWS;
+
   const [groom, raw, premium] = STUDIO_OPTIONS;
 
   const notes: L10nList = {
@@ -412,6 +419,121 @@ export const FAQ_QUESTIONS: Partial<Record<Locale, [string, string, string]>> = 
     'What if a typhoon cancels my flight?',
   ],
 };
+
+/* ---------------- 한국어 전용 상품 구성 ----------------
+ *
+ * 한국 고객 대상 상품은 일본어판과 별개다 (근거: usherinmaking.com/korean).
+ * 플랜명·가격(원화)·제공 내역(원본 + 몸매보정/색감보정)이 모두 다르므로
+ * ko 로케일은 아래 데이터로만 렌더하고, JA/EN 의 스튜디오·로케이션 플랜은 쓰지 않는다.
+ */
+
+export const KO_TABS = {
+  wedding: '웨딩 촬영',
+  etc: '기타 촬영',
+};
+
+export const KO_WEDDING_PLANS: Plan[] = [
+  {
+    code: 'ko-basic',
+    scope: 'location',
+    badge: '웨딩 촬영',
+    title: koOnly('베이직'),
+    duration: koOnly('촬영 시간 2시간 30분'),
+    price: 880000,
+    currency: 'KRW',
+    priceText: '88만원',
+    taxIncluded: false,
+    includes: koOnlyList([
+      '의상 2벌 이내',
+      '장소 2곳 (탈착의 시간 · 이동 시간 포함)',
+      '원본 + 몸매보정 25컷 제공',
+    ]),
+  },
+  {
+    code: 'ko-afterfull',
+    scope: 'location',
+    badge: '웨딩 촬영',
+    title: koOnly('에프터풀'),
+    duration: koOnly('촬영 시간 4시간'),
+    price: 1100000,
+    currency: 'KRW',
+    priceText: '110만원',
+    taxIncluded: false,
+    includes: koOnlyList([
+      '의상 3~4벌 이내',
+      '장소 3곳 (탈착의 시간 · 이동 시간 포함)',
+      '원본 + 몸매보정 35컷 제공',
+    ]),
+  },
+];
+
+export const KO_ETC_PLANS: Plan[] = [
+  {
+    code: 'ko-standard',
+    scope: 'location',
+    badge: '기타 촬영',
+    title: koOnly('스탠다드'),
+    duration: koOnly('촬영 시간 1시간'),
+    price: 300000,
+    currency: 'KRW',
+    priceText: '30만원',
+    taxIncluded: false,
+    includes: koOnlyList(['장소 1곳 (탈착의 시간 포함)', '원본 + 색감보정 15컷 제공']),
+  },
+  {
+    code: 'ko-upto',
+    scope: 'location',
+    badge: '기타 촬영',
+    title: koOnly('업투'),
+    duration: koOnly('촬영 시간 2시간'),
+    price: 500000,
+    currency: 'KRW',
+    priceText: '50만원',
+    taxIncluded: false,
+    includes: koOnlyList(['장소 2곳 (탈착의 시간 · 이동 시간 포함)', '원본 + 색감보정 24컷 제공']),
+  },
+];
+
+/** 기타 촬영 탭 하단 공통사항 — 원문 그대로 */
+export const KO_ETC_NOTES = ['의상은 제공하지 않습니다.', '웨딩 의상 착장은 불가합니다.'];
+
+/** 웨딩 촬영 탭 하단 — 커플 · 가족 촬영 안내 */
+export const KO_WEDDING_NOTE =
+  '에메랄드 산호 바다와 보타니컬한 오키나와 섬의 아름다움 속에서 웨딩 · 커플 · 가족 촬영으로 추억을 남겨보세요.';
+
+/** ko 옵션 표 — 원본 페이지의 옵션 절(영상 · 드레스 · 헤어메이크업 · 주말 요금)을 그대로 옮긴다. */
+export const KO_OPTION_ROWS: OptionRow[] = [
+  {
+    label: '영상 촬영 (기간 한정)',
+    price: '제공',
+    note: '100초 내외의 편집 영상 제공',
+  },
+  {
+    label: '드레스 대여 (1벌 + 액세서리 + 소품)',
+    price: '10만원부터',
+    note: '신부 드레스만 대여 가능 · 신랑 의상은 직접 준비 / 액세서리 · 소품은 드레스에 맞춰 작가가 매칭 (선택 불가)',
+  },
+  {
+    label: '헤어/메이크업 기본형',
+    price: '25만원',
+    note: '신랑 신부 헤어/메이크업 · 오키나와 현지 숍 이용',
+  },
+  {
+    label: '헤어/메이크업 헬퍼형',
+    price: '42만원부터',
+    note: '신랑 신부 헤어/메이크업 + 헬퍼 (신부 헤어 체인지 1회 포함)',
+  },
+  {
+    label: '주말 · 휴일 추가 요금 (일본 기준)',
+    price: '+6만원',
+    note: '헤어/메이크업 이용 시',
+  },
+];
+
+/** ko 드레스 안내 — 옵션 표 아래 보조 문장 */
+export const KO_OPTION_NOTES = [
+  '드레스 피팅은 불가하며, 드레스 디자인과 사이즈는 상담을 통해 선택 가능합니다.',
+];
 
 export const META_TITLE: L10n = {
   ja: 'プラン ・ スタジオとロケーションの料金',

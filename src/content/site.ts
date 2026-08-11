@@ -92,6 +92,10 @@ export type Plan = {
   duration: L10n;
   listPrice?: number;
   price: number;
+  /** 표시 통화. 생략하면 JPY(¥). 한국어 전용 플랜은 KRW('만원' 표기)를 쓴다. */
+  currency?: 'JPY' | 'KRW';
+  /** 카드에 그대로 내보낼 가격 문자열 — 있으면 숫자 포맷 대신 이걸 쓴다 (예: '88만원'). */
+  priceText?: string;
   taxIncluded: boolean;
   includes: L10nList;
 };
