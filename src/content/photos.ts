@@ -29,6 +29,9 @@ export type Photo = {
   planCode?: string;
   dress?: L10n;
   status: PhotoStatus;
+  /** 'video' 면 src 가 포스터, videoUrl 이 mp4 다. 생략 시 image. */
+  mediaType?: 'image' | 'video';
+  videoUrl?: string | null;
 };
 
 export const PHOTOS: Photo[] = [

@@ -132,15 +132,30 @@ export default async function WorkDetailPage({
       </nav>
 
       <figure className={s.hero}>
-        <Image
-          src={photo.src}
-          alt={photo.alt[locale]}
-          width={photo.width}
-          height={photo.height}
-          sizes="(max-width: 800px) 100vw, 760px"
-          className={s.heroImage}
-          priority
-        />
+        {photo.mediaType === 'video' && photo.videoUrl ? (
+          // 릴스 원본. 포스터는 사진 파이프라인이 만든 썸네일이라 격자와 톤이 같다.
+          // 자동재생하지 않는다 — 사용자가 눌러야 소리와 함께 시작된다.
+          <video
+            src={photo.videoUrl}
+            poster={photo.src}
+            controls
+            playsInline
+            preload="metadata"
+            width={photo.width}
+            height={photo.height}
+            className={s.heroImage}
+          />
+        ) : (
+          <Image
+            src={photo.src}
+            alt={photo.alt[locale]}
+            width={photo.width}
+            height={photo.height}
+            sizes="(max-width: 800px) 100vw, 760px"
+            className={s.heroImage}
+            priority
+          />
+        )}
       </figure>
 
       <article className={`u-wrap ${s.main}`}>

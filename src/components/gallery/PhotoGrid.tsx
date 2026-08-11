@@ -33,6 +33,11 @@ export function PhotoGrid({
               className={s.image}
               priority={index < priorityCount}
             />
+            {photo.mediaType === 'video' && (
+              <span className={s.play} aria-hidden="true">
+                ▶
+              </span>
+            )}
           </Link>
         </li>
       ))}

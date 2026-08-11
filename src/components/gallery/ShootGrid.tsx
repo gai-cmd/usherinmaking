@@ -42,6 +42,11 @@ export function ShootGrid({
               className={s.image}
               priority={index < priorityCount}
             />
+            {shoot.cover.mediaType === 'video' && (
+              <span className={s.play} aria-hidden="true">
+                ▶
+              </span>
+            )}
             {shoot.photos.length > 1 && (
               <span className={s.count}>{COUNT_LABEL[locale](shoot.photos.length)}</span>
             )}

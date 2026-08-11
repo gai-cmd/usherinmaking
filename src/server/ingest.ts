@@ -386,8 +386,12 @@ async function uniqueSlug(altEn: string): Promise<string | null> {
 type ItemOutcome = 'created' | 'duplicate';
 
 /**
- * 사진 한 장: 다운로드 → 원본 보관 → 실측 → 파생본 → AI 초안 → UNSORTED 저장.
- * 어느 단계에서 던지든 호출측이 그 한 장만 실패로 세고 다음으로 넘어간다.
+ * 한 건: 다운로드 → 원본 보관 → 실측 → 파생본 → AI 초안 → UNSORTED 저장.
+ * 어느 단계에서 던지든 호출측이 그 한 건만 실패로 세고 다음으로 넘어간다.
+ *
+ * 동영상(릴스)은 mp4 를 자사 스토리지에 그대로 보관하고, 썸네일을 사진과 같은
+ * 파이프라인(실측 · 파생본 · AI 초안)에 태운다 — 격자와 목록은 포스터로 그려지고
+ * 상세에서만 재생되므로, 포스터가 사진 한 장의 역할을 전부 대신한다.
  */
 async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
   const takenAt = parseInstagramTimestamp(media.timestamp);
@@ -396,9 +400,24 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
     throw new Error(`촬영 시각을 해석할 수 없습니다 (timestamp=${media.timestamp || '없음'}).`);
   }
 
-  const ext = extensionOf(media.mediaUrl);
-  const bytes = await downloadOriginal(media.mediaUrl);
-  const originalUrl = await storeOriginal(originalKey(media.id, ext), bytes);
+  const isVideo = media.mediaType === 'video';
+
+  // 파이프라인에 태울 "이미지" — 사진 자신이거나, 동영상의 포스터 썸네일.
+  const imageUrl = isVideo ? media.posterUrl : media.mediaUrl;
+  if (!imageUrl) throw new Error('동영상에 썸네일이 없어 포스터를 만들 수 없습니다.');
+
+  const ext = extensionOf(imageUrl);
+  const bytes = await downloadOriginal(imageUrl);
+  // 동영상 포스터는 사진 원본과 키가 겹치지 않게 접미사를 붙인다.
+  const imageKey = isVideo ? originalKey(`${media.id}-poster`, ext) : originalKey(media.id, ext);
+  const originalUrl = await storeOriginal(imageKey, bytes);
+
+  // mp4 원본. 포스터를 먼저 저장한 뒤 받는다 — 실패하면 이 건 전체가 실패로 남는다.
+  let videoUrl: string | null = null;
+  if (isVideo) {
+    const videoBytes = await downloadOriginal(media.mediaUrl);
+    videoUrl = await storeOriginal(originalKey(media.id, 'mp4'), videoBytes);
+  }
 
   // Graph API 는 크기를 주지 않는다. 내려받은 원본에서 직접 재야 파생본 계획과
   // 저해상도 판정이 실제와 맞는다.
@@ -418,6 +437,8 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
         height,
         caption: media.caption,
         takenAt,
+        mediaType: media.mediaType,
+        ...(videoUrl ? { videoUrl } : {}),
         // 수집물은 예외 없이 미선별이다. 전시는 관리자가 고른 것만 나간다.
         status: 'UNSORTED',
         lowRes: isLowRes(width, height),
@@ -447,7 +468,7 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
       update: {},
       create: {
         url: originalUrl,
-        pathname: originalKey(media.id, ext),
+        pathname: imageKey,
         mimeType: mimeForExtension(ext),
         size: bytes.byteLength,
         width,

@@ -29,6 +29,24 @@
   position: relative;
 }
 
+/* 동영상(릴스) 표시 — 이 카드를 누르면 상세에서 재생된다 */
+.play {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 11px;
+  padding-left: 2px;
+  color: #fff;
+  background: rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
 /* "사진 5장" — 이 카드가 낱장이 아니라 한 촬영임을 알리는 표시 */
 .count {
   position: absolute;

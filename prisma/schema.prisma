@@ -34,10 +34,14 @@ model Photo {
   // 인스타 원본 id. 수동 업로드는 null.
   igMediaId String? @unique
 
-  originalUrl String // 자사 스토리지 원본
+  originalUrl String // 자사 스토리지 원본 (동영상이면 포스터 이미지)
   variants    Json // { avif: { 400, 800, 1600 }, webp: {...} }
   width       Int
   height      Int
+
+  // 'image' | 'video'. 동영상(릴스)은 originalUrl/variants 가 포스터, videoUrl 이 mp4 다.
+  mediaType String  @default("image")
+  videoUrl  String?
 
   caption String?
   takenAt DateTime

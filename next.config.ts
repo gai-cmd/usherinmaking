@@ -51,6 +51,8 @@ const nextConfig: NextConfig = {
               "frame-ancestors 'self'",
               "form-action 'self'",
               "img-src 'self' data: blob: https:",
+              // 릴스 mp4 는 자사 Blob 스토어에서만 재생한다
+              "media-src 'self' https://1twhnamsdw7uymz2.public.blob.vercel-storage.com",
               // dev 는 소스맵·HMR 이 eval 을 쓴다 — 막으면 하이드레이션이 죽어
               // 클릭이 무반응이 된다(로컬 전용, 프로덕션 헤더에는 붙지 않는다).
               `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,

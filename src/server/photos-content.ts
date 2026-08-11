@@ -99,6 +99,8 @@ type Row = {
   caption: string | null;
   takenAt: Date;
   status: string;
+  mediaType: string;
+  videoUrl: string | null;
   terms: { term: { slug: string } }[];
 };
 
@@ -129,6 +131,8 @@ function fromDb(row: Row): PhotoContent | null {
     takenAt: toDateString(row.takenAt),
     terms: row.terms.map((t) => t.term.slug).filter((s) => KNOWN_SLUGS.has(s)),
     status: row.status as PhotoStatus,
+    mediaType: row.mediaType === 'video' ? 'video' : 'image',
+    videoUrl: row.videoUrl ?? null,
   };
 }
 

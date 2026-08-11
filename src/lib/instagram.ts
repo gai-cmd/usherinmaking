@@ -44,9 +44,10 @@ const MEDIA_FIELDS = [
   'id',
   'media_type',
   'media_url',
+  'thumbnail_url',
   'caption',
   'timestamp',
-  'children{id,media_type,media_url}',
+  'children{id,media_type,media_url,thumbnail_url}',
 ].join(',');
 
 /* ============================ 자격 증명 ============================ */
@@ -128,11 +129,17 @@ export class InstagramRateLimitError extends InstagramApiError {}
 /* ============================ 응답 형태 ============================ */
 
 /** Graph API 응답 중 우리가 요청한 필드만. 나머지는 정의하지 않는다. */
-export type IgApiChild = { id?: string; media_type?: string; media_url?: string };
+export type IgApiChild = {
+  id?: string;
+  media_type?: string;
+  media_url?: string;
+  thumbnail_url?: string;
+};
 export type IgApiItem = {
   id?: string;
   media_type?: string;
   media_url?: string;
+  thumbnail_url?: string;
   caption?: string;
   timestamp?: string;
   children?: { data?: IgApiChild[] };
@@ -155,6 +162,10 @@ export type InstagramMedia = {
   /** 게시물 안에서의 순서. 캐러셀 자식은 0,1,2…, 단일 게시물은 항상 0. */
   order: number;
   mediaUrl: string;
+  /** 'image' 는 mediaUrl 이 사진, 'video' 는 mediaUrl 이 mp4 이고 posterUrl 이 썸네일이다. */
+  mediaType: 'image' | 'video';
+  /** 동영상 썸네일(Graph API thumbnail_url). 이미지에는 없다. */
+  posterUrl: string | null;
   caption: string | null;
   /** Graph API 가 준 ISO8601 문자열. 해석은 parseInstagramTimestamp 로. */
   timestamp: string;
@@ -164,12 +175,38 @@ export type InstagramMedia = {
 
 /**
  * API 응답 → 수집 단위.
- * 캐러셀은 자식 사진 각각이 한 장으로 풀린다 — 갤러리의 단위가 게시물이 아니라 사진이기 때문이다.
+ * 캐러셀은 자식 각각이 한 건으로 풀린다 — 갤러리의 단위가 게시물이 아니라 미디어이기 때문이다.
  * 캡션·촬영시각은 부모 것을 물려받는다(Graph API 가 자식에 캡션을 주지 않는다).
- * 동영상은 Photo 파이프라인 대상이 아니라 제외한다.
+ * 동영상(릴스)도 수집한다 — mediaUrl 이 mp4, posterUrl 이 썸네일이다.
+ * 썸네일 없는 동영상은 포스터를 만들 수 없어 건너뛴다(수집 실패가 아니라 비대상).
  */
 export function flattenInstagramMedia(items: IgApiItem[]): InstagramMedia[] {
   const out: InstagramMedia[] = [];
+
+  const push = (
+    m: { id?: string; media_type?: string; media_url?: string; thumbnail_url?: string },
+    order: number,
+    inherited: { parentId: string; caption: string | null; timestamp: string },
+  ): boolean => {
+    if (!m.id || !m.media_url) return false;
+    if (m.media_type === 'IMAGE') {
+      out.push({ id: m.id, order, mediaUrl: m.media_url, mediaType: 'image', posterUrl: null, ...inherited });
+      return true;
+    }
+    if (m.media_type === 'VIDEO') {
+      if (!m.thumbnail_url) return false;
+      out.push({
+        id: m.id,
+        order,
+        mediaUrl: m.media_url,
+        mediaType: 'video',
+        posterUrl: m.thumbnail_url,
+        ...inherited,
+      });
+      return true;
+    }
+    return false;
+  };
 
   for (const item of items) {
     if (!item.id) continue;
@@ -180,18 +217,15 @@ export function flattenInstagramMedia(items: IgApiItem[]): InstagramMedia[] {
     };
 
     if (item.media_type === 'CAROUSEL_ALBUM') {
-      // 순서는 API 가 준 배열 순서 그대로다 — 동영상을 건너뛰어도 남은 사진의 앞뒤는 유지된다.
+      // 순서는 API 가 준 배열 순서 그대로다 — 비대상을 건너뛰어도 남은 미디어의 앞뒤는 유지된다.
       let order = 0;
       for (const child of item.children?.data ?? []) {
-        if (child.media_type !== 'IMAGE' || !child.id || !child.media_url) continue;
-        out.push({ id: child.id, order, mediaUrl: child.media_url, ...inherited });
-        order += 1;
+        if (push(child, order, inherited)) order += 1;
       }
       continue;
     }
 
-    if (item.media_type !== 'IMAGE' || !item.media_url) continue;
-    out.push({ id: item.id, order: 0, mediaUrl: item.media_url, ...inherited });
+    push(item, 0, inherited);
   }
 
   return out;

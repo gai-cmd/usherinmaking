@@ -62,6 +62,7 @@ export function mimeForExtension(ext: string): string {
     webp: 'image/webp',
     avif: 'image/avif',
     gif: 'image/gif',
+    mp4: 'video/mp4',
   };
   return map[ext.toLowerCase()] ?? 'application/octet-stream';
 }
