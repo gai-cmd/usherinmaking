@@ -19,7 +19,7 @@ import {
   parseInstagramTimestamp,
   type InstagramMedia,
 } from '@/lib/instagram';
-import { getInstagramCredentials, inspectToken } from '@/server/ig-token';
+import { getInstagramCredentials, inspectToken, type IgAccount } from '@/server/ig-token';
 import {
   downloadOriginal,
   encodeRenditions,
@@ -79,7 +79,43 @@ function isOnOrAfter(timestamp: string, since: Date): boolean {
 /** 원본 URL 에서 확장자를 못 읽었을 때. IG 의 IMAGE 미디어는 실제로 JPEG 로 온다. */
 const FALLBACK_EXT = 'jpg';
 
+/* ============================ 계정 프로필 ============================ */
+
+/**
+ * 계정마다 수집 규칙이 다르다.
+ *
+ * 작품(main)은 갤러리에서 파생본(AVIF/WebP)으로 서빙되고 사람이 골라 전시한다.
+ * 드레스(dress)는 룩북이라 원본을 next/image 가 그대로 최적화하고, 캡션 첫 줄이 곧 문안이므로
+ * 문안이 채워진 것은 바로 전시된다 — 이 규칙은 기존 수동 스크립트(--publish)와 같다.
+ */
+type AccountProfile = {
+  /** 저장 키 앞자리. 계정이 섞이면 나중에 어느 쪽 원본인지 알 수 없다. */
+  keyPrefix: (mediaId: string, ext: string) => string;
+  /** 파생본을 만들 것인가 */
+  renditions: boolean;
+  /** alt 가 채워졌으면 곧장 전시로 올릴 것인가 */
+  autoPublish: boolean;
+};
+
+const PROFILES: Record<IgAccount, AccountProfile> = {
+  main: {
+    keyPrefix: (id, ext) => originalKey(id, ext),
+    renditions: true,
+    autoPublish: false,
+  },
+  dress: {
+    keyPrefix: (id, ext) => `photos/dress/${id}.${ext}`,
+    renditions: false,
+    autoPublish: true,
+  },
+};
+
 const EMPTY_ALT: Localized = { ja: '', en: '', ko: '' };
+
+/** 3개 언어가 모두 채워졌는가. 전시(PUBLISHED) 의 전제 조건과 같은 규칙이다. */
+function isAltFilled(alt: Localized): boolean {
+  return Boolean(alt.ja.trim() && alt.en.trim() && alt.ko.trim());
+}
 
 /* ============================ 준비 상태 ============================ */
 
@@ -87,18 +123,26 @@ const EMPTY_ALT: Localized = { ja: '', en: '', ko: '' };
  * 토큰이 DB(Setting)에 보관된 뒤에는 IG_ACCESS_TOKEN 환경변수가 더 이상 요구사항이 아니다.
  * 씨앗을 심고 나면 그 변수를 지워도 수집이 돈다 — 그러니 없다고 미비로 세지 않는다.
  */
-function excludeStoredToken(missing: string[], hasStoredToken: boolean): string[] {
-  return hasStoredToken ? missing.filter((k) => k !== 'IG_ACCESS_TOKEN') : missing;
+function excludeStoredToken(
+  missing: string[],
+  hasStoredToken: boolean,
+  account: IgAccount,
+): string[] {
+  const tokenKey = account === 'dress' ? 'IG_DRESS_ACCESS_TOKEN' : 'IG_ACCESS_TOKEN';
+  return hasStoredToken ? missing.filter((k) => k !== tokenKey) : missing;
 }
 
 /**
  * 목록 조회만 하는 데 필요한 것. 미리보기가 쓴다.
  * 저장을 하지 않으므로 스토리지 토큰은 여기 없다.
  */
-export function missingFetchEnv(hasStoredToken = false): string[] {
+export function missingFetchEnv(hasStoredToken = false, account: IgAccount = 'main'): string[] {
+  // 파이프라인 쪽 검사는 작품 계정 변수만 본다 — 드레스는 자기 변수로 이미 걸렀다.
+  const pipeline = account === 'main' ? missingPipelineEnv() : [];
   return excludeStoredToken(
-    [...new Set([...missingInstagramEnv(), ...missingPipelineEnv()])],
+    [...new Set([...missingInstagramEnv(account), ...pipeline])],
     hasStoredToken,
+    account,
   );
 }
 
@@ -109,16 +153,16 @@ export function missingFetchEnv(hasStoredToken = false): string[] {
  * 업로드가 장마다 실패해서 "전건 실패"로 끝나는데, 그건 원인을 가린다.
  * 한 장도 내려받기 전에 여기서 끊고 무엇이 없는지 이름으로 말한다.
  */
-export function missingRunEnv(hasStoredToken = false): string[] {
-  const missing = missingFetchEnv(hasStoredToken);
+export function missingRunEnv(hasStoredToken = false, account: IgAccount = 'main'): string[] {
+  const missing = missingFetchEnv(hasStoredToken, account);
   if (!isBlobConfigured()) missing.push('BLOB_READ_WRITE_TOKEN');
   return [...new Set(missing)];
 }
 
 /** 준비 상태를 DB 의 토큰까지 보고 판정한다. 관리자 화면과 크론이 함께 쓴다. */
-export async function missingRunRequirements(): Promise<string[]> {
-  if (!isDatabaseConfigured()) return missingRunEnv();
-  return missingRunEnv((await inspectToken()).stored);
+export async function missingRunRequirements(account: IgAccount = 'main'): Promise<string[]> {
+  if (!isDatabaseConfigured()) return missingRunEnv(false, account);
+  return missingRunEnv((await inspectToken(account)).stored, account);
 }
 
 /* ============================ 타입 ============================ */
@@ -238,9 +282,9 @@ export async function listIngestRuns(limit = 10): Promise<IngestRunRecord[]> {
  * 신규 판정을 이 집합으로 먼저 거르기 때문에 재실행에서는 네트워크·인코딩이 한 번도 일어나지 않는다.
  * igMediaId 의 unique 제약은 이 집합을 만든 뒤 실행이 겹쳤을 때를 위한 두 번째 방어선이다.
  */
-export async function knownIgMediaIds(): Promise<Set<string>> {
+export async function knownIgMediaIds(account: IgAccount = 'main'): Promise<Set<string>> {
   const rows = await prisma.photo.findMany({
-    where: { igMediaId: { not: null } },
+    where: { igMediaId: { not: null }, igAccount: account },
     select: { igMediaId: true },
   });
   return new Set(rows.map((r) => r.igMediaId).filter((v): v is string => Boolean(v)));
@@ -393,7 +437,8 @@ type ItemOutcome = 'created' | 'duplicate';
  * 파이프라인(실측 · 파생본 · AI 초안)에 태운다 — 격자와 목록은 포스터로 그려지고
  * 상세에서만 재생되므로, 포스터가 사진 한 장의 역할을 전부 대신한다.
  */
-async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
+async function ingestOne(media: InstagramMedia, account: IgAccount): Promise<ItemOutcome> {
+  const profile = PROFILES[account];
   const takenAt = parseInstagramTimestamp(media.timestamp);
   if (!takenAt) {
     // 촬영 시각은 정렬의 축이다. 지어내면 갤러리 순서가 통째로 거짓이 된다.
@@ -409,20 +454,24 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
   const ext = extensionOf(imageUrl);
   const bytes = await downloadOriginal(imageUrl);
   // 동영상 포스터는 사진 원본과 키가 겹치지 않게 접미사를 붙인다.
-  const imageKey = isVideo ? originalKey(`${media.id}-poster`, ext) : originalKey(media.id, ext);
+  const imageKey = profile.keyPrefix(isVideo ? `${media.id}-poster` : media.id, ext);
   const originalUrl = await storeOriginal(imageKey, bytes);
 
   // mp4 원본. 포스터를 먼저 저장한 뒤 받는다 — 실패하면 이 건 전체가 실패로 남는다.
   let videoUrl: string | null = null;
   if (isVideo) {
     const videoBytes = await downloadOriginal(media.mediaUrl);
-    videoUrl = await storeOriginal(originalKey(media.id, 'mp4'), videoBytes);
+    videoUrl = await storeOriginal(profile.keyPrefix(media.id, 'mp4'), videoBytes);
   }
 
   // Graph API 는 크기를 주지 않는다. 내려받은 원본에서 직접 재야 파생본 계획과
   // 저해상도 판정이 실제와 맞는다.
   const { width, height } = await probeImageDimensions(bytes);
-  const variants = await encodeRenditions(bytes, planRenditions({ id: media.id, width, height }));
+  // 드레스 룩북은 원본을 next/image 가 그대로 최적화한다 — 파생본을 만들 이유가 없고,
+  // 인코딩을 건너뛴 만큼 크론 한 회차가 더 많은 장수를 소화한다.
+  const variants = profile.renditions
+    ? await encodeRenditions(bytes, planRenditions({ id: media.id, width, height }))
+    : [];
 
   const draft = await draftPhotoMetadata(bytes, media.caption);
   const slug = await uniqueSlug(draft.alt.en);
@@ -430,6 +479,7 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
   try {
     await prisma.photo.create({
       data: {
+        igAccount: account,
         igMediaId: media.id,
         originalUrl,
         variants: variants as unknown as Prisma.InputJsonValue,
@@ -439,8 +489,10 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
         takenAt,
         mediaType: media.mediaType,
         ...(videoUrl ? { videoUrl } : {}),
-        // 수집물은 예외 없이 미선별이다. 전시는 관리자가 고른 것만 나간다.
-        status: 'UNSORTED',
+        // 작품은 예외 없이 미선별이다 — 전시는 관리자가 고른 것만 나간다.
+        // 드레스 룩북은 문안(alt)이 채워졌으면 곧장 전시로 간다. alt 없는 사진을 올리지 않는 것은
+        // 두 계정에 공통이다(접근성 규칙).
+        status: profile.autoPublish && isAltFilled(draft.alt) ? 'PUBLISHED' : 'UNSORTED',
         lowRes: isLowRes(width, height),
         alt: draft.alt as unknown as Prisma.InputJsonValue,
         ...(draft.story ? { story: draft.story as unknown as Prisma.InputJsonValue } : {}),
@@ -473,7 +525,7 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
         size: bytes.byteLength,
         width,
         height,
-        source: 'instagram',
+        source: account === 'dress' ? 'instagram:dress' : 'instagram',
       },
     });
   } catch (err) {
@@ -487,6 +539,8 @@ async function ingestOne(media: InstagramMedia): Promise<ItemOutcome> {
 
 export type RunOptions = {
   trigger: IngestTrigger;
+  /** 수집 계정. 생략하면 작품(main). */
+  account?: IgAccount;
   /** 활동 로그에 남을 주체. 크론은 'system'. */
   actor?: string;
   /** 이번 실행에서 처리할 신규 건수 상한 override */
@@ -514,7 +568,7 @@ async function failWith(
  * 부분 실패는 정상 경로다: 항목 하나가 깨지면 failed 를 올리고 다음 항목으로 간다.
  */
 export async function runInstagramIngest(options: RunOptions): Promise<IngestResult> {
-  const { trigger, actor = trigger === 'cron' ? 'system' : 'admin' } = options;
+  const { trigger, account = 'main', actor = trigger === 'cron' ? 'system' : 'admin' } = options;
   const startedAtMs = Date.now();
   const aiUnavailable = isAiConfigured() ? null : AI_NOT_CONFIGURED.reason;
 
@@ -530,17 +584,17 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
   const run = await startRun();
 
   // 토큰을 먼저 확보한다 — 만료가 가까우면 여기서 연장되고, 그 결과가 아래 판정의 근거가 된다.
-  const token = await getInstagramCredentials();
+  const token = await getInstagramCredentials(account);
   if (token.refreshed) {
     await recordActivity({
       actor: 'system',
-      action: 'Instagram 액세스 토큰 자동 연장',
+      action: `Instagram 액세스 토큰 자동 연장 (${account})`,
       detail: { expiresAt: token.state.expiresAt?.toISOString() ?? null },
     });
   }
 
   // 자격 증명 · 스토리지. 하나라도 없으면 한 장도 건드리지 않고 끝낸다.
-  const missing = missingRunEnv(token.state.stored);
+  const missing = missingRunEnv(token.state.stored, account);
   if (missing.length > 0) {
     const error = new DependencyUnavailableError(
       `인스타그램 수집에 필요한 환경변수가 없습니다: ${missing.join(', ')}`,
@@ -572,7 +626,7 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
     const media = await fetchInstagramMedia(creds);
     fetched = media.length;
 
-    const known = await knownIgMediaIds();
+    const known = await knownIgMediaIds(account);
     const since = ingestSince();
     const inWindow = since ? media.filter((m) => isOnOrAfter(m.timestamp, since)) : media;
     tooOld = media.length - inWindow.length;
@@ -594,7 +648,7 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
       }
 
       try {
-        if ((await ingestOne(item)) === 'created') created += 1;
+        if ((await ingestOne(item, account)) === 'created') created += 1;
         else skipped += 1;
       } catch (itemErr) {
         // 한 장의 실패가 나머지를 막지 않는다. 세어서 남기고 다음으로 간다.
@@ -607,8 +661,8 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
 
     await recordActivity({
       actor,
-      action: `Instagram 동기화 — 신규 ${created}건 수집`,
-      detail: { trigger, fetched, created, failed, skipped, tooOld, remaining },
+      action: `Instagram 동기화 (${account}) — 신규 ${created}건 수집`,
+      detail: { trigger, account, fetched, created, failed, skipped, tooOld, remaining },
     });
 
     return { ok: true, trigger, run: closed, skipped, tooOld, remaining, aiUnavailable };
@@ -650,17 +704,17 @@ export type IngestPreview = {
  * 토큰이 살아 있는지 확인하는 가장 싼 방법이기도 하다 — 그래서 IngestRun 을 만들지 않는다.
  * 실행하지 않은 것을 실행 이력에 남기면 이력이 거짓말을 하게 된다.
  */
-export async function previewInstagramIngest(): Promise<IngestPreview> {
+export async function previewInstagramIngest(account: IgAccount = 'main'): Promise<IngestPreview> {
   if (!isDatabaseConfigured()) {
     throw new DependencyUnavailableError('DATABASE_URL 이 없어 중복 여부를 판단할 수 없습니다.', {
       missingEnv: ['DATABASE_URL'],
     });
   }
 
-  const token = await getInstagramCredentials();
+  const token = await getInstagramCredentials(account);
 
   // 미리보기는 아무것도 저장하지 않으므로 스토리지 토큰까지 요구하지 않는다.
-  const missing = missingFetchEnv(token.state.stored);
+  const missing = missingFetchEnv(token.state.stored, account);
   if (missing.length > 0) {
     throw new DependencyUnavailableError(
       `인스타그램 수집에 필요한 환경변수가 없습니다: ${missing.join(', ')}`,
@@ -678,7 +732,7 @@ export async function previewInstagramIngest(): Promise<IngestPreview> {
   }
 
   const media = await fetchInstagramMedia(creds);
-  const known = await knownIgMediaIds();
+  const known = await knownIgMediaIds(account);
   const fresh = media.filter((m) => !known.has(m.id)).length;
 
   return {

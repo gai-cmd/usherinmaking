@@ -17,12 +17,41 @@ import {
   type InstagramCredentials,
 } from '@/lib/instagram';
 
-/* ============================ 키 ============================ */
+/* ============================ 계정 ============================ */
 
-const KEY_TOKEN = 'ig.access_token';
-const KEY_EXPIRES_AT = 'ig.token_expires_at';
-/** 최초 씨앗 시각. 연장은 발급 24시간 뒤부터 가능해서 이 값이 필요하다. */
-const KEY_STORED_AT = 'ig.token_stored_at';
+/**
+ * 수집 계정. 'main' 은 작품(@usherinmaking), 'dress' 는 룩북(@usherindress).
+ *
+ * 계정마다 토큰이 따로 살아야 한다 — 하나의 Setting 키를 공유하면 한쪽 연장이
+ * 다른 쪽 토큰을 덮어써 두 계정이 동시에 죽는다.
+ */
+export type IgAccount = 'main' | 'dress';
+
+type AccountKeys = {
+  token: string;
+  expiresAt: string;
+  storedAt: string;
+  envToken: string;
+  envUserId: string;
+};
+
+const ACCOUNTS: Record<IgAccount, AccountKeys> = {
+  main: {
+    token: 'ig.access_token',
+    expiresAt: 'ig.token_expires_at',
+    // 최초 씨앗 시각. 연장은 발급 24시간 뒤부터 가능해서 이 값이 필요하다.
+    storedAt: 'ig.token_stored_at',
+    envToken: 'IG_ACCESS_TOKEN',
+    envUserId: 'IG_USER_ID',
+  },
+  dress: {
+    token: 'ig.dress.access_token',
+    expiresAt: 'ig.dress.token_expires_at',
+    storedAt: 'ig.dress.token_stored_at',
+    envToken: 'IG_DRESS_ACCESS_TOKEN',
+    envUserId: 'IG_DRESS_USER_ID',
+  },
+};
 
 /* ============================ 정책 ============================ */
 
@@ -84,8 +113,9 @@ function daysUntil(expiresAt: Date | null): number | null {
  * 지금 토큰이 어떤 상태인지. 관리자 화면이 "며칠 남았는가"를 말하는 근거다.
  * 토큰 값 자체는 절대 포함하지 않는다.
  */
-export async function inspectToken(): Promise<TokenState> {
-  const envToken = process.env.IG_ACCESS_TOKEN?.trim() ?? null;
+export async function inspectToken(account: IgAccount = 'main'): Promise<TokenState> {
+  const keys = ACCOUNTS[account];
+  const envToken = process.env[keys.envToken]?.trim() ?? null;
 
   if (!isDatabaseConfigured()) {
     return {
@@ -99,8 +129,8 @@ export async function inspectToken(): Promise<TokenState> {
   }
 
   const [dbToken, expiresRaw] = await Promise.all([
-    readSetting(KEY_TOKEN),
-    readSetting(KEY_EXPIRES_AT),
+    readSetting(keys.token),
+    readSetting(keys.expiresAt),
   ]);
   const expiresAt = parseDate(expiresRaw);
   const daysLeft = daysUntil(expiresAt);
@@ -125,12 +155,12 @@ export async function inspectToken(): Promise<TokenState> {
  * 실제 값은 첫 연장에서 API 가 알려 준다. 이 추정치가 실제보다 길면 연장 시도가 실패하는데,
  * 그때는 만료로 처리되어 사람에게 재발급을 요구하게 된다(조용히 넘어가지 않는다).
  */
-async function seedFromEnv(envToken: string): Promise<void> {
+async function seedFromEnv(keys: AccountKeys, envToken: string): Promise<void> {
   const now = new Date();
   await writeSettings({
-    [KEY_TOKEN]: envToken,
-    [KEY_EXPIRES_AT]: new Date(now.getTime() + 60 * DAY_MS).toISOString(),
-    [KEY_STORED_AT]: now.toISOString(),
+    [keys.token]: envToken,
+    [keys.expiresAt]: new Date(now.getTime() + 60 * DAY_MS).toISOString(),
+    [keys.storedAt]: now.toISOString(),
   });
 }
 
@@ -152,9 +182,18 @@ export type CredentialsResult = {
  * 연장이 실패해도 credentials 는 비지 않는다 — 기존 토큰이 아직 유효하기 때문이다.
  * 만료된 경우에만 credentials 가 null 이 되고, 호출측이 그 사실을 기록으로 남긴다.
  */
-export async function getInstagramCredentials(): Promise<CredentialsResult> {
-  const envCreds = instagramCredentialsFromEnv();
-  const userId = process.env.IG_USER_ID?.trim() ?? null;
+export async function getInstagramCredentials(
+  account: IgAccount = 'main',
+): Promise<CredentialsResult> {
+  const keys = ACCOUNTS[account];
+  const envToken = process.env[keys.envToken]?.trim() ?? null;
+  const userId = process.env[keys.envUserId]?.trim() ?? null;
+  const envCreds =
+    account === 'main'
+      ? instagramCredentialsFromEnv()
+      : envToken && userId
+        ? { accessToken: envToken, userId }
+        : null;
 
   // DB 가 없으면 연장 자체가 불가능하다. 환경변수 그대로 쓰고 그 사실을 상태로 알린다.
   if (!isDatabaseConfigured()) {
@@ -173,19 +212,19 @@ export async function getInstagramCredentials(): Promise<CredentialsResult> {
     };
   }
 
-  let token = await readSetting(KEY_TOKEN);
+  let token = await readSetting(keys.token);
 
   if (!token && envCreds) {
-    await seedFromEnv(envCreds.accessToken);
+    await seedFromEnv(keys, envCreds.accessToken);
     token = envCreds.accessToken;
   }
 
   if (!token || !userId) {
-    const state = await inspectToken();
+    const state = await inspectToken(account);
     return { credentials: null, refreshed: false, refreshError: null, state };
   }
 
-  let state = await inspectToken();
+  let state = await inspectToken(account);
 
   // 만료된 토큰으로는 연장도 조회도 되지 않는다. 사람이 재발급해야 한다.
   if (state.expired) {
@@ -196,7 +235,7 @@ export async function getInstagramCredentials(): Promise<CredentialsResult> {
   let refreshError: string | null = null;
 
   if (state.needsRefresh) {
-    const storedAt = parseDate(await readSetting(KEY_STORED_AT));
+    const storedAt = parseDate(await readSetting(keys.storedAt));
     const tooYoung = storedAt != null && Date.now() - storedAt.getTime() < MIN_TOKEN_AGE_MS;
 
     if (tooYoung) {
@@ -206,13 +245,13 @@ export async function getInstagramCredentials(): Promise<CredentialsResult> {
       try {
         const next = await refreshLongLivedToken(token);
         await writeSettings({
-          [KEY_TOKEN]: next.accessToken,
-          [KEY_EXPIRES_AT]: next.expiresAt.toISOString(),
-          [KEY_STORED_AT]: new Date().toISOString(),
+          [keys.token]: next.accessToken,
+          [keys.expiresAt]: next.expiresAt.toISOString(),
+          [keys.storedAt]: new Date().toISOString(),
         });
         token = next.accessToken;
         refreshed = true;
-        state = await inspectToken();
+        state = await inspectToken(account);
       } catch (err) {
         // 연장 실패는 이번 수집을 막지 않는다 — 기존 토큰이 아직 유효하다.
         refreshError = err instanceof Error ? err.message : String(err);

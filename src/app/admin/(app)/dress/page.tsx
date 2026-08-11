@@ -9,6 +9,7 @@ import {
   type PhotoStatus,
 } from '@/server/photos';
 import { PhotoCurator } from '../photos/PhotoCurator';
+import { SyncButton } from './SyncButton';
 import s from '../photos/page.module.css';
 
 // 드레스는 이제 @usherindress 수집분이 원본이다.
@@ -79,7 +80,8 @@ export default async function AdminDressPage({ searchParams }: { searchParams: S
     <>
       <PageHeader
         title="드레스 컬렉션"
-        description={`@usherindress 수집분입니다 (${counts.total.toLocaleString('ko-KR')}건). 드레스 페이지에 내보낼 것만 고르고, 컬렉션 분류를 지정합니다.`}
+        description={`@usherindress 수집분입니다 (${counts.total.toLocaleString('ko-KR')}건). 매일 자동으로 새 게시물을 받고, 캡션이 있는 것은 바로 전시됩니다.`}
+        actions={<SyncButton />}
       />
 
       <Toolbar>

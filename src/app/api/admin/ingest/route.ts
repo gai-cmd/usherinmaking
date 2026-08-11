@@ -8,7 +8,7 @@ import {
   previewInstagramIngest,
   runInstagramIngest,
 } from '@/server/ingest';
-import { inspectToken } from '@/server/ig-token';
+import { inspectToken, type IgAccount } from '@/server/ig-token';
 import { isDatabaseConfigured } from '@/server/db';
 
 export const runtime = 'nodejs';
@@ -27,9 +27,9 @@ export const maxDuration = 300;
  * 준비 상태. 값은 절대 싣지 않고 "무엇이 비었는지"만 알린다.
  * 토큰도 마찬가지다 — 만료일과 남은 일수만 나가고 토큰 원문은 어느 필드에도 없다.
  */
-async function readiness() {
-  const missingEnv = await missingRunRequirements();
-  const token = isDatabaseConfigured() ? await inspectToken() : null;
+async function readiness(account: IgAccount = 'main') {
+  const missingEnv = await missingRunRequirements(account);
+  const token = isDatabaseConfigured() ? await inspectToken(account) : null;
 
   return {
     ready: missingEnv.length === 0 && isDatabaseConfigured(),
@@ -70,6 +70,8 @@ const TriggerSchema = z
     preview: z.boolean().optional().default(false),
     /** 이번 실행에서 처리할 신규 건수 상한 */
     maxItems: z.number().int().min(1).max(200).optional(),
+    /** 수집 계정. 드레스 관리자의 "지금 동기화"가 'dress' 를 보낸다. */
+    account: z.enum(['main', 'dress']).optional().default('main'),
   })
   .strict();
 
@@ -81,17 +83,23 @@ export async function POST(req: Request) {
     const raw = await req.json().catch(() => ({}));
     const parsed = TriggerSchema.safeParse(raw ?? {});
     if (!parsed.success) {
-      throw new ValidationError('preview(boolean) · maxItems(1~200)만 받습니다.', {
+      throw new ValidationError('preview(boolean) · maxItems(1~200) · account(main|dress)만 받습니다.', {
         fields: parsed.error.issues.map((i) => i.path.join('.') || '(body)'),
       });
     }
 
+    const account = parsed.data.account;
+
     if (parsed.data.preview) {
-      return Response.json({ preview: await previewInstagramIngest(), ...(await readiness()) });
+      return Response.json({
+        preview: await previewInstagramIngest(account),
+        ...(await readiness(account)),
+      });
     }
 
     const result = await runInstagramIngest({
       trigger: 'admin',
+      account,
       maxItems: parsed.data.maxItems,
     });
 

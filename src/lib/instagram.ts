@@ -54,9 +54,16 @@ const MEDIA_FIELDS = [
 
 export type InstagramCredentials = { accessToken: string; userId: string };
 
-/** 크론이 실행 전에 확인하는 환경변수. 비어 있으면 503 으로 끊는다. */
-export function missingInstagramEnv(): string[] {
-  return (['IG_USER_ID', 'IG_ACCESS_TOKEN'] as const).filter((k) => !process.env[k]?.trim());
+/**
+ * 크론이 실행 전에 확인하는 환경변수. 비어 있으면 503 으로 끊는다.
+ * 계정마다 변수 이름이 다르다 — 드레스는 IG_DRESS_* 를 쓴다.
+ */
+export function missingInstagramEnv(account: 'main' | 'dress' = 'main'): string[] {
+  const keys =
+    account === 'dress'
+      ? (['IG_DRESS_USER_ID', 'IG_DRESS_ACCESS_TOKEN'] as const)
+      : (['IG_USER_ID', 'IG_ACCESS_TOKEN'] as const);
+  return keys.filter((k) => !process.env[k]?.trim());
 }
 
 /** 환경변수에서 자격 증명을 읽는다. 하나라도 없으면 null — 반쪽짜리로 호출하지 않는다. */

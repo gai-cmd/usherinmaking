@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/ingest-instagram",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/ingest-dress",
+      "schedule": "30 3 * * *"
     }
   ]
 }
