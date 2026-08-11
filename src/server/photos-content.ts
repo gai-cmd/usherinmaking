@@ -251,6 +251,29 @@ export function groupByShoot(photos: PhotoContent[]): Shoot[] {
 }
 
 /**
+ * 이 사진이 속한 촬영의 대표컷. 낱장이면 자기 자신이다.
+ *
+ * 왜 필요한가: 캐러셀 사진들은 저마다 상세 주소를 갖는데 본문은 게시물 캡션 하나를 공유한다.
+ * 그대로 두면 같은 글이 최대 7개 주소로 발행되어(2026-08-11 실측: 공개 1,016장 중 987장이
+ * 다른 페이지와 본문이 같다) 검색엔진에는 중복 콘텐츠가 된다. 대표컷을 정본 주소로 삼아
+ * 나머지를 canonical 로 몰아주면, 사람은 모든 사진을 그대로 보면서 색인만 한 곳으로 모인다.
+ */
+export function shootCoverOf(photos: PhotoContent[], photo: PhotoContent): PhotoContent {
+  if (!photo.shootKey) return photo;
+  let cover = photo;
+  for (const p of photos) {
+    if (p.shootKey !== photo.shootKey) continue;
+    if (p.shootOrder < cover.shootOrder) cover = p;
+  }
+  return cover;
+}
+
+/** 촬영마다 대표컷 한 장씩. 사이트맵이 묶음당 하나만 싣기 위해 쓴다. */
+export function shootCovers(photos: PhotoContent[]): PhotoContent[] {
+  return groupByShoot(photos).map((s) => s.cover);
+}
+
+/**
  * 같은 촬영의 다른 사진.
  *
  * 예전에는 세트·계절(mood 축)이 겹치는 사진을 보여줬는데, 그것은 "비슷한 분위기"일 뿐

@@ -95,9 +95,15 @@ async function galleryFilterEntries(now: Date): Promise<MetadataRoute.Sitemap> {
 async function photoEntries(now: Date): Promise<MetadataRoute.Sitemap> {
   try {
     // 공개 화면과 같은 곳을 본다. 사이트맵만 다른 소스를 보면 화면과 어긋난다.
-    const { getPublishedPhotos } = await import('@/server/photos-content');
-    const photos = await getPublishedPhotos();
-    if (!Array.isArray(photos)) return [];
+    const { getPublishedPhotos, shootCovers } = await import('@/server/photos-content');
+    const all = await getPublishedPhotos();
+    if (!Array.isArray(all)) return [];
+
+    // 촬영 묶음마다 대표컷 하나만 싣는다. 캐러셀 사진들은 본문(게시물 캡션)이 같아서
+    // 전부 실으면 같은 글을 여러 주소로 제출하는 셈이 된다 — 상세 페이지의 canonical 도
+    // 대표컷을 가리키므로, 사이트맵이 비대표컷을 싣는 것은 그 신호와 어긋나기까지 한다.
+    // 비대표컷 페이지는 여전히 목록에서 링크되어 사람도 검색엔진도 닿을 수 있다.
+    const photos = shootCovers(all);
 
     const out: MetadataRoute.Sitemap = [];
     for (const photo of photos) {

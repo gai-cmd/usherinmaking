@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { PhotoGrid } from '@/components/gallery/PhotoGrid';
 import { GALLERY } from '@/components/gallery/content';
 import type { Photo } from '@/content/photos';
-import { findBySlug, getPublishedPhotos, sameSet } from '@/server/photos-content';
+import { findBySlug, getPublishedPhotos, sameSet, shootCoverOf } from '@/server/photos-content';
 import { TERMS, termLabel } from '@/content/taxonomy';
 import {
   ANNIVERSARY_PLANS,
@@ -43,8 +43,14 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   if (!isLocale(locale)) return {};
 
-  const photo = findBySlug(await getPublishedPhotos(), slug);
+  const all = await getPublishedPhotos();
+  const photo = findBySlug(all, slug);
   if (!photo) return {};
+
+  // 같은 촬영의 사진들은 게시물 캡션 하나를 본문으로 공유한다. 그대로 두면 같은 글이
+  // 여러 주소로 발행되므로, 대표컷을 정본으로 지정해 색인을 한 곳에 모은다.
+  // 사람에게는 이 페이지가 그대로 보이고, 바뀌는 것은 검색엔진에 주는 신호뿐이다.
+  const cover = shootCoverOf(all, photo);
 
   // 메타 설명은 태그 없는 문장 한 문단으로 제한한다. 캡션 전문이 그대로 흘러가면
   // 검색 결과 스니펫이 해시태그 덩어리가 된다. story 는 이미 정제돼 있지만 길이는 여기서 자른다.
@@ -55,8 +61,8 @@ export async function generateMetadata({
     title: photo.alt[locale],
     description,
     alternates: {
-      canonical: `${SITE_URL}${path(locale, 'gallery', 'g', photo.slug)}`,
-      languages: alternates('gallery', 'g', photo.slug),
+      canonical: `${SITE_URL}${path(locale, 'gallery', 'g', cover.slug)}`,
+      languages: alternates('gallery', 'g', cover.slug),
     },
     openGraph: {
       type: 'article',
