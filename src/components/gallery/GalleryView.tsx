@@ -8,7 +8,9 @@ import { ShootGrid } from './ShootGrid';
 import { GALLERY, countLabel, moreLabel } from './content';
 import s from './GalleryView.module.css';
 
-export const PAGE_SIZE = 15;
+// 4열 그리드의 배수로 맞춘다 — 한 페이지가 항상 꽉 찬 줄로 끝나야
+// 마지막 줄 빈 칸(그걸 카드 늘리기로 메꾸는 편법)이 생기지 않는다.
+export const PAGE_SIZE = 16;
 
 /**
  * 칩에 붙는 숫자 — 현재 선택에 그 term을 더했을 때 남는 사진 수.
