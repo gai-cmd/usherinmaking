@@ -10,6 +10,7 @@
 import type { Prisma } from '@prisma/client';
 import { isDatabaseConfigured, prisma } from '@/server/db';
 import { logAdminAction } from '@/server/activity';
+import { blockIgMediaIds } from '@/server/ig-blocklist';
 import { AppError, NotImplementedError, NotFoundError, ValidationError } from './errors';
 import { isLowRes, type VariantMap } from '@/lib/image-contract';
 import { LOCALES, type Locale } from '@/lib/i18n';
@@ -574,6 +575,42 @@ export async function bulkUpdatePhotoStatus(ids: string[], status: PhotoStatus):
 
   const rows = await prisma.photo.findMany({ where: { id: { in: ids } }, include: PHOTO_INCLUDE });
   return rows.map(fromDb);
+}
+
+/**
+ * 선택 사진을 갤러리에서 완전히 뺀다 — 행을 지우고, 그 인스타 게시물을 수집 제외 목록에 올린다.
+ *
+ * 제외 목록이 핵심이다. 행만 지우면 중복 방지가 "처음 보는 사진"으로 판단해서
+ * 다음 동기화에 그대로 다시 들어온다. 지운 사실 자체를 남겨야 다시 오지 않는다.
+ *
+ * 원본 파일은 스토리지에 그대로 둔다(MediaAsset 행도 남는다). 되돌릴 수 없는 것은
+ * 갤러리 등록 정보뿐이고, 사진 자체는 미디어 화면에서 계속 볼 수 있다 —
+ * 사장님이 "원본은 남겨놔"라고 하신 경계가 여기다.
+ */
+export async function deletePhotos(ids: string[]): Promise<{ deleted: number; blocked: number }> {
+  if (!isDatabaseConfigured()) {
+    throw new NotImplementedError(`사진 ${ids.length}건 삭제`);
+  }
+
+  // 먼저 인스타 id 를 모아 제외 목록에 올린다. 순서가 중요하다 —
+  // 지우고 나서 목록에 올리다 실패하면, 그 사진은 다음 동기화에 되돌아온다.
+  const rows = await prisma.photo.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, igMediaId: true },
+  });
+  const igIds = rows.map((r) => r.igMediaId).filter((v): v is string => Boolean(v));
+  const blocked = igIds.length > 0 ? await blockIgMediaIds(igIds) : 0;
+
+  // 분류 연결을 먼저 끊는다(관계 테이블에 외래키가 걸려 있다).
+  await prisma.photoTerm.deleteMany({ where: { photoId: { in: ids } } });
+  const { count } = await prisma.photo.deleteMany({ where: { id: { in: ids } } });
+
+  await logAdminAction('사진 삭제 · 수집 제외', undefined, {
+    count,
+    blockedTotal: blocked,
+  });
+
+  return { deleted: count, blocked };
 }
 
 export async function updatePhotoAlt(id: string, alt: Partial<Localized>): Promise<Photo> {

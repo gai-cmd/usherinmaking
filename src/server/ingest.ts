@@ -33,6 +33,7 @@ import {
   storeOriginal,
 } from '@/lib/image-pipeline';
 import { parseCaption } from '@/lib/caption';
+import { blockedIgMediaIds } from '@/server/ig-blocklist';
 import { slugFromAlt, suggestCategories } from '@/server/ai-draft';
 import type { AiSuggestion, Localized } from '@/server/photos';
 
@@ -627,11 +628,14 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
     fetched = media.length;
 
     const known = await knownIgMediaIds(account);
+    // 관리자가 "제외"한 게시물. 행을 지웠으므로 known 으로는 걸러지지 않는다 —
+    // 이 목록이 없으면 지운 사진이 다음 동기화에 그대로 다시 들어온다.
+    const blocked = await blockedIgMediaIds();
     const since = ingestSince();
     const inWindow = since ? media.filter((m) => isOnOrAfter(m.timestamp, since)) : media;
     tooOld = media.length - inWindow.length;
 
-    const fresh = inWindow.filter((m) => !known.has(m.id));
+    const fresh = inWindow.filter((m) => !known.has(m.id) && !blocked.has(m.id));
     skipped = inWindow.length - fresh.length;
 
     // 최신부터 넣는다. 오늘 올린 게시물이 다음 회차에 바로 들어와야 "자동 업데이트"가 되고,
@@ -733,7 +737,9 @@ export async function previewInstagramIngest(account: IgAccount = 'main'): Promi
 
   const media = await fetchInstagramMedia(creds);
   const known = await knownIgMediaIds(account);
-  const fresh = media.filter((m) => !known.has(m.id)).length;
+  // 미리보기도 같은 규칙을 써야 "지금 돌리면 몇 장"이 실제와 맞는다.
+  const blocked = await blockedIgMediaIds();
+  const fresh = media.filter((m) => !known.has(m.id) && !blocked.has(m.id)).length;
 
   return {
     fetched: media.length,

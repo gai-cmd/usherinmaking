@@ -5,6 +5,10 @@
 // 대소를 64비트로 적고(dHash), 해밍 거리가 임계 이하면 같은 사진으로 묶는다.
 // 워터마크 위치나 해상도가 달라도 같은 컷이면 잡힌다.
 //
+// 동영상(릴스)은 판정 대상에서 뺀다. 릴스의 포스터는 같은 촬영의 스틸 컷과 거의 같은 그림이라
+// 화면 비교로는 반드시 중복으로 잡히는데, 둘은 서로 다른 매체다 — 보관하면 릴스가 갤러리에서 사라진다.
+// (2026-08-11 실측: 27장 후보 중 1장이 릴스였다.)
+//
 // 남길 한 장(원본)을 고르는 기준 — 순서대로:
 //   1) 해상도가 큰 것 (720×900 축소본보다 1440×1800 원본)
 //   2) 저해상도 딱지(lowRes)가 없는 것
@@ -106,7 +110,8 @@ const fmt = (p) =>
 
 async function main() {
   const rows = await prisma.photo.findMany({
-    where: { status: STATUS, igAccount: ACCOUNT },
+    // 동영상은 제외한다. 위 주석의 이유 — 릴스 포스터는 스틸과 닮을 수밖에 없다.
+    where: { status: STATUS, igAccount: ACCOUNT, NOT: { mediaType: 'video' } },
     select: {
       id: true,
       slug: true,
@@ -122,7 +127,14 @@ async function main() {
     orderBy: { takenAt: 'desc' },
   });
 
-  console.log(`대상: ${STATUS} · ${ACCOUNT} 계정 ${rows.length}건 (임계 해밍거리 ${THRESHOLD})\n`);
+  const videos = await prisma.photo.count({
+    where: { status: STATUS, igAccount: ACCOUNT, mediaType: 'video' },
+  });
+
+  console.log(
+    `대상: ${STATUS} · ${ACCOUNT} 계정 ${rows.length}건 (임계 해밍거리 ${THRESHOLD})` +
+      `${videos ? ` · 동영상 ${videos}건은 판정에서 제외` : ''}\n`,
+  );
 
   const hashed = [];
   let failed = 0;

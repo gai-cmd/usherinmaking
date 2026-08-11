@@ -1,7 +1,12 @@
 import { z } from 'zod';
 import { requireAdmin } from '@/server/auth';
 import { errorResponse, ValidationError } from '@/server/errors';
-import { bulkUpdatePhotoStatus, countPublishedAmong, type PhotoStatus } from '@/server/photos';
+import {
+  bulkUpdatePhotoStatus,
+  countPublishedAmong,
+  deletePhotos,
+  type PhotoStatus,
+} from '@/server/photos';
 import { revalidateWorksSurfaces } from '@/server/works';
 
 export const runtime = 'nodejs';
@@ -10,10 +15,10 @@ export const dynamic = 'force-dynamic';
 const BulkSchema = z.object({
   // 한 번에 다루는 건수 상한. 실수로 전체를 공개하는 사고를 막는다.
   ids: z.array(z.string().min(1).max(64)).min(1).max(200),
-  action: z.enum(['publish', 'archive', 'unsort']),
+  action: z.enum(['publish', 'archive', 'unsort', 'delete']),
 });
 
-const ACTION_TO_STATUS: Record<z.infer<typeof BulkSchema>['action'], PhotoStatus> = {
+const ACTION_TO_STATUS: Record<'publish' | 'archive' | 'unsort', PhotoStatus> = {
   publish: 'PUBLISHED',
   archive: 'ARCHIVED',
   unsort: 'UNSORTED',
@@ -36,8 +41,17 @@ export async function POST(req: Request) {
     const unique = [...new Set(ids)];
 
     // 공개 그리드는 PUBLISHED 가 개입하는 전환에서만 바뀐다. publish 는 항상 개입하고,
-    // archive/unsort 는 대상에 PUBLISHED 가 있었을 때만이다 — 변경 전에 재야 한다.
+    // 나머지는 대상에 PUBLISHED 가 있었을 때만이다 — 변경 전에 재야 한다.
     const hadPublished = action !== 'publish' && (await countPublishedAmong(unique)) > 0;
+
+    // 삭제는 행을 지우고 그 게시물을 수집 제외 목록에 올린다 — 동기화해도 다시 오지 않는다.
+    if (action === 'delete') {
+      const { deleted, blocked } = await deletePhotos(unique);
+      const { revalidated } = hadPublished
+        ? await revalidateWorksSurfaces()
+        : { revalidated: false };
+      return Response.json({ ok: true, count: deleted, blocked, revalidated });
+    }
 
     await bulkUpdatePhotoStatus(unique, ACTION_TO_STATUS[action]);
 

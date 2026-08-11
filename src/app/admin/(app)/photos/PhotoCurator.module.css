@@ -27,7 +27,8 @@
 
 .bulkPrimary,
 .bulkGhost,
-.bulkQuiet {
+.bulkQuiet,
+.bulkDanger {
   min-height: 32px;
   padding: 7px 15px;
   font-size: 12px;
@@ -51,9 +52,23 @@
   color: var(--a-muted);
 }
 
+/* 되돌릴 수 없는 동작이라 다른 버튼과 눈에 띄게 구분한다. 왼쪽 여백으로 무리에서 떼어 놓는다. */
+.bulkDanger {
+  margin-left: auto;
+  border: 1px solid #a8412f;
+  color: #a8412f;
+  background: transparent;
+}
+
+.bulkDanger:hover:not(:disabled) {
+  background: #a8412f;
+  color: var(--a-panel);
+}
+
 .bulkPrimary:disabled,
 .bulkGhost:disabled,
-.bulkQuiet:disabled {
+.bulkQuiet:disabled,
+.bulkDanger:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }

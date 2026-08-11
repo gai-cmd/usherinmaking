@@ -83,21 +83,50 @@ export function PhotoCurator({ photos, taxonomies, initialPhotoId }: Props) {
     return call(`/api/admin/photos/${id}/status`, { status });
   }
 
-  function bulkStatus(status: PhotoStatus) {
+  function bulkAction(action: 'publish' | 'archive' | 'delete') {
     if (selected.size === 0) return;
     setBusy(true);
     setNotice(null);
     fetch('/api/admin/photos/bulk', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ ids: [...selected], action: status === 'PUBLISHED' ? 'publish' : 'archive' }),
+      body: JSON.stringify({ ids: [...selected], action }),
     })
       .then(async (res) => {
-        const data = (await res.json().catch(() => ({}))) as ApiError;
-        if (!res.ok) setNotice(data.error?.message ?? `요청이 실패했습니다 (HTTP ${res.status}).`);
+        const data = (await res.json().catch(() => ({}))) as ApiError & { count?: number };
+        if (!res.ok) {
+          setNotice(data.error?.message ?? `요청이 실패했습니다 (HTTP ${res.status}).`);
+          return;
+        }
+        if (action === 'delete') {
+          // 지운 사진은 목록에서 사라져야 한다. 선택도 함께 비운다 —
+          // 이미 없는 사진이 선택된 채로 남으면 다음 일괄 작업이 404 로 막힌다.
+          setSelected(new Set());
+          setNotice(`${data.count ?? 0}건을 삭제했습니다. 동기화해도 다시 들어오지 않습니다.`);
+        }
       })
       .catch(() => setNotice('서버에 연결하지 못했습니다.'))
       .finally(() => setBusy(false));
+  }
+
+  function bulkStatus(status: PhotoStatus) {
+    bulkAction(status === 'PUBLISHED' ? 'publish' : 'archive');
+  }
+
+  /**
+   * 삭제는 되돌릴 수 없다(행이 사라지고 수집 제외 목록에 오른다).
+   * 그래서 버튼 한 번으로는 실행하지 않고, 확인을 한 단계 둔다.
+   */
+  function confirmDelete() {
+    if (selected.size === 0) return;
+    const ok = window.confirm(
+      `선택한 ${selected.size}건을 갤러리에서 삭제합니다.\n\n` +
+        `· 사이트와 관리자 목록에서 사라집니다\n` +
+        `· 인스타 동기화가 돌아도 다시 들어오지 않습니다\n` +
+        `· 원본 파일은 미디어 보관함에 남습니다\n\n` +
+        `되돌릴 수 없습니다. 계속할까요?`,
+    );
+    if (ok) bulkAction('delete');
   }
 
   const selectedMissingAlt = [...selected].filter((id) => {
@@ -136,6 +165,15 @@ export function PhotoCurator({ photos, taxonomies, initialPhotoId }: Props) {
           </button>
           <button type="button" className={s.bulkQuiet} disabled title="AI alt 생성이 아직 연결되지 않았습니다">
             alt 일괄 생성
+          </button>
+          <button
+            type="button"
+            className={s.bulkDanger}
+            disabled={selected.size === 0 || busy}
+            title="갤러리에서 지우고 다시 수집되지 않게 합니다"
+            onClick={confirmDelete}
+          >
+            삭제 · 수집 제외
           </button>
         </div>
 
