@@ -118,7 +118,7 @@ export default async function WorkDetailPage({
           alt={photo.alt[locale]}
           width={photo.width}
           height={photo.height}
-          sizes="100vw"
+          sizes="(max-width: 800px) 100vw, 760px"
           className={s.heroImage}
           priority
         />

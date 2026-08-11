@@ -20,16 +20,16 @@
 
 /* 작품 상세의 큰 사진도 컨테이너 폭을 지킨다. */
 .hero {
-  height: 520px;
-  overflow: hidden;
-  max-width: var(--content-max);
+  /* 인스타 원본은 세로형(4:5)이다. 고정 높이 + cover 는 얼굴을 잘랐다 —
+     폭을 좁혀 원본 비율 그대로 세로로 길게 보여준다 (저널 표지와 같은 해법). */
+  max-width: 760px;
   margin-inline: auto;
 }
 
 .heroImage {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
 }
 
 .main {
