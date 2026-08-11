@@ -16,7 +16,6 @@
 
 .lead {
   margin-top: 14px;
-  max-width: 64ch;
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   color: var(--muted);

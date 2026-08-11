@@ -3,7 +3,6 @@
 }
 
 .head {
-  max-width: 78ch;
   padding-bottom: 34px;
   border-bottom: 1px solid var(--hairline);
 }
@@ -27,7 +26,6 @@
 }
 
 .body {
-  max-width: 78ch;
   padding-top: 34px;
 }
 

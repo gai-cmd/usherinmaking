@@ -23,7 +23,6 @@
 
 .lead {
   margin: 18px auto 0;
-  max-width: 66ch;
   font-size: 13.5px;
   line-height: 2.1;
   color: var(--muted);

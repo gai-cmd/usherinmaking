@@ -33,7 +33,6 @@
 
 .lead {
   margin-top: 22px;
-  max-width: 46ch;
   font-family: var(--ff-heading);
   font-size: 14px;
   line-height: 2.1;
