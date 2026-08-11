@@ -20,14 +20,16 @@ function termCounts(
   selection: Selection,
 ): Record<string, number> {
   const base = selectionSegments(selection);
-  const counts: Record<string, number> = { __all: photos.length };
+  // 단위는 촬영 묶음이다 — 목록이 묶음 단위로 그려지므로 칩 숫자도 같은 자로 재야
+  // "스튜디오 36인데 눌렀더니 9개" 같은 어긋남이 없다.
+  const counts: Record<string, number> = { __all: groupByShoot(photos).length };
 
   // 모든 축에 숫자를 붙인다 — 눌러 봐야 아는 칩은 눌리지 않는다.
   // 같은 축의 기존 선택은 빼고 센다: 칩을 누르면 그 축이 갈아끼워지는 동작과 같은 셈법이다.
   for (const taxonomy of TAXONOMIES) {
     for (const term of termsFor(taxonomy.key, locale)) {
       const segments = base.filter((slug) => slug !== selection[taxonomy.key]?.slug);
-      counts[term.slug] = filterBy(photos, [...segments, term.slug]).length;
+      counts[term.slug] = groupByShoot(filterBy(photos, [...segments, term.slug])).length;
     }
   }
 
