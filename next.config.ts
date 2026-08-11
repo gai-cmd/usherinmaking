@@ -49,7 +49,9 @@ const nextConfig: NextConfig = {
               "frame-ancestors 'self'",
               "form-action 'self'",
               "img-src 'self' data: blob: https:",
-              "script-src 'self' 'unsafe-inline'",
+              // dev 는 소스맵·HMR 이 eval 을 쓴다 — 막으면 하이드레이션이 죽어
+              // 클릭이 무반응이 된다(로컬 전용, 프로덕션 헤더에는 붙지 않는다).
+              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
               // 애플 시스템 서체를 쓰므로 외부 폰트 도메인을 열 필요가 없다
               "style-src 'self' 'unsafe-inline'",
               "font-src 'self'",
