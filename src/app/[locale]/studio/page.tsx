@@ -235,13 +235,13 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
             <div className={s.map}>
               <iframe
                 title={ACCESS.mapTitle[locale]}
-                src={`https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`}
+                src={STUDIO_INFO.map.embed}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className={s.mapFrame}
               />
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                href={STUDIO_INFO.map.place}
                 className={s.mapLink}
                 target="_blank"
                 rel="noreferrer"

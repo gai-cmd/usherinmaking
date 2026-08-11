@@ -416,6 +416,17 @@ export const STUDIO_INFO = {
   /** 지역 검색·AI 답변에서 주소와 함께 신뢰 신호가 된다. 국제 표기는 구조화 데이터에서 쓴다. */
   phone: '090-6792-5091',
   phoneIntl: '+81-90-6792-5091',
+  /**
+   * 구글 지도. 주소 문자열로 검색하면 이름 없는 핀만 찍힌다 — 업체명으로 검색해야
+   * 등록된 비즈니스 정보(사진·전화·웹사이트)가 카드로 열린다. 모든 페이지가 이 두 값을 쓴다.
+   * place 는 사용자가 지도에서 직접 공유한 업체 링크(2026-08-11)다.
+   */
+  map: {
+    place: 'https://share.google/rLFyycYdU4fvFDxcG',
+    embed: `https://www.google.com/maps?q=${encodeURIComponent(
+      'usherinmaking 1868 Toguchi Kitanakagusuku Okinawa 901-2302',
+    )}&output=embed`,
+  },
   /** 나하공항 기준 소요시간. 근거가 없어 지어내지 않는다. */
   fromAirport: TBC,
   languages: {

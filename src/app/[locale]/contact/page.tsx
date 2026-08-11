@@ -20,6 +20,12 @@ const TITLE: Record<Locale, string> = {
 };
 
 /** 언어마다 구분점이 다르다 — EN 페이지에 일본어 중점을 쓰지 않는다. */
+const MAP_OPEN: Record<Locale, string> = {
+  ja: 'マップで開く ↗',
+  en: 'Open in Google Maps ↗',
+  ko: '지도에서 열기 ↗',
+};
+
 const DOT: Record<Locale, string> = { ja: ' ・ ', en: ' · ', ko: ' · ' };
 
 export async function generateMetadata({
@@ -208,11 +214,20 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           <div className={s.map}>
             <iframe
               title={CONTACT.studioTitle[locale]}
-              src={`https://www.google.com/maps?q=${encodeURIComponent(STUDIO_INFO.address[locale])}&output=embed`}
+              src={STUDIO_INFO.map.embed}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className={s.mapFrame}
             />
+            <a
+              href={STUDIO_INFO.map.place}
+              className={s.mapOpen}
+              target="_blank"
+              rel="noreferrer"
+              data-tap
+            >
+              {MAP_OPEN[locale]}
+            </a>
           </div>
         </section>
       </div>

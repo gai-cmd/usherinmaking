@@ -244,3 +244,12 @@
     border-top: 0;
   }
 }
+
+.mapOpen {
+  display: block;
+  padding: 10px 12px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--brass);
+  border-top: 1px solid var(--hairline);
+}
