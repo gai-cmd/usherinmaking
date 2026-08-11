@@ -54,6 +54,8 @@ export default async function PhotosPage({ searchParams }: { searchParams: Searc
   const preselect = one(sp.photo);
 
   const filter: PhotoFilter = {
+    // 작품 갤러리 선별 화면이다 — 드레스 룩북(@usherindress) 수집분은 /admin/dress 가 맡는다.
+    account: 'main',
     status,
     sort,
     untagged: flag === 'untagged' || undefined,
@@ -63,8 +65,9 @@ export default async function PhotosPage({ searchParams }: { searchParams: Searc
 
   const [photos, counts, taxonomies] = await Promise.all([
     listPhotos(filter),
-    countPhotos(),
-    listPhotoTaxonomies(),
+    countPhotos('main'),
+    // 작품 갤러리의 축만. 드레스 컬렉션 축은 /admin/dress 가 쓴다.
+    listPhotoTaxonomies(['place', 'session', 'mood']),
   ]);
 
   const current = { status, flag, sort };

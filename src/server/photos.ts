@@ -100,6 +100,7 @@ function fromContent(p: (typeof CONTENT_PHOTOS)[number]): Photo {
   const takenAt = jstDate(p.takenAt);
   return {
     id: p.id,
+    igAccount: 'main',
     igMediaId: null,
     originalUrl: p.src,
     variants: { avif: {}, webp: {} },
@@ -236,6 +237,7 @@ function fromQueue(q: QueueInput): Photo {
   const takenAt = jstDate(q.takenAt);
   return {
     id: q.id,
+    igAccount: 'main',
     igMediaId: q.manual ? null : `ig_${q.id}`,
     originalUrl: `/images/up/${q.file}`,
     variants: { avif: {}, webp: {} },
@@ -353,6 +355,7 @@ function fromDbTerm(row: DbPhotoTerm): PhotoTermRef {
 function fromDb(row: DbPhoto): Photo {
   return {
     id: row.id,
+    igAccount: row.igAccount,
     igMediaId: row.igMediaId,
     originalUrl: row.originalUrl,
     variants: readVariants(row.variants),
@@ -390,6 +393,8 @@ async function allRows(): Promise<Photo[]> {
 export async function listPhotos(filter: PhotoFilter = {}): Promise<Photo[]> {
   let rows = await allRows();
 
+  // 계정은 화면의 경계다 — 드레스 관리자에 작품 사진이 섞이면 선별 자체가 무의미해진다.
+  if (filter.account) rows = rows.filter((p) => p.igAccount === filter.account);
   if (filter.status) rows = rows.filter((p) => p.status === filter.status);
   if (filter.untagged) rows = rows.filter(hasNoTerms);
   if (filter.lowRes) rows = rows.filter((p) => p.lowRes);
@@ -459,8 +464,9 @@ async function requirePhoto(id: string): Promise<Photo> {
   return seedPhoto;
 }
 
-export async function countPhotos(): Promise<PhotoCounts> {
-  const all = await allRows();
+export async function countPhotos(account?: 'main' | 'dress'): Promise<PhotoCounts> {
+  const rows = await allRows();
+  const all = account ? rows.filter((p) => p.igAccount === account) : rows;
   const publishedByPlace: Record<string, number> = {};
   for (const p of all) {
     if (p.status !== 'PUBLISHED') continue;
@@ -482,10 +488,36 @@ export async function countPhotos(): Promise<PhotoCounts> {
   };
 }
 
-/** 분류 드롭다운용. TODO(taxonomy): 카테고리 관리 화면이 생기면 그쪽 모듈로 옮긴다. */
-export async function listPhotoTaxonomies(): Promise<TaxonomyOption[]> {
-  // TODO(prisma): prisma.taxonomy.findMany({ include: { terms: { orderBy: { order: 'asc' } } } })
-  return SEED_TAXONOMIES;
+/**
+ * 분류 드롭다운용.
+ *
+ * DB 가 붙어 있으면 DB 를 읽는다 — 분류 지정(setPhotoTerms)이 DB 의 term id 로 검증하므로,
+ * 시드의 content key 를 내려보내면 DB 에만 있는 축(dressCollection)은 저장이 통째로 막힌다.
+ * `key` 로 좁혀 부르면 그 축만 준다(드레스 관리자는 dressCollection 하나만 쓴다).
+ */
+export async function listPhotoTaxonomies(keys?: string | string[]): Promise<TaxonomyOption[]> {
+  const wanted = keys === undefined ? null : Array.isArray(keys) ? keys : [keys];
+
+  if (isDatabaseConfigured()) {
+    const rows = await prisma.taxonomy.findMany({
+      ...(wanted ? { where: { key: { in: wanted } } } : {}),
+      include: { terms: { orderBy: { order: 'asc' } } },
+      orderBy: { order: 'asc' },
+    });
+    if (rows.length > 0) {
+      return rows.map((tx) => ({
+        id: tx.id,
+        key: tx.key,
+        label: readLocalized(tx.label, { ja: tx.key, en: tx.key, ko: tx.key }),
+        terms: tx.terms.map((t) => ({
+          id: t.id,
+          slug: t.slug,
+          label: readLocalized(t.label, { ja: t.slug, en: t.slug, ko: t.slug }),
+        })),
+      }));
+    }
+  }
+  return wanted ? SEED_TAXONOMIES.filter((tx) => wanted.includes(tx.key)) : SEED_TAXONOMIES;
 }
 
 /** 스토리지 사용량. 아직 계산할 근거가 없으므로 null을 돌려주고 화면이 "미연결"로 표시한다. */

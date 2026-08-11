@@ -12,3 +12,8 @@
 {"ts":"2026-08-11T12:25:55.548142875+09:00","event":"InstructionsLoaded","handler":"*hook.instructionsLoadedHandler","duration_ms":0,"session_id":"5f2023eb-9c7d-41eb-a171-64766b93bcd9"}
 {"ts":"2026-08-11T12:25:55.55087125+09:00","event":"InstructionsLoaded","handler":"*hook.instructionsLoadedHandler","duration_ms":0,"session_id":"5f2023eb-9c7d-41eb-a171-64766b93bcd9"}
 {"ts":"2026-08-11T12:28:49.354964959+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Write","duration_ms":0,"decision":"deny","reason":"Path traversal detected: file is outside project directory","session_id":"5f2023eb-9c7d-41eb-a171-64766b93bcd9"}
+{"ts":"2026-08-11T15:35:03.774415834+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Bash","duration_ms":0,"decision":"allow","session_id":"5f2023eb-9c7d-41eb-a171-64766b93bcd9"}
+{"ts":"2026-08-11T15:36:23.84309725+09:00","event":"Stop","handler":"*hook.stopHandler","duration_ms":0,"session_id":"5f2023eb-9c7d-41eb-a171-64766b93bcd9"}
+{"ts":"2026-08-11T15:36:29.068015084+09:00","event":"TeammateIdle","handler":"*hook.teammateIdleHandler","duration_ms":0,"session_id":"5f2023eb-9c7d-41eb-a171-64766b93bcd9"}
+{"ts":"2026-08-11T15:43:07.455846708+09:00","event":"SubagentStart","handler":"*hook.subagentStartHandler","duration_ms":0,"session_id":"5f2023eb-9c7d-41eb-a171-64766b93bcd9"}
+{"ts":"2026-08-11T15:47:45.52245975+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Bash","duration_ms":5,"decision":"allow","session_id":"5f2023eb-9c7d-41eb-a171-64766b93bcd9"}

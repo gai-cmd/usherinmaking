@@ -1,250 +1,137 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import {
-  AdminButton,
-  Badge,
-  DataTable,
-  NotWired,
-  PageHeader,
-  Panel,
-  type Column,
-} from '@/components/admin';
-import { LOCALES, LOCALE_LABEL, type Locale } from '@/lib/i18n';
-import {
-  countDress,
-  getDressPhotoState,
-  listDressCollections,
-  listDressItems,
-  DRESS_TIER_LABEL,
-  type DressItem,
-} from '@/server/dress';
-import s from './dress.module.css';
+import { FilterChip, PageHeader, Toolbar } from '@/components/admin';
 import { checkAdminPageAccess } from '@/server/auth';
+import {
+  countPhotos,
+  listPhotos,
+  listPhotoTaxonomies,
+  type PhotoFilter,
+  type PhotoStatus,
+} from '@/server/photos';
+import { PhotoCurator } from '../photos/PhotoCurator';
+import s from '../photos/page.module.css';
 
-export const metadata = { title: '드레스 관리 · 관리자' };
+// 드레스는 이제 @usherindress 수집분이 원본이다.
+//
+// 예전 화면은 코드 상수(@/content/dress)의 드레스 3벌을 표로 보여줬는데, 사진이 인스타로
+// 대체되면서 그 표는 실물과 무관한 목록이 됐다. 그래서 전시 선별과 같은 선별 화면으로 바꾸고
+// 계정만 dress 로 좁힌다 — 같은 컴포넌트를 쓰므로 조작 방법도 한 가지로 유지된다.
+//
+// 분류 축은 dressCollection 하나만 내려보낸다. 장소·촬영·무드는 작품 갤러리의 축이라
+// 드레스 룩북에 섞이면 필터가 의미를 잃는다.
 
-/** 금액은 항상 --ff-num(SF). 추가요금 없음은 0 이 아니라 "없음"이다. */
-function surcharge(item: DressItem) {
-  if (item.surcharge === null) return <span className={s.dim}>없음</span>;
-  return <span className={s.num}>+¥{item.surcharge.toLocaleString('ja-JP')}</span>;
+export const metadata = { title: '드레스 컬렉션 · 관리자' };
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+const STATUS_TABS: { value: PhotoStatus; label: string }[] = [
+  { value: 'UNSORTED', label: '미선별' },
+  { value: 'PUBLISHED', label: '전시중' },
+  { value: 'ARCHIVED', label: '보관' },
+];
+
+function one(v: string | string[] | undefined): string | undefined {
+  return Array.isArray(v) ? v[0] : v;
 }
 
-export default async function AdminDressPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ id?: string }>;
-}) {
-  // 레이아웃 가드만으로는 이 컴포넌트의 실행을 막지 못한다.
-  // App Router에서 자식 세그먼트는 부모의 조건과 무관하게 렌더되고, 그 결과가 같은 응답의
-  // RSC 페이로드에 실려 나간다. 그래서 데이터를 읽기 전에 여기서 한 번 더 끊는다.
+function buildHref(
+  base: Record<string, string | undefined>,
+  patch: Record<string, string | undefined>,
+) {
+  const merged = { ...base, ...patch };
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(merged)) if (v) qs.set(k, v);
+  const q = qs.toString();
+  return q ? `/admin/dress?${q}` : '/admin/dress';
+}
+
+export default async function AdminDressPage({ searchParams }: { searchParams: SearchParams }) {
+  // 레이아웃의 잠금 화면은 표시만 막고 자식 실행은 막지 못한다 — 데이터를 읽기 전에 끊는다.
   const access = await checkAdminPageAccess();
   if (!access.allowed) notFound();
 
-  const { id } = await searchParams;
+  const sp = await searchParams;
+  const statusParam = one(sp.status);
+  const status: PhotoStatus =
+    statusParam === 'UNSORTED' || statusParam === 'ARCHIVED' ? statusParam : 'PUBLISHED';
+  const flag = one(sp.flag);
+  const sort = one(sp.sort) === 'oldest' ? 'oldest' : 'newest';
+  const preselect = one(sp.photo);
 
-  const [items, collections, photoState, counts] = await Promise.all([
-    listDressItems(),
-    listDressCollections(),
-    getDressPhotoState(),
-    countDress(),
+  const filter: PhotoFilter = {
+    account: 'dress',
+    status,
+    sort,
+    untagged: flag === 'untagged' || undefined,
+    lowRes: flag === 'lowres' || undefined,
+    missingAlt: flag === 'missing-alt' || undefined,
+  };
+
+  const [photos, counts, taxonomies] = await Promise.all([
+    listPhotos(filter),
+    countPhotos('dress'),
+    listPhotoTaxonomies('dressCollection'),
   ]);
 
-  const selected = items.find((d) => d.id === id) ?? items[0];
-  const collectionTitle = (slug: string) =>
-    collections.find((c) => c.slug === slug)?.title.ko ?? slug;
-
-  const columns: Column<DressItem>[] = [
-    {
-      key: 'img',
-      header: 'IMG',
-      width: '64px',
-      cell: (d) =>
-        d.photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={d.photo} alt="" className={s.thumb} width={34} height={44} />
-        ) : (
-          // 없는 경로를 지어내지 않는다. 사진이 없으면 없는 자리를 보여 준다.
-          <span className={s.thumbEmpty} title="사진 미납품" aria-label="사진 없음" />
-        ),
-    },
-    {
-      key: 'name',
-      header: '이름',
-      cell: (d) => (
-        <Link href={`/admin/dress?id=${d.id}`} className={s.nameLink}>
-          {d.name.ko ?? d.name.ja ?? d.id}
-        </Link>
-      ),
-    },
-    {
-      key: 'collection',
-      header: '컬렉션',
-      width: '14%',
-      cell: (d) => <span className={s.dim}>{collectionTitle(d.collection)}</span>,
-    },
-    {
-      key: 'tier',
-      header: '구분',
-      width: '10%',
-      cell: (d) => <span className={s.dim}>{DRESS_TIER_LABEL[d.tier]}</span>,
-    },
-    { key: 'surcharge', header: '추가요금', width: '14%', cell: surcharge },
-    {
-      key: 'status',
-      header: '상태',
-      width: '10%',
-      cell: (d) =>
-        d.published ? <Badge tone="default">공개</Badge> : <Badge tone="brass">비공개</Badge>,
-    },
-  ];
+  const current = { status, flag, sort };
 
   return (
     <>
       <PageHeader
         title="드레스 컬렉션"
-        description="컬렉션 단위로 관리합니다. 드레스 페이지에는 브랜드명을 쓰지 않으므로 브랜드 항목은 없습니다."
-        actions={
-          <>
-            <AdminButton disabled title="저장 경로가 아직 연결되지 않았습니다">
-              순서 변경
-            </AdminButton>
-            <AdminButton variant="primary" disabled title="저장 경로가 아직 연결되지 않았습니다">
-              드레스 추가
-            </AdminButton>
-          </>
-        }
+        description={`@usherindress 수집분입니다 (${counts.total.toLocaleString('ko-KR')}건). 드레스 페이지에 내보낼 것만 고르고, 컬렉션 분류를 지정합니다.`}
       />
 
-      <div className={s.body}>
-        {!photoState.anyPhotoSupplied ? (
-          <div className={s.noticeWarn}>
-            개별 드레스 사진이 아직 납품되지 않았습니다 ({photoState.missingPhotoCount}벌 전부).
-            사진이 들어오기 전까지 목록과 상세는 빈 자리로 표시됩니다.
-            {!photoState.inventoryConfirmed
-              ? ' 아래 목록은 시안에 실린 예시이며 확정된 대여 재고가 아닙니다.'
-              : ''}
-          </div>
-        ) : null}
+      <Toolbar>
+        {STATUS_TABS.map((t) => (
+          <FilterChip
+            key={t.value}
+            href={buildHref(current, { status: t.value, photo: undefined })}
+            active={status === t.value}
+            count={
+              t.value === 'UNSORTED'
+                ? counts.unsorted
+                : t.value === 'PUBLISHED'
+                  ? counts.published
+                  : counts.archived
+            }
+          >
+            {t.label}
+          </FilterChip>
+        ))}
 
-        <div className={s.split}>
-          <Panel padded={false}>
-            <DataTable
-              columns={columns}
-              rows={items}
-              getRowKey={(d) => d.id}
-              empty="등록된 드레스가 없습니다."
-            />
-          </Panel>
+        <span className={s.divider} aria-hidden="true" />
 
-          {selected ? (
-            <Panel
-              title={selected.name.ko ?? selected.id}
-              aside={
-                selected.published ? (
-                  <Badge tone="default">공개</Badge>
-                ) : (
-                  <Badge tone="brass">비공개</Badge>
-                )
-              }
-            >
-              <div className={s.detail}>
-                <div>
-                  <div className={s.fieldLabel}>사진</div>
-                  {selected.photo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={selected.photo} alt="" className={s.detailPhoto} />
-                  ) : (
-                    <div className={s.detailPhotoEmpty}>사진 미납품</div>
-                  )}
-                </div>
+        <FilterChip
+          href={buildHref(current, { flag: flag === 'untagged' ? undefined : 'untagged' })}
+          active={flag === 'untagged'}
+          count={counts.untagged}
+        >
+          컬렉션 미지정만
+        </FilterChip>
+        <FilterChip
+          href={buildHref(current, { flag: flag === 'missing-alt' ? undefined : 'missing-alt' })}
+          active={flag === 'missing-alt'}
+          count={counts.missingAlt}
+        >
+          alt 미완성만
+        </FilterChip>
+        <FilterChip
+          href={buildHref(current, { flag: flag === 'lowres' ? undefined : 'lowres' })}
+          active={flag === 'lowres'}
+          count={counts.lowRes}
+        >
+          저해상도만
+        </FilterChip>
 
-                <div>
-                  <div className={s.fieldLabel}>설명 (JA / EN / KO)</div>
-                  <div className={s.descBox}>
-                    {LOCALES.map((l: Locale) => {
-                      const text = selected.description[l];
-                      return (
-                        <div key={l} className={s.descRow}>
-                          <span className={s.descLang}>{LOCALE_LABEL[l]}</span>
-                          {text && text.trim() ? (
-                            <span lang={l}>{text}</span>
-                          ) : (
-                            <span className={s.missing}>미작성</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+        <span className={s.spacer} />
 
-                <div className={s.pair}>
-                  <div>
-                    <div className={s.fieldLabel}>사이즈</div>
-                    <div className={s.fieldValue}>
-                      {selected.sizes.length > 0 ? (
-                        <span className={s.num}>{selected.sizes.join(' · ')}</span>
-                      ) : (
-                        <span className={s.dim}>미지정</span>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <div className={s.fieldLabel}>추가요금</div>
-                    <div className={s.fieldValue}>{surcharge(selected)}</div>
-                  </div>
-                </div>
+        <FilterChip href={buildHref(current, { sort: sort === 'newest' ? 'oldest' : 'newest' })}>
+          SORT: {sort === 'newest' ? 'NEWEST' : 'OLDEST'}
+        </FilterChip>
+      </Toolbar>
 
-                <div className={s.actions}>
-                  <AdminButton disabled title="저장 경로가 아직 연결되지 않았습니다">
-                    {selected.published ? '비공개로' : '공개로'}
-                  </AdminButton>
-                  <AdminButton
-                    variant="primary"
-                    disabled
-                    title="저장 경로가 아직 연결되지 않았습니다"
-                  >
-                    저장
-                  </AdminButton>
-                </div>
-              </div>
-            </Panel>
-          ) : null}
-        </div>
-
-        <Panel title="컬렉션">
-          <p className={s.collectionNote}>
-            드레스 페이지의 필터 축입니다. 대여 요금대는 ¥10,000대부터 ¥50,000대까지이며,
-            턱시도는 취급하지 않습니다.
-          </p>
-          <ul className={s.collections}>
-            {collections.map((c) => (
-              <li key={c.slug} className={s.collection}>
-                <span className={s.collectionName}>{c.title.ko}</span>
-                <span className={s.dim}>{c.note.ko}</span>
-                {c.image ? (
-                  <Badge tone="default">대표사진 있음</Badge>
-                ) : (
-                  <Badge tone="warn">대표사진 없음</Badge>
-                )}
-              </li>
-            ))}
-          </ul>
-        </Panel>
-
-        <p className={s.summary}>
-          공개 {counts.published} · 비공개 {counts.hidden} · 사진 없음 {counts.withoutPhoto}
-        </p>
-        <NotWired
-          what="드레스 추가 · 순서 변경 · 저장"
-          hint={
-            <>
-              prisma/schema.prisma 에 Dress 모델이 아직 없어{' '}
-              <code className={s.code}>@/content/dress</code> 를 읽고 있습니다. 모델 추가 후
-              열립니다.
-            </>
-          }
-        />
-      </div>
+      <PhotoCurator photos={photos} taxonomies={taxonomies} initialPhotoId={preselect} />
     </>
   );
 }

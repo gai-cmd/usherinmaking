@@ -35,6 +35,8 @@ export type PhotoTermRef = {
 
 export type Photo = {
   id: string;
+  /** 수집 출처 계정. 'main'(작품 @usherinmaking) / 'dress'(@usherindress). */
+  igAccount: string;
   igMediaId: string | null;
   originalUrl: string;
   variants: VariantMap;
@@ -61,6 +63,8 @@ export type TaxonomyOption = {
 };
 
 export type PhotoFilter = {
+  /** 수집 계정으로 거른다. 없으면 전체 — 전시 선별은 'main', 드레스 관리자는 'dress' 를 쓴다. */
+  account?: 'main' | 'dress';
   status?: PhotoStatus;
   /** 분류가 하나도 지정되지 않은 것만 */
   untagged?: boolean;
