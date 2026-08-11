@@ -93,7 +93,16 @@ export async function GalleryView({
 
         {hasMore && (
           <p className={s.more}>
-            <Link href={`${currentPath}?page=${page + 1}`} className="u-btn" data-tap>
+            {/* scroll={false} 가 이 버튼의 핵심이다. 다음 쪽은 앞쪽을 포함해 더 길어진 목록이라
+                화면에는 "아래로 이어붙는" 것처럼 보여야 하는데, Next 의 기본 이동은 맨 위로
+                스크롤해 버려서 보던 자리를 잃는다. 주소는 그대로 ?page=N 이므로 뒤로가기와
+                검색엔진 크롤은 지금처럼 동작한다. */}
+            <Link
+              href={`${currentPath}?page=${page + 1}`}
+              className="u-btn"
+              data-tap
+              scroll={false}
+            >
               {moreLabel(shown.length + PAGE_SIZE > shoots.length ? shoots.length : shown.length + PAGE_SIZE, shoots.length, locale)}
             </Link>
           </p>
