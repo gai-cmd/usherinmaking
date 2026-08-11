@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
       // 구 사이트에서 삭제된 페이지 — RESERVE 자리에 PHOTOGRAPHER
       { source: '/reserve.html', destination: '/ja/photographer', permanent: true },
       { source: '/reserve', destination: '/ja/photographer', permanent: true },
+      // 요금 페이지 en 세그먼트를 plan 으로 통일하며 남긴 구 주소
+      { source: '/en/plans', destination: '/en/plan', permanent: true },
     ];
   },
   async headers() {

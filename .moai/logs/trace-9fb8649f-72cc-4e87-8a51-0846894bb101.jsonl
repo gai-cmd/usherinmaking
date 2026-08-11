@@ -1,0 +1,4 @@
+{"ts":"2026-08-09T14:23:46.756515625+09:00","event":"SessionStart","handler":"*hook.sessionStartHandler","duration_ms":9,"session_id":"9fb8649f-72cc-4e87-8a51-0846894bb101"}
+{"ts":"2026-08-09T14:23:46.765934625+09:00","event":"SessionStart","handler":"*hook.autoUpdateHandler","duration_ms":1397,"session_id":"9fb8649f-72cc-4e87-8a51-0846894bb101"}
+{"ts":"2026-08-09T15:26:19.425532834+09:00","event":"PermissionRequest","handler":"*hook.permissionRequestHandler","tool":"AskUserQuestion","duration_ms":0,"session_id":"9fb8649f-72cc-4e87-8a51-0846894bb101"}
+{"ts":"2026-08-10T00:28:55.192632584+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Bash","duration_ms":0,"decision":"allow","session_id":"9fb8649f-72cc-4e87-8a51-0846894bb101"}

@@ -1,0 +1,6 @@
+{"ts":"2026-08-01T13:17:17.566460708+09:00","event":"SessionStart","handler":"*hook.sessionStartHandler","duration_ms":8,"session_id":"3c896fd0-1e2f-4210-bb28-2566e0f05510"}
+{"ts":"2026-08-01T13:35:47.215014625+09:00","event":"PostToolUse","handler":"*hook.postToolHandler","tool":"Edit","duration_ms":0,"session_id":"3c896fd0-1e2f-4210-bb28-2566e0f05510"}
+{"ts":"2026-08-01T13:42:41.151553792+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Bash","duration_ms":0,"session_id":"3c896fd0-1e2f-4210-bb28-2566e0f05510"}
+{"ts":"2026-08-01T14:07:01.21504875+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Bash","duration_ms":0,"session_id":"3c896fd0-1e2f-4210-bb28-2566e0f05510"}
+{"ts":"2026-08-01T21:11:57.242819959+09:00","event":"PreToolUse","handler":"*hook.preToolHandler","tool":"Bash","duration_ms":0,"decision":"allow","session_id":"3c896fd0-1e2f-4210-bb28-2566e0f05510"}
+{"ts":"2026-08-02T11:01:12.247701666+09:00","event":"SubagentStop","handler":"*hook.subagentStopHandler","duration_ms":0,"session_id":"3c896fd0-1e2f-4210-bb28-2566e0f05510"}

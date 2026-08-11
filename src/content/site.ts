@@ -257,20 +257,36 @@ export const ANNIVERSARY_PLANS: Plan[] = [
     scope: 'anniversary',
     badge: 'STANDARD',
     title: { ja: '記念写真 スタンダード', en: 'Anniversary Standard', ko: '기념사진 스탠다드' },
-    duration: { ja: '—', en: '—', ko: '—' },
+    duration: {
+      ja: '撮影時間 1時間 ・ 1ヶ所 ・ 日中のみ',
+      en: '1 hour · 1 location · daytime only',
+      ko: '촬영 1시간 · 1곳 · 낮 시간만',
+    },
     price: 38000,
     taxIncluded: true,
-    includes: { ja: [], en: [], ko: [] },
+    includes: {
+      ja: ['原本 全データ 200カット以上', '＋ 色補正 20カット'],
+      en: ['200+ original frames', 'plus 20 colour-corrected cuts'],
+      ko: ['원본 전체 200컷 이상', '+ 색 보정 20컷'],
+    },
   },
   {
     code: 'anniversary-half',
     scope: 'anniversary',
     badge: 'HALF',
     title: { ja: '記念写真 ハーフ', en: 'Anniversary Half', ko: '기념사진 하프' },
-    duration: { ja: '—', en: '—', ko: '—' },
+    duration: {
+      ja: '撮影時間 2時間 ・ 2ヶ所 ・ 日中 / 夕方〜サンセット',
+      en: 'approx. 2 hours · 2 locations · daytime or into sunset',
+      ko: '촬영 2시간 · 2곳 · 낮 / 저녁~선셋',
+    },
     price: 60000,
     taxIncluded: true,
-    includes: { ja: [], en: [], ko: [] },
+    includes: {
+      ja: ['原本 全データ 400カット以上', '＋ 色補正 30カット'],
+      en: ['400+ original frames', 'plus 30 colour-corrected cuts'],
+      ko: ['원본 전체 400컷 이상', '+ 색 보정 30컷'],
+    },
   },
 ];
 

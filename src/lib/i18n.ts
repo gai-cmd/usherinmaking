@@ -16,13 +16,13 @@ export const HTML_LANG: Record<Locale, string> = {
   ko: 'ko-KR',
 };
 
-/** 페이지 키 → 로케일별 URL 세그먼트. 요금 페이지만 en에서 'plans'. */
+/** 페이지 키 → 로케일별 URL 세그먼트. 요금 페이지는 전 로케일 'plan' (구 /en/plans 는 redirect). */
 export const ROUTE_SEGMENT = {
   home: { ja: '', en: '', ko: '' },
   studio: { ja: 'studio', en: 'studio', ko: 'studio' },
   location: { ja: 'location', en: 'location', ko: 'location' },
   dress: { ja: 'dress', en: 'dress', ko: 'dress' },
-  plan: { ja: 'plan', en: 'plans', ko: 'plan' },
+  plan: { ja: 'plan', en: 'plan', ko: 'plan' },
   photographer: { ja: 'photographer', en: 'photographer', ko: 'photographer' },
   journal: { ja: 'journal', en: 'journal', ko: 'journal' },
   gallery: { ja: 'gallery', en: 'gallery', ko: 'gallery' },

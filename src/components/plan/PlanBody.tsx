@@ -6,7 +6,6 @@ import {
   LOCATION_NOTES,
   LOCATION_PLANS,
   STUDIO_PLANS,
-  TBC,
   type Plan,
 } from '@/content/site';
 import { SITE_URL, alternates, path, type Locale } from '@/lib/i18n';
@@ -138,9 +137,7 @@ function AnniversaryPanel({ locale, text }: { locale: Locale; text: PageCopy }) 
           </div>
         ))}
       </div>
-      <p className={s.panelNote}>
-        {C.ANNIVERSARY_PANEL.unconfirmed[locale]} — {TBC[locale]}
-      </p>
+      <p className={s.panelNote}>{C.ANNIVERSARY_PANEL.surcharge[locale]}</p>
       <p className={s.panelNote}>{text['anniversaryPanel.note']}</p>
     </div>
   );

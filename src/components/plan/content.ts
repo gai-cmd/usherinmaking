@@ -169,11 +169,11 @@ export const LOCATION_PANEL = {
 };
 
 export const ANNIVERSARY_PANEL = {
-  /** 기념사진 탭은 시안 카드에 상세가 없다 — 확정되지 않은 항목은 TBC 로 표기한다. */
-  unconfirmed: {
-    ja: '所要時間・カット数などの詳細',
-    en: 'Duration and the number of cuts',
-    ko: '소요 시간과 컷 수',
+  /** 상세는 usherinmaking.jp/plan 의 기념사진 절에서 옮겼다 — TBC 표기는 종료. */
+  surcharge: {
+    ja: '土・日・祝 ＋¥8,000 ／ 大人2名＋お子様2名まで ・ 1名追加 ＋¥3,000 ／ 場所により許可費・出張費がかかる場合があります。',
+    en: 'Weekends and holidays +¥8,000 · up to 2 adults and 2 children, +¥3,000 per extra person · some locations carry permit or travel fees.',
+    ko: '주말 · 공휴일 +¥8,000 / 성인 2명 + 어린이 2명까지 · 1명 추가 +¥3,000 / 장소에 따라 허가비 · 출장비가 추가될 수 있습니다.',
   } satisfies L10n,
   note: {
     ja: '記念写真プランは税込表示です。お問い合わせの際に詳細をご案内します。',
