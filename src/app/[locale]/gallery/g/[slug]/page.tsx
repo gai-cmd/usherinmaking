@@ -18,6 +18,7 @@ import { SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
 import { captionDescription, topHashtags } from '@/lib/caption';
 import { getPageCopy } from '@/server/page-content';
 import s from './page.module.css';
+import { Reveal } from './Reveal';
 
 const ALL_PLANS: Plan[] = [...STUDIO_PLANS, ...LOCATION_PLANS, ...ANNIVERSARY_PLANS];
 
@@ -166,12 +167,17 @@ export default async function WorkDetailPage({
 
       <article className={`u-wrap ${s.main}`}>
         <div>
-          <p className="u-label">
-            {(photo.terms.includes('studio') ? 'STUDIO' : 'LOCATION') + ' ・ '}
-            <span className="u-num">{taken}</span>
-          </p>
-          <h1 className={s.title}>{photo.alt[locale]}</h1>
-          <p className={s.story}>{photo.story[locale]}</p>
+          <Reveal>
+            <p className="u-label">
+              {(photo.terms.includes('studio') ? 'STUDIO' : 'LOCATION') + ' ・ '}
+              <span className="u-num">{taken}</span>
+            </p>
+            <h1 className={s.title}>{photo.alt[locale]}</h1>
+          </Reveal>
+
+          <Reveal delay={90}>
+            <p className={s.story}>{photo.story[locale]}</p>
+          </Reveal>
 
           <ul className={s.chips}>
             {chips.map((term) => (
@@ -203,6 +209,7 @@ export default async function WorkDetailPage({
           )}
         </div>
 
+        <Reveal delay={140}>
         <aside className={s.meta}>
           <dl className={s.table}>
             <div className={s.row}>
@@ -241,6 +248,7 @@ export default async function WorkDetailPage({
             </Link>
           </div>
         </aside>
+        </Reveal>
       </article>
 
       <p className={`u-wrap u-meta ${s.domainNote}`}>{text['ownDomainNote']}</p>
@@ -248,9 +256,11 @@ export default async function WorkDetailPage({
       {related.length > 0 && (
         <section className={`u-wrap ${s.related}`}>
           <p className="u-label">{GALLERY.sameSet}</p>
-          <div className={s.relatedGrid}>
-            <PhotoGrid locale={locale} photos={related} columns={4} />
-          </div>
+          <Reveal>
+            <div className={s.relatedGrid}>
+              <PhotoGrid locale={locale} photos={related} columns={4} />
+            </div>
+          </Reveal>
         </section>
       )}
     </>

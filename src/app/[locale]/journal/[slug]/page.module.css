@@ -285,7 +285,9 @@
   }
 
   .cover {
-    height: 280px;
+    /* 높이 고정은 세로 사진을 상자 밖으로 흘려 본문 위에 겹치게 만든다.
+       상한은 .coverImg 의 max-height 가 이미 맡고 있다. */
+    max-height: 78vh;
   }
 
   .body {
