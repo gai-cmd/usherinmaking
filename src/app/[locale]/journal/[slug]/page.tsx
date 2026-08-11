@@ -55,6 +55,16 @@ export async function generateMetadata({
   return {
     title: post.title,
     description: post.excerpt,
+    /*
+     * 얇은 글은 색인에서 뺀다 — 사람에게는 그대로 보인다.
+     *
+     * 옛 블로그 글은 사진 위주라 본문이 짧은 것이 많고, 그런 페이지가 수백 장 색인되면
+     * 사이트 전체의 검색 평가가 깎인다. 원문을 부풀려 쓰는 대신(원문 불훼손이 요구다)
+     * noindex 로 검색·AI 엔진에만 내보내지 않는다. follow 는 남긴다 — 글 속 링크를 타고
+     * 도는 것까지 막을 이유가 없다. OpenAI 도 "AI 답변에서 빼려면 차단이 아니라 noindex"
+     * 를 공식 안내한다.
+     */
+    ...(post.thin ? { robots: { index: false, follow: true } } : {}),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'journal', post.slug)}`,
       languages: alternates('journal', post.slug),
@@ -111,7 +121,16 @@ export default async function JournalPostPage({
         '@type': 'BlogPosting',
         headline: post.title,
         description: post.excerpt,
-        image: absoluteUrl(post.cover.src),
+        // 이 글들의 실체는 사진이다. 표지 한 장만 선언하면 사진 글이 "이미지 하나짜리
+        // 얇은 글"로 읽힌다 — 본문 사진까지 배열로 선언해 페이지의 실제 분량을 보인다.
+        image: [
+          absoluteUrl(post.cover.src),
+          ...post.body
+            .filter((b): b is Extract<typeof b, { kind: 'figure' }> => b.kind === 'figure')
+            .map((b) => absoluteUrl(b.image.src))
+            .filter((src) => src !== absoluteUrl(post.cover.src))
+            .slice(0, 20),
+        ],
         datePublished: post.publishedAt,
         // 갱신일이 없으면 오래된 글인지 최근 손본 글인지 검색·AI 엔진이 구분하지 못한다.
         ...(post.updatedAt ? { dateModified: post.updatedAt } : {}),

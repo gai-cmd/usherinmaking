@@ -98,10 +98,21 @@ export default async function WorkDetailPage({
   // 키워드 나열이 되고, 전부 버리면 검색 단서를 잃는다 — 앞쪽 태그가 게시물의 핵심이다.
   const igTags = topHashtags(photo.caption);
 
+  /*
+   * 릴스 페이지는 VideoObject 로 선언한다 — 실제로 영상이 재생되는 페이지를 ImageObject 로
+   * 내보내면 구조화 데이터가 화면과 어긋난다(리치 결과 자격은 사실과 일치할 때만 성립).
+   * schema.org 표준 타입만 쓴다. 둘의 공통 필드는 같고 영상 쪽만 contentUrl 이 mp4,
+   * thumbnailUrl 이 포스터가 된다.
+   */
+  const isVideo = photo.mediaType === 'video' && photo.videoUrl;
+  // 수집 사진의 src 는 이미 절대 URL(자사 Blob)이고, 시드만 사이트 상대경로다.
+  const absSrc = photo.src.startsWith('http') ? photo.src : `${SITE_URL}${photo.src}`;
   const imageObject = {
     '@context': 'https://schema.org',
-    '@type': 'ImageObject',
-    contentUrl: `${SITE_URL}${photo.src}`,
+    '@type': isVideo ? 'VideoObject' : 'ImageObject',
+    ...(isVideo
+      ? { contentUrl: photo.videoUrl, thumbnailUrl: absSrc, uploadDate: photo.takenAt }
+      : { contentUrl: absSrc }),
     url: `${SITE_URL}${path(locale, 'gallery', 'g', photo.slug)}`,
     name: photo.alt[locale],
     caption: photo.alt[locale],

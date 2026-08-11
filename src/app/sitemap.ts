@@ -137,7 +137,7 @@ async function journalEntries(now: Date): Promise<MetadataRoute.Sitemap> {
     // 사이트에는 떠 있는데 사이트맵에는 없어, 검색엔진이 새 글을 발견하지 못한다.
     const mod = (await import('@/server/journal-content')) as {
       getJournalContentPosts?: () => Promise<
-        { slug: string; locale: string; publishedAt?: string; updatedAt?: string }[]
+        { slug: string; locale: string; publishedAt?: string; updatedAt?: string; thin?: boolean }[]
       >;
     };
     const posts = await mod.getJournalContentPosts?.();
@@ -145,7 +145,10 @@ async function journalEntries(now: Date): Promise<MetadataRoute.Sitemap> {
 
     // 촬영후기는 한국어에만 둔다(JOURNAL_LOCALES). 다른 언어판 행이 DB 에 남아 있어도
     // 사이트맵에는 싣지 않는다 — 메뉴에서 뺀 페이지를 검색엔진에 제출하면 앞뒤가 맞지 않는다.
-    const known = posts.filter((p) => (JOURNAL_LOCALES as readonly string[]).includes(p.locale));
+    // 얇은 글(thin)도 뺀다 — 상세가 noindex 를 내보내는 페이지를 사이트맵에 실으면 신호가 어긋난다.
+    const known = posts.filter(
+      (p) => (JOURNAL_LOCALES as readonly string[]).includes(p.locale) && !p.thin,
+    );
 
     // 같은 slug의 여러 언어판은 서로 hreflang으로 묶어야 한다.
     // 묶지 않으면 같은 글의 3개 언어판이 서로 경쟁하는 별개 페이지로 취급된다.

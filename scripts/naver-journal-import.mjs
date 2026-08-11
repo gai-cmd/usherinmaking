@@ -43,6 +43,8 @@ const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
 const args = process.argv.slice(2);
 const DRY = args.includes('--dry');
+/** 목록을 전량 훑는다. 옛 글까지 가져올 때 필요하다(기본은 최신 6쪽). */
+const ALL = args.includes('--all');
 const LIMIT = Number(args[args.indexOf('--limit') + 1]) || 10;
 // 기본은 최근 1년. 오래된 글일수록 사진 해상도와 문체가 지금 사이트와 어긋난다.
 const SINCE =
@@ -67,8 +69,26 @@ const stripTags = (s) =>
     .replace(/[ \t]+/g, ' ')
     .trim();
 
+/**
+ * 일시적 네트워크 실패(ETIMEDOUT 등)에 짧게 물러났다 다시 건다.
+ * 276건짜리 실행이 140건째의 타임아웃 한 번으로 통째로 죽었다 — 재시도 없이는
+ * 긴 실행이 가장 약한 요청 하나에 볼모로 잡힌다. 4xx/5xx 는 재시도 대상이 아니다.
+ */
+async function fetchRetry(url, init, attempts = 3) {
+  let last;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      return await fetch(url, init);
+    } catch (e) {
+      last = e;
+      if (i < attempts) await new Promise((r) => setTimeout(r, 1000 * i));
+    }
+  }
+  throw last;
+}
+
 async function get(url, referer) {
-  const res = await fetch(url, { headers: { 'User-Agent': UA, ...(referer && { Referer: referer }) } });
+  const res = await fetchRetry(url, { headers: { 'User-Agent': UA, ...(referer && { Referer: referer }) } });
   if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
   return res.text();
 }
@@ -199,11 +219,19 @@ const main = async () => {
     JSON.parse(catText.slice(catText.indexOf('{'))).result.mylogCategoryList.map((c) => [String(c.categoryNo), c.categoryName]),
   );
 
-  // 목록 — 최신 쪽부터 훑어 후보가 채워지면 멈춘다(전량 조회는 불필요).
+  /*
+   * 목록 — 기본은 최신 6쪽(180건)까지만 본다.
+   *
+   * 그 상한이 "최근 1년"이라는 기본 하한과 짝이라 평소에는 맞는다. 그런데 옛 글까지
+   * 가져오려고 --since 를 내리면 이 상한에 먼저 걸려 2022년 아래로는 닿지 못한다
+   * (전체 716건 = 24쪽). --all 을 주면 전량을 훑는다. 쪽마다 300ms 를 쉬는 것은 그대로다.
+   */
   const first = await listPage(1);
   const pages = Math.ceil(Number(first.totalCount) / 30);
+  const maxPages = ALL ? pages : Math.min(pages, 6);
+  const maxRows = ALL ? Number(first.totalCount) : 180;
   const rows = [...first.postList];
-  for (let n = 2; n <= Math.min(pages, 6) && rows.length < 180; n++) {
+  for (let n = 2; n <= maxPages && rows.length < maxRows; n++) {
     rows.push(...(await listPage(n)).postList);
     await new Promise((r) => setTimeout(r, 300));
   }
@@ -225,8 +253,28 @@ const main = async () => {
   console.log(`후보 ${candidates.length}건 (${SINCE} 이후 · 스냅/웨딩룩) → 상위에서 ${LIMIT}건 선별\n`);
 
   const picked = [];
+  /*
+   * 이미 취입된 글은 원문 조회 전에 건너뛴다.
+   *
+   * upsert 라 다시 넣어도 데이터는 안전하지만, 그 "다시"가 글마다 원문 fetch + 사진 전부
+   * 재다운로드·재업로드다. 276건 재실행에서 글당 수 분까지 늘어졌다(반복 전량 조회에
+   * 네이버가 응답을 늦추는 것으로 보인다). 본문 끝의 원문 링크에 logNo 가 남으므로
+   * 그것으로 보유 여부를 판정한다 — 신규 글만 네트워크를 탄다.
+   */
+  const doneLogNos = new Set(
+    (
+      await prisma.journalPost.findMany({
+        where: { locale: 'ko', source: 'naver-blog' },
+        select: { body: true },
+      })
+    )
+      .map((r) => r.body.match(/blog\.naver\.com\/[A-Za-z0-9_-]+\/(\d+)/)?.[1])
+      .filter(Boolean),
+  );
+
   for (const c of candidates) {
     if (picked.length >= LIMIT) break;
+    if (doneLogNos.has(c.logNo)) continue;
     let post;
     try {
       post = await fetchPost(c.logNo);
@@ -249,8 +297,21 @@ const main = async () => {
     // 통과해 실제로 취입됐다(오키나와 3회 vs 거제 13회). 다른 지역명이 더 자주 나오면 뺀다.
     const okinawaHits = (text.match(/오키나와|미야코지마|okinawa/gi) || []).length;
     const elsewhereHits = (text.match(/거제|제주|여수|부산|통영|강릉|발리|괌|사이판/g) || []).length;
-    if (okinawaHits === 0 || elsewhereHits >= okinawaHits) {
+    /*
+     * 타지역 글 제외.
+     *
+     * 원래 조건은 `okinawaHits === 0 || elsewhereHits >= okinawaHits` 였는데, 앞쪽이
+     * **"아무 지역도 언급하지 않은 글"까지 타지역으로 몰아냈다** — 드레스 소개처럼 사진 위주라
+     * 지명이 안 나오는 글이 여기 걸렸다(전량 조사에서 51건 중 대부분). 지역을 안 적은 것과
+     * 다른 지역에서 찍은 것은 다르다. 그래서 **다른 지역이 실제로 더 자주 나올 때만** 뺀다.
+     */
+    if (elsewhereHits > 0 && elsewhereHits >= okinawaHits) {
       console.log(`  제외 ${c.date} (오키나와 ${okinawaHits}회 vs 타지역 ${elsewhereHits}회) ${c.titleRaw.slice(0, 26)}`);
+      continue;
+    }
+    // 남의 글을 퍼온 스크랩([공유] 접두)은 우리 콘텐츠가 아니다 — 저작권·문맥 둘 다 어긋난다.
+    if (/^\s*\[공유\]/.test(c.titleRaw)) {
+      console.log(`  제외 ${c.date} (다른 블로그 스크랩) ${c.titleRaw.slice(0, 30)}`);
       continue;
     }
     if (chars < MIN_CHARS || post.images.length < MIN_IMAGES) {
@@ -293,7 +354,7 @@ const main = async () => {
     //    표지 한 장만 옮기던 때에는 본문이 글자만 남아 원문의 흐름이 사라졌다.
     const uploaded = new Map();
     for (const [i, src] of p.images.entries()) {
-      const r = await fetch(src, { headers: { 'User-Agent': UA, Referer: link } });
+      const r = await fetchRetry(src, { headers: { 'User-Agent': UA, Referer: link } });
       if (!r.ok) {
         console.log(`  사진 실패 ${slug} #${i + 1} — HTTP ${r.status}, 이 장만 건너뜀`);
         continue;

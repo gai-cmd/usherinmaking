@@ -89,13 +89,40 @@ function toDateString(d: Date): string {
   }).format(d);
 }
 
+/**
+ * "얇은 글" 판정 — noindex 대상은 **정말 비어 있는 글뿐**이다.
+ *
+ * 처음에는 SEO 문서의 400자를 그대로 썼는데, 그 기준이면 취입분 대부분이 색인에서
+ * 빠져 "검색되라고 가져온 콘텐츠가 검색이 안 되는" 자기모순이 된다(사용자 지적).
+ * 이 블로그 글의 실체는 사진이다 — 사진이 여럿이면 그 페이지의 콘텐츠는 사진이고,
+ * 고유 이미지 + 고유 제목 + 날짜 + 구조화 데이터가 있으면 얇은 페이지가 아니다.
+ * 검색 평가를 깎는 것은 "아무것도 없는 페이지"이지 "글자가 적은 사진 글"이 아니다.
+ *
+ * 따라서 글자도 거의 없고(200자 미만) 사진도 몇 장 없는(3장 미만) 글만 얇다고 본다.
+ * 그 글들만 noindex + 사이트맵 제외되고, 나머지는 전부 색인·사이트맵에 실린다.
+ */
+const THIN_BODY_CHARS = 200;
+const THIN_MIN_IMAGES = 3;
+
+function bodyChars(blocks: JournalBlock[]): number {
+  return blocks
+    .filter((b): b is Extract<JournalBlock, { kind: 'p' | 'quote' }> => b.kind === 'p' || b.kind === 'quote')
+    .reduce((n, b) => n + b.text.length, 0);
+}
+
+function imageCount(blocks: JournalBlock[]): number {
+  return blocks.filter((b) => b.kind === 'figure' || b.kind === 'pair').length;
+}
+
 function fromDb(row: Row): JournalContentPost | null {
   // 로케일·카테고리가 화면이 아는 값이 아니면 그리지 않는다 — 지어내는 것보다 빼는 편이 안전하다.
   if (!isLocale(row.locale) || !isCategory(row.category)) return null;
   if (!row.title.trim() || !row.body.trim()) return null;
 
   const blocks = toBlocks(row.body);
+  const thin = bodyChars(blocks) < THIN_BODY_CHARS && imageCount(blocks) < THIN_MIN_IMAGES;
   return {
+    ...(thin ? { thin: true } : {}),
     slug: row.slug,
     locale: row.locale,
     category: row.category,
