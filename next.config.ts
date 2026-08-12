@@ -21,6 +21,13 @@ const nextConfig: NextConfig = {
       { source: '/reserve', destination: '/ja/photographer', permanent: true },
       // 요금 페이지 en 세그먼트를 plan 으로 통일하며 남긴 구 주소
       { source: '/en/plans', destination: '/en/plan', permanent: true },
+      /*
+       * 구 사이트의 한국어 페이지 주소. 네이버 블로그 글 수십 편이 본문에 이 주소를
+       * 평문으로 박아 뒀고(우리 저널로 옮겨온 30편 중 12편), 네이버 원본은 우리가
+       * 고칠 수 없다. 도메인이 넘어온 뒤에도 그 링크들이 계속 닿도록 /ko 로 넘긴다.
+       */
+      { source: '/korean', destination: '/ko', permanent: true },
+      { source: '/korean/:path*', destination: '/ko/:path*', permanent: true },
     ];
   },
   async headers() {
