@@ -20,6 +20,7 @@
 //   node scripts/dedupe-photos.mjs            → 드라이런. 아무것도 쓰지 않고 묶음만 보고한다.
 //   node scripts/dedupe-photos.mjs --apply    → 중복본을 ARCHIVED 로 내린다.
 //   옵션: --threshold=5 (해밍 거리 임계, 기본 5) --account=main|dress --status=PUBLISHED
+//         --force  해시 실패율 상한을 무시하고 반영 (실패가 정말 깨진 파일일 때만)
 
 import { config } from 'dotenv';
 import { PrismaClient } from '@prisma/client';
@@ -31,6 +32,10 @@ config();
 
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
+/** 해시 실패가 이 비율을 넘으면 반영을 막는다. 판정 못 한 사진을 "중복 아님"으로 쓰지 않기 위해서다. */
+const FAIL_LIMIT = 0.05;
+/** 실패가 정말 깨진 파일 때문임을 확인했을 때의 탈출구. */
+const FORCE = args.includes('--force');
 const argOf = (name, fallback) => {
   const hit = args.find((a) => a.startsWith(`--${name}=`));
   return hit ? hit.slice(name.length + 3) : fallback;
@@ -184,10 +189,31 @@ async function main() {
   }
 
   console.log(`총 ${rows.length}장 중 해시 실패 ${failed}장.`);
+
+  // 해시를 못 읽은 사진은 판정에서 통째로 빠진다. 그런데 빠진 것은 "중복 아님"과
+  // 화면상 구분되지 않아서, 실패가 많아도 요약 한 줄로만 보이고 그대로 반영된다.
+  // 2026-08-12 실측: 저장소가 동시 다운로드를 일시 제한해 1,451장 중 734장이 실패했고
+  // 중복이 10장 대신 5장만 잡혔다. 재실행하니 실패 0장이었다 — 사진 문제가 아니었다.
+  // 그래서 실패가 일정 비율을 넘으면 반영을 막는다. 판정 못 한 것을 "없음"으로 쓰지 않는다.
+  const failRate = rows.length > 0 ? failed / rows.length : 0;
+  if (failed > 0) {
+    console.log(`  → 이 ${failed}장은 판정에서 빠졌습니다 (실패율 ${(failRate * 100).toFixed(1)}%).`);
+  }
   console.log(`중복으로 판정되어 보관 대상: ${toArchive.length}장 (남는 공개 사진 ${rows.length - toArchive.length}장)`);
 
   if (!APPLY) {
     console.log('\n드라이런입니다. 실제로 반영하려면 --apply 를 붙여 다시 실행하세요.');
+    return;
+  }
+
+  if (failRate > FAIL_LIMIT && !FORCE) {
+    console.error(
+      `\n중단 — 해시 실패율 ${(failRate * 100).toFixed(1)}% 가 상한 ${(FAIL_LIMIT * 100).toFixed(0)}% 를 넘습니다.` +
+        `\n판정하지 못한 사진이 많아, 지금 반영하면 놓친 중복이 남은 채로 "완료"가 됩니다.` +
+        `\n대개 저장소의 일시적 제한이므로 잠시 뒤 다시 돌리면 실패가 사라집니다.` +
+        `\n실패한 사진이 정말 깨진 것이라 확인했다면 --force 로 넘길 수 있습니다.`,
+    );
+    process.exitCode = 1;
     return;
   }
   if (toArchive.length === 0) return;
