@@ -54,16 +54,26 @@ async function exportBatches() {
       originalUrl: true,
       shootKey: true,
       caption: true,
+      alt: true,
       terms: { select: { term: { select: { slug: true } } } },
     },
   });
-  console.log(`대상 ${photos.length}건 — 썸네일 준비 중…`);
+
+  // --dup-alt: 세 언어가 같은 문장인 것만. 캡션이 그대로 복사된 상태의 표지다.
+  // JSON 컬럼 비교라 DB 에서 거르지 못해 여기서 한 번 더 좁힌다.
+  const target = args.includes('--dup-alt')
+    ? photos.filter((p) => {
+        const a = p.alt ?? {};
+        return a.ja && (a.ja === a.en || a.ja === a.ko);
+      })
+    : photos;
+  console.log(`대상 ${target.length}건 — 썸네일 준비 중…`);
 
   const rows = [];
   let reused = 0;
   let fetched = 0;
   let failed = 0;
-  for (const p of photos) {
+  for (const p of target) {
     const file = path.join(out, 'img', `${p.id}.jpg`);
     try {
       let done = false;
