@@ -42,6 +42,48 @@ function absoluteUrl(src: string): string {
   return src.startsWith('http') ? src : `${SITE_URL}${src}`;
 }
 
+/**
+ * 취입 본문에 남은 HTML 이스케이프 잔재(&#x3D; 등)를 문자로 되살린다.
+ *
+ * 네이버 원문의 = 가 &#x3D; 로 저장된 글이 있어 화면에 그대로 찍혔다. 저장된 원문은
+ * 건드리지 않고(원문 불훼손) 읽는 자리에서 되살린다 — photos-content 의 cleanStory 와
+ * 같은 방식이다. &amp; 는 다른 엔티티를 만들 수 있어 마지막에 푼다.
+ */
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#x([0-9a-f]+);/gi, (_, h: string) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d: string) => String.fromCodePoint(Number(d)))
+    .replace(/&amp;/g, '&');
+}
+
+const URL_RE = /https?:\/\/[^\s<>"']+/g;
+
+/**
+ * 문단 속 URL 을 클릭 가능한 링크로 바꾼다. 원문 텍스트는 그대로 두고 표현만 바꾼다.
+ * 옛 블로그 글이 "더 많은 사진은 클릭 ↓" 뒤에 주소를 평문으로 적어 두는 관습이라,
+ * 링크가 안 되면 그 문장이 약속을 지키지 못한다. 외부로 나가는 링크이므로 새 탭 + noopener.
+ */
+function linkify(raw: string): React.ReactNode {
+  const text = decodeEntities(raw);
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(URL_RE)) {
+    const start = m.index ?? 0;
+    // 문장 끝에 붙은 구두점은 주소가 아니다 — 링크에서 떼어 본문으로 남긴다.
+    const url = m[0].replace(/[).,]+$/, '');
+    if (start > last) parts.push(text.slice(last, start));
+    parts.push(
+      <a key={start} href={url} target="_blank" rel="noopener noreferrer">
+        {url}
+      </a>,
+    );
+    last = start + url.length;
+  }
+  if (parts.length === 0) return text;
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -237,21 +279,21 @@ export default async function JournalPostPage({
           if (block.kind === 'p') {
             return (
               <p key={i} className={s.p}>
-                {block.text}
+                {linkify(block.text)}
               </p>
             );
           }
           if (block.kind === 'quote') {
             return (
               <blockquote key={i} className={s.quote}>
-                {block.text}
+                {linkify(block.text)}
               </blockquote>
             );
           }
           if (block.kind === 'note') {
             return (
               <p key={i} className={s.note}>
-                {block.text}
+                {linkify(block.text)}
               </p>
             );
           }
