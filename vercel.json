@@ -6,7 +6,7 @@
   "crons": [
     {
       "path": "/api/cron/ingest-instagram",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 18 * * *"
     },
     {
       "path": "/api/cron/ingest-dress",

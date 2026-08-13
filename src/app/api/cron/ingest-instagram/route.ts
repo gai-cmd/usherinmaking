@@ -4,7 +4,8 @@ import { runInstagramIngest } from '@/server/ingest';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// 6시간마다 — vercel.json 의 crons 항목이 이 경로를 가리킨다.
+// 하루 한 번, 새벽(UTC 18시 = 한국·일본 새벽 3시) — vercel.json 의 crons 항목이 이 경로를 가리킨다.
+// 부하를 줄이려고 6시간마다에서 하루 한 번으로 줄였다(2026-08-14).
 export const maxDuration = 300;
 
 /**
