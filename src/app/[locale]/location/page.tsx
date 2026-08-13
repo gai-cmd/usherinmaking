@@ -41,6 +41,8 @@ export async function generateMetadata({
       languages: alternates('location'),
     },
     openGraph: {
+      // 한국어에서는 이 페이지가 대문이라 카카오톡 링크 미리보기의 첫인상이 여기서 결정된다.
+      type: 'website',
       title: text['meta.title'],
       description: text['meta.description'],
       url: `${SITE_URL}${path(locale, 'location')}`,

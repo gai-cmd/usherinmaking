@@ -9,16 +9,21 @@ type L10nLines = Record<Locale, string[]>;
  * LOCATION 은 지역이 아니라 촬영 종류(WEDDING / ANNIVERSARY)로 나눈다.
  */
 
+/**
+ * 한국어에서 이 페이지는 하위 페이지가 아니라 사이트의 대문이다(i18n HOME_LOCALES).
+ * 그래서 ko 제목·설명은 절(節) 소개가 아니라 브랜드 소개로 쓴다 — 검색 결과와
+ * 카카오톡 링크 미리보기에 그대로 나가는 문장이라 여기가 첫인상이 된다.
+ */
 export const META = {
   title: {
     ja: 'LOCATION ・ 沖縄の屋外ロケーションフォト',
     en: 'LOCATION — outdoor photography in Okinawa',
-    ko: '로케이션 · 오키나와 야외 촬영',
+    ko: '오키나와 웨딩 스냅 · 가족 촬영',
   } satisfies L10n,
   description: {
     ja: '沖縄の屋外で撮るウェディングフォトと記念写真。撮影当日の光と天気を見ながら場所を決めます。撮影の種類、月別アーカイブ、ロケーションプランのご案内。',
     en: 'Wedding photography and anniversary portraits made outdoors in Okinawa. Two categories, a monthly archive and the location plans.',
-    ko: '오키나와 야외에서 촬영하는 웨딩 스냅과 기념사진. 촬영지는 날씨를 보고 촬영일에 임박해 추천드립니다. 촬영 종류와 월별 아카이브, 로케이션 플랜을 안내합니다.',
+    ko: '어셔린메이킹은 2014년부터 오키나와에서 스냅 촬영을 이어온 한국인 여성 사진작가입니다. 에메랄드 바다와 오키나와의 자연 속에서 웨딩 · 커플 · 가족 촬영을 진행하며, 상담은 카카오톡으로 편하게 하실 수 있습니다.',
   } satisfies L10n,
 };
 

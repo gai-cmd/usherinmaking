@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
-import { CONTACT, SESSION_TYPES, type SessionTypeValue } from '@/app/[locale]/contact/content';
+import { CONTACT, sessionTypesFor, type SessionTypeValue } from '@/app/[locale]/contact/content';
 import { LOCALES, LOCALE_LABEL, path, type Locale } from '@/lib/i18n';
 import s from './EnquiryForm.module.css';
 
@@ -19,7 +19,10 @@ export function EnquiryForm({
   privacyNote?: string;
   submitLabel?: string;
 }) {
-  const [sessionType, setSessionType] = useState<SessionTypeValue>(SESSION_TYPES[0].value);
+  // 그 언어에 실제로 있는 촬영 종류만 보여준다. 초기 선택값도 반드시 이 목록에서 고른다 —
+  // 전체 목록의 첫 항목(스튜디오)을 그대로 쓰면 한국어에서 화면에 없는 값이 접수된다.
+  const sessionTypes = sessionTypesFor(locale);
+  const [sessionType, setSessionType] = useState<SessionTypeValue>(sessionTypes[0].value);
   const [replyIn, setReplyIn] = useState<Locale>(locale);
   const [status, setStatus] = useState<Status>('idle');
 
@@ -118,7 +121,7 @@ export function EnquiryForm({
       <fieldset className={s.fieldset}>
         <legend className={s.label}>{CONTACT.fields.sessionType[locale]}</legend>
         <div className={s.chips}>
-          {SESSION_TYPES.map((type) => (
+          {sessionTypes.map((type) => (
             <label key={type.value} className={s.chip} data-selected={sessionType === type.value || undefined}>
               <input
                 className="u-visually-hidden"

@@ -210,15 +210,24 @@ export const CONTACT = {
   } satisfies L10n,
 } as const;
 
-/** 폼의 촬영 종류 칩. value는 API가 받는 값이고 라벨만 언어별로 다르다. */
+/**
+ * 폼의 촬영 종류 칩. value는 API가 받는 값이고 라벨만 언어별로 다르다.
+ *
+ * `locales` 가 있는 항목은 그 언어에서만 보인다 — 한국 고객 상품에는 스튜디오 촬영이
+ * 없으므로 스튜디오 관련 두 항목을 한국어 폼에서 뺀다. **값 목록 자체는 줄이지 않는다**:
+ * API 검증(z.enum)과 이미 저장된 문의 기록이 이 값들을 쓰고 있어, 값을 지우면
+ * 옛 기록이 유효하지 않은 값을 갖게 된다. 화면에서만 거른다.
+ */
 export const SESSION_TYPES = [
   {
     value: 'studio',
     label: { ja: 'スタジオ', en: 'Studio', ko: '스튜디오' } satisfies L10n,
+    locales: ['ja', 'en'] as readonly Locale[],
   },
   {
     value: 'location',
-    label: { ja: 'ロケーション', en: 'Location', ko: '로케이션' } satisfies L10n,
+    // 한국어 상품명은 '웨딩 촬영'(베이직 · 에프터풀)이다 — 요금 페이지 탭과 같은 말을 쓴다.
+    label: { ja: 'ロケーション', en: 'Location', ko: '웨딩 촬영' } satisfies L10n,
   },
   {
     value: 'studio-location',
@@ -227,6 +236,7 @@ export const SESSION_TYPES = [
       en: 'Studio + Location',
       ko: '스튜디오 + 로케이션',
     } satisfies L10n,
+    locales: ['ja', 'en'] as readonly Locale[],
   },
   {
     value: 'maternity',
@@ -237,9 +247,14 @@ export const SESSION_TYPES = [
     label: {
       ja: '記念日・家族',
       en: 'Anniversary / family',
-      ko: '기념일 · 가족',
+      ko: '기념일 · 가족 · 커플',
     } satisfies L10n,
   },
 ] as const;
 
 export type SessionTypeValue = (typeof SESSION_TYPES)[number]['value'];
+
+/** 그 언어의 폼에 실제로 보여줄 촬영 종류. 폼의 초기 선택값도 이 목록의 첫 항목이어야 한다. */
+export function sessionTypesFor(locale: Locale) {
+  return SESSION_TYPES.filter((t) => !('locales' in t) || t.locales.includes(locale));
+}
