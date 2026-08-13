@@ -18,7 +18,7 @@ export const META = {
   description: {
     ja: '沖縄の屋外で撮るウェディングフォトと記念写真。撮影当日の光と天気を見ながら場所を決めます。撮影の種類、月別アーカイブ、ロケーションプランのご案内。',
     en: 'Wedding photography and anniversary portraits made outdoors in Okinawa. Two categories, a monthly archive and the location plans.',
-    ko: '오키나와 야외에서 촬영하는 웨딩 스냅과 기념사진. 촬영 종류, 월별 아카이브, 로케이션 플랜을 안내합니다.',
+    ko: '오키나와 야외에서 촬영하는 웨딩 스냅과 기념사진. 촬영지는 날씨를 보고 촬영일에 임박해 추천드립니다. 촬영 종류와 월별 아카이브, 로케이션 플랜을 안내합니다.',
   } satisfies L10n,
 };
 
@@ -49,8 +49,8 @@ export const LEAD: L10nLines = {
   // 기념사진 카테고리(가족 · 백일 · 돌 · 만삭 · 커플 · 기념일)를 풀어 써
   // 일본어와 같은 짧-긴-짧 대칭으로 맞춘다.
   ko: [
-    '웨딩 스냅과, 기념일과 가족의 사진.',
-    '촬영 당일의 빛과 날씨를 보고 장소를 함께 정하는,',
+    '웨딩 스냅, 그리고 기념일과 가족의 사진.',
+    '그날의 빛과 날씨를 보고 장소를 함께 정하는,',
     '오키나와의 야외 로케이션 촬영입니다.',
   ],
 };
@@ -66,7 +66,8 @@ export const LEAD_NOTE: L10nLines = {
   ],
   ko: [
     '촬영 1시간 ~ 3시간 30분 · 1~3개 장소 · 이동 시간(10~15분) 포함',
-    '머무시는 곳에 맞춰 장소를 제안해 드립니다',
+    '머무시는 숙소 위치에 맞춰 촬영 장소를 제안해 드립니다',
+    '오키나와에서 다년간 촬영해 온 작가의 노하우를 믿고 맡겨주세요',
   ],
 };
 
@@ -79,7 +80,7 @@ export const CATEGORY = {
   lead: {
     ja: '場所は撮影当日の天気と光を見ながら、一緒に決めます',
     en: '',
-    ko: '',
+    ko: '유명 관광지보다는 한적한 시크릿 스팟 위주로 안내하며, 정확한 장소는 촬영일에 임박해 날씨를 보고 함께 정합니다.',
   } satisfies L10n,
 };
 
@@ -102,7 +103,7 @@ export const CATEGORIES = [
     body: {
       ja: '前撮り ・ 後撮り ・ セルフウェディング。沖縄の屋外で撮影します。衣装・ヘアメイクはオプションでご用意できます。Simple / Basic / Afterfull の3プラン。',
       en: 'Pre-wedding, post-wedding and self-wedding sessions outdoors. Clothing and hair & make-up can be added. Simple / Basic / Afterfull.',
-      ko: '본식 전 웨딩 촬영 · 결혼 후 리마인드 웨딩 · 셀프 웨딩. 의상과 헤어메이크업은 옵션으로 준비해 드립니다. Simple / Basic / Afterfull 세 가지.',
+      ko: '본식 전 웨딩 촬영 · 결혼 후 리마인드 웨딩 · 셀프 웨딩. 의상과 헤어메이크업은 옵션으로 준비해 드립니다. 플랜은 Simple / Basic / Afterfull 세 가지입니다.',
     } satisfies L10n,
     link: {
       ja: 'ウェディングを見る',
@@ -154,7 +155,7 @@ export const DETAILS = [
     note: {
       ja: '撮影データのみのプランです。衣装・ヘアメイクはオプションでご用意できます。',
       en: 'Location plans cover photography only. Clothing and hair & make-up are available as add-ons.',
-      ko: '로케이션 플랜은 촬영 데이터만 포함됩니다. 의상과 헤어메이크업은 옵션으로 준비해 드립니다.',
+      ko: '로케이션 플랜에는 촬영 데이터만 포함됩니다. 의상과 헤어메이크업은 옵션으로 추가하실 수 있습니다.',
     } satisfies L10n,
   },
   {
@@ -197,7 +198,7 @@ export const ARCHIVE = {
   lead: {
     ja: '季節ごとの光の違いは、月別のアーカイブからご覧いただけます。',
     en: 'Light changes with the season — browse the monthly archive to see it.',
-    ko: '계절마다 빛이 달라집니다. 월별 아카이브에서 확인해 보세요.',
+    ko: '계절마다 빛이 다릅니다. 월별 아카이브에서 그 차이를 살펴보세요.',
   } satisfies L10n,
   themes: [
     {

@@ -70,7 +70,7 @@ export const HOME: Record<Locale, HomeCopy> = {
       studio: {
         eyebrow: 'INDOOR ・ NEW',
         display: 'Studio',
-        lines: ['白い壁とアーチ窓。', '光がながく居る家で。'],
+        lines: ['白い壁とアーチ窓。', '光が長くとどまる家で。'],
         cta: 'VIEW STUDIO',
         alt: '沖縄のスタジオ、アーチ窓と自然光',
       },
@@ -98,7 +98,7 @@ export const HOME: Record<Locale, HomeCopy> = {
     sets: {
       label: 'STUDIO',
       title: 'Four Sets',
-      lead: '一度の撮影で、四つの光を移りながら撮影します。',
+      lead: '一度の撮影で、四つの光をめぐりながら撮影します。',
       cta: 'VIEW STUDIO →',
     },
     locationPlans: {
@@ -158,7 +158,7 @@ export const HOME: Record<Locale, HomeCopy> = {
       location: {
         eyebrow: 'OUTDOOR',
         display: 'Location',
-        lines: ['Where the sea meets the light —', 'photographed close to where you are staying.'],
+        lines: ['Where the sea meets the light —', 'photographed close to where you’re staying.'],
         cta: 'VIEW LOCATION',
         alt: 'Outdoor wedding photo session in Okinawa',
       },
@@ -177,7 +177,7 @@ export const HOME: Record<Locale, HomeCopy> = {
       ],
       sub: [
         'Pre-wedding · self-wedding · maternity · anniversary · family portraits.',
-        'Photographed in a soft Korean style, and we are happy to talk in English, Japanese or Korean.',
+        'Photographed in a soft Korean style — and we’re happy to talk in English, Japanese or Korean.',
       ],
     },
     studioPlans: {
@@ -192,7 +192,7 @@ export const HOME: Record<Locale, HomeCopy> = {
     sets: {
       label: 'STUDIO',
       title: 'Four sets',
-      lead: 'You can move between more than one room in a single session',
+      lead: 'Move between all four sets in a single session',
       cta: 'VIEW STUDIO →',
     },
     locationPlans: {
@@ -230,7 +230,7 @@ export const HOME: Record<Locale, HomeCopy> = {
         },
         {
           q: 'Can I book online?',
-          a: 'No — there is no automatic booking. Send us your dates through the form or on Instagram and we will confirm availability.',
+          a: 'No — there’s no automatic booking. Send us your dates through the form or on Instagram and we’ll confirm availability.',
         },
         {
           q: 'Is a dress included?',
@@ -238,7 +238,7 @@ export const HOME: Record<Locale, HomeCopy> = {
         },
         {
           q: 'What happens if it rains?',
-          a: 'We still shoot in the rain, and we will try to reschedule within your stay whenever possible.',
+          a: 'We still shoot in the rain, and we’ll try to reschedule within your stay whenever possible.',
         },
         { q: 'Is there parking?', a: 'Yes — the studio has parking for 2 cars.' },
         { q: 'Which languages do you speak?', a: 'English, Japanese and Korean.' },
@@ -251,13 +251,13 @@ export const HOME: Record<Locale, HomeCopy> = {
     meta: {
       title: '오키나와 웨딩 스냅 · 스튜디오 촬영',
       description:
-        'usherinmaking은 오키나와에서 활동하는 한국인 여성 사진작가의 스튜디오입니다. 바다 앞의 로케이션 촬영과, 흰 벽의 스튜디오 촬영을 함께 합니다. 상담은 카카오톡으로 편하게.',
+        '어셔린메이킹(usherinmaking)은 2014년부터 오키나와에서 스냅 촬영을 이어온 한국인 여성 사진작가의 스튜디오입니다. 바다 앞 로케이션 촬영과 흰 벽의 스튜디오 촬영을 모두 진행하며, 상담은 카카오톡으로 편하게 하실 수 있습니다.',
     },
     hero: {
       location: {
         eyebrow: 'OUTDOOR',
         display: 'Location',
-        lines: ['바다와 바람이 지나는 자리에서,', '촬영 당일의 빛으로 담습니다'],
+        lines: ['바다와 바람이 지나는 자리에서,', '그날의 빛 그대로 담습니다'],
         cta: '로케이션 보기',
         alt: '오키나와 야외 로케이션 웨딩 촬영',
       },
@@ -273,12 +273,12 @@ export const HOME: Record<Locale, HomeCopy> = {
       // 한 줄 = 한 문장. 문장 중간에서 줄을 자르면 조각으로 읽힌다 —
       // keep-all + 풀폭이라 넘치면 어절 단위로 자연 줄바꿈된다.
       headline: [
-        'usherinmaking은 오키나와에서 활동하는 한국인 여성 사진작가의 스튜디오입니다.',
-        '바다 앞의 로케이션 촬영과, 흰 벽의 스튜디오 촬영을 함께 합니다.',
+        '어셔린메이킹은 2014년부터 동양의 하와이라 불리는 오키나와에서 스냅 촬영을 이어온 한국인 여성 사진작가의 스튜디오입니다.',
+        '바다 앞 로케이션 촬영과 흰 벽의 스튜디오 촬영을 모두 진행합니다.',
       ],
       sub: [
         '웨딩 스냅 · 셀프 웨딩 · 만삭 · 기념일 · 가족사진',
-        '상담은 한국어로 편하게. 카카오톡이 가장 빠릅니다.',
+        '오래되어도 가치 있는 추억을 담아드립니다. 상담은 카카오톡이 가장 빠릅니다.',
       ],
     },
     studioPlans: {
@@ -293,13 +293,13 @@ export const HOME: Record<Locale, HomeCopy> = {
     sets: {
       label: 'STUDIO',
       title: '4개의 세트',
-      lead: '한 번의 촬영에서 공간을 옮겨가며 담습니다',
+      lead: '한 번의 촬영으로 네 개의 공간을 오가며 담습니다',
       cta: '스튜디오 보기 →',
     },
     locationPlans: {
       label: 'LOCATION PLAN',
       title: '로케이션 플랜',
-      lead: '웨딩 스냅과 기념사진. 장소는 촬영 당일의 날씨와 빛을 보고 함께 정합니다.',
+      lead: '웨딩 스냅과 기념사진. 장소는 그날의 날씨와 빛을 보고 함께 정합니다.',
       aside: 'FROM ¥76,000',
       notesLabel: '옵션 · 안내',
       anniversaryLabel: '기념사진 · 가족 / 커플 / 만삭',
@@ -308,7 +308,7 @@ export const HOME: Record<Locale, HomeCopy> = {
     works: {
       label: 'GALLERY · 인스타그램에서 선별',
       title: '최근 작품',
-      lead: '인스타그램에 올린 사진 중 보여드릴 작품만 골라, 저희 사이트에서 직접 보여드립니다.',
+      lead: '인스타그램에 올린 사진 가운데 보여드리고 싶은 작품만 골라 이곳에 담았습니다.',
       viewAll: '작품 전체 보기',
     },
     photographer: {
@@ -316,7 +316,7 @@ export const HOME: Record<Locale, HomeCopy> = {
       name: 'usherinmaking',
       body: [
         '오키나와에서 사진을 찍는 한국인 여성 작가입니다.',
-        '실내든 실외든 처음부터 끝까지 제가 직접 담고, 상담도 한국어로 편하게 나눕니다.',
+        '실내든 야외든 처음부터 끝까지 제가 직접 촬영하고, 상담도 한국어로 편하게 나눕니다.',
       ],
       cta: '작가 소개',
       alt: '스튜디오 아치와 드레스룸',
@@ -331,20 +331,20 @@ export const HOME: Record<Locale, HomeCopy> = {
         },
         {
           q: '온라인으로 바로 예약할 수 있나요?',
-          a: '자동 예약 기능은 없습니다. 카카오톡이나 문의 폼으로 희망 날짜를 보내주시면 일정을 확인해 드립니다.',
+          a: '자동 예약 기능은 따로 없습니다. 카카오톡이나 문의 폼으로 희망 날짜를 보내주시면 일정을 확인해 안내드립니다.',
         },
         {
           q: '드레스가 포함되나요?',
-          a: '스튜디오 플랜은 드레스 1~2벌이 포함됩니다. 로케이션 촬영은 ¥10,000대부터 대여로 이용하실 수 있습니다.',
+          a: '스튜디오 플랜에는 드레스 1~2벌이 포함됩니다. 로케이션 촬영은 ¥10,000대부터 대여하실 수 있습니다.',
         },
         {
           q: '비가 오면 어떻게 되나요?',
-          a: '비가 와도 촬영은 진행합니다. 체류 중에 대체 가능한 날짜가 있으면 최대한 조정해 드립니다.',
+          a: '비가 와도 촬영은 진행합니다. 머무시는 동안 옮길 수 있는 날짜가 있으면 최대한 조정해 드립니다.',
         },
-        { q: '주차가 되나요?', a: '스튜디오에 2대 주차 가능합니다.' },
+        { q: '주차가 되나요?', a: '스튜디오에 2대까지 주차하실 수 있습니다.' },
         {
           q: '한국어로 상담할 수 있나요?',
-          a: '네. 카카오톡으로 편하게 문의해 주세요. 문의 폼도 한국어로 답변드립니다.',
+          a: '네, 카카오톡으로 편하게 문의해 주세요. 문의 폼으로 남기셔도 한국어로 답변드립니다.',
         },
       ],
     },
@@ -415,8 +415,8 @@ export const NAVER_NOTICE = {
   label: 'NAVER BLOG',
   title: '촬영 전, 궁금한 마음까지',
   body: [
-    '촬영 후기와 준비하며 나눈 이야기는 네이버 블로그에 한국어로 적고 있습니다. 하루가 어떻게 흘러가는지, 무엇을 챙기면 좋은지 미리 살펴보세요.',
-    '블로그 글은 사이트에도 자동으로 불러와, 게시할 글만 선택해 보여드립니다.',
+    '촬영 후기와 준비 과정의 이야기는 네이버 블로그에 한국어로 적고 있습니다. 촬영 당일 하루가 어떻게 흘러가는지, 무엇을 챙기면 좋은지 미리 살펴보세요.',
+    '블로그에 올린 글은 사이트로도 자동으로 가져와, 보여드릴 글만 골라 싣습니다.',
   ],
   cta: '촬영후기 보기',
   cards: [

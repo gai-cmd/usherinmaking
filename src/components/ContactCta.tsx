@@ -10,8 +10,8 @@ const HEADING: Record<Locale, string> = {
 
 const BODY: Record<Locale, string> = {
   ja: '撮影日・人数・ご希望の雰囲気をお聞かせください。日本語・韓国語・英語でお答えします。',
-  en: 'Tell us your dates, how many of you there are, and the mood you have in mind. We answer in English, Japanese or Korean.',
-  ko: '촬영 날짜와 인원, 원하시는 분위기를 알려주세요. 한국어·일본어·영어로 답변드립니다.',
+  en: 'Tell us your dates, how many of you there are, and the mood you have in mind. We reply in English, Japanese or Korean.',
+  ko: '촬영 날짜와 인원, 원하시는 분위기를 알려주세요. 한국어 · 일본어 · 영어 모두 편하게 답변드립니다.',
 };
 
 /** 모든 페이지 하단에 붙는 공통 문의 섹션. 자동 예약이 없다는 사실을 함께 명시한다. */

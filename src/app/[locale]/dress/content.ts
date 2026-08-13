@@ -14,7 +14,7 @@ export const HERO = {
   lead: {
     ja: '白いドレスから色のあるものまで、当日ドレスルームでお選びいただけます。スタジオプランはドレス代込み、ロケーションプランはレンタルとしてご利用いただけます。',
     en: 'From white gowns to colour, chosen in the dress room on your session day. Studio plans include the dress; for location sessions it is a rental.',
-    ko: '흰 드레스부터 색이 있는 옷까지, 촬영 당일 드레스룸에서 직접 입어보고 정합니다. 스튜디오 플랜은 드레스가 포함되고, 로케이션 촬영은 대여로 이용하실 수 있습니다.',
+    ko: '흰 드레스부터 컬러 드레스까지, 촬영 당일 드레스룸에서 직접 입어보고 고릅니다. 스튜디오 플랜에는 드레스가 포함되어 있으며, 로케이션 촬영은 대여로 이용하실 수 있습니다.',
   } satisfies L10n,
   imageAlt: {
     ja: 'スタジオのドレスコレクション',
@@ -43,7 +43,7 @@ export const COLLECTION = {
   pendingPhotos: {
     ja: '個別のドレス写真は準備中です。',
     en: 'Individual dress photographs are being prepared.',
-    ko: '개별 드레스 사진은 준비 중입니다.',
+    ko: '드레스 개별 사진은 준비 중입니다.',
   } satisfies L10n,
   placeholderLabel: 'DRESS PHOTO',
 };
@@ -148,7 +148,7 @@ export const RENTAL = {
       body: {
         ja: 'ブーケ ・ ブートニア ・ アクセサリー ／ レンタル時は込み（当日カメラマンが持参）',
         en: 'Bouquet, boutonniere and accessories. Included with a rental, brought on your session day',
-        ko: '부케 · 부토니아 · 액세서리 / 대여 시 포함되며 촬영 당일 가져다 드립니다',
+        ko: '부케 · 부토니아 · 액세서리 / 대여 시 드레스에 맞춰 작가가 매칭해 촬영 당일 가져갑니다',
       } satisfies L10n,
     },
     {
@@ -156,7 +156,7 @@ export const RENTAL = {
       body: {
         ja: 'タキシードはありません ／ スタジオは M サイズ ＋¥20,000 でご用意',
         en: 'No tuxedos available. Studio: size M suit for +¥20,000',
-        ko: '턱시도는 없습니다 / 스튜디오는 M 사이즈 +¥20,000',
+        ko: '턱시도는 준비되어 있지 않습니다 / 스튜디오는 M 사이즈 +¥20,000',
       } satisfies L10n,
     },
   ],
@@ -185,10 +185,10 @@ export const FITTING = {
       'Accessories matched to your hair and make-up',
     ],
     ko: [
-      '문의하실 때 원하는 분위기를 알려주세요',
-      '후보를 제안하고 사이즈를 확인합니다',
-      '촬영 당일 드레스룸에서 최종 결정',
-      '헤어메이크업에 맞춰 소품을 맞춥니다',
+      '문의하실 때 원하시는 분위기를 알려주세요',
+      '어울리는 후보를 제안하고 사이즈를 확인합니다',
+      '촬영 당일 드레스룸에서 입어보고 최종 결정합니다',
+      '헤어메이크업에 맞춰 소품까지 함께 매칭합니다',
     ],
   } satisfies Record<Locale, string[]>,
 };

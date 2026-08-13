@@ -114,7 +114,7 @@ export const PHOTOGRAPHER: Record<Locale, PhotographerContent> = {
     title: 'usherinmaking',
     intro: [
       'A Korean woman photographing in Okinawa.',
-      'If you want something softer and quieter, you are in the right place — and the same person shoots every session, indoors or out.',
+      'If you want something softer and quieter, you’re in the right place — and the same person shoots every session, indoors or out.',
     ],
     facts: [
       { label: 'BASE', value: 'Okinawa · house studio' },
@@ -140,7 +140,7 @@ export const PHOTOGRAPHER: Record<Locale, PhotographerContent> = {
       points: [
         {
           title: 'Direction, not posing',
-          body: 'You do not need to know how to pose. I talk you through it as we go, and the people who feel most awkward usually come out the most natural.',
+          body: 'You don’t need to know how to pose. I talk you through it as we go, and the people who feel most awkward usually come out the most natural.',
         },
         {
           title: 'Korean-style retouching',
@@ -184,9 +184,9 @@ export const PHOTOGRAPHER: Record<Locale, PhotographerContent> = {
     eyebrow: 'PHOTOGRAPHER',
     title: 'usherinmaking',
     intro: [
-      '오키나와에서 사진을 찍는 한국인 여성 작가입니다.',
-      '부드럽고 조용한 장면을 원하신다면, 편하게 맡겨주세요.',
-      '실내든 실외든 처음부터 끝까지 제가 직접 담습니다.',
+      '2014년부터 오키나와에서 스냅 촬영을 이어온 한국인 여성 사진작가입니다.',
+      '부드럽고 조용한 사진을 원하신다면 편하게 맡겨주세요.',
+      '실내든 야외든 처음부터 끝까지 제가 직접 촬영합니다.',
     ],
     facts: [
       { label: 'BASE', value: '오키나와 · 단독주택 스튜디오' },
@@ -199,25 +199,25 @@ export const PHOTOGRAPHER: Record<Locale, PhotographerContent> = {
       lines: [
         '‘usher in’은 어딘가로 안내한다는 뜻입니다.',
         '거기에 making을 더해,',
-        '기억이 만들어지는 자리로 안내한다는 이름이 되었습니다.',
+        '기억이 만들어지는 자리로 안내한다는 이름을 지었습니다.',
       ],
-      note: ['자연과 사람이 어우러진 사진이,', '오랜 시간이 지난 뒤에도 잔상처럼 남기를 바랍니다.'],
+      note: ['자연과 사람이 어우러진 사진이,', '오랜 시간이 지나도 잔상처럼, 행복한 여운으로 남기를 바랍니다.'],
     },
     how: {
       label: 'HOW I SHOOT',
-      title: '이렇게 담습니다',
+      title: '이렇게 촬영합니다',
       points: [
         {
           title: '포즈는 몰라도 괜찮아요',
-          body: '계속 말을 걸며 진행하기 때문에, 사진이 어색한 분일수록 오히려 자연스럽게 나옵니다.',
+          body: '촬영 내내 말을 건네며 진행하기 때문에, 카메라가 어색한 분일수록 오히려 자연스럽게 나옵니다.',
         },
         {
           title: '한국 스타일 보정',
-          body: '부드러운 피부 톤과 색을 덜어낸 마무리. 보정본은 후일 데이터로 드리고, 원본도 옵션으로 받으실 수 있습니다.',
+          body: '부드러운 피부 톤과 색을 덜어낸 담백한 마무리. 보정본은 촬영 후 데이터로 보내드리며, 원본도 옵션으로 받으실 수 있습니다.',
         },
         {
           title: '실내와 실외, 둘 다',
-          body: '스튜디오의 빛과 오키나와의 햇빛. 한쪽만, 또는 하루에 둘 다(PLAN 02) 담을 수 있습니다.',
+          body: '스튜디오의 빛과 오키나와의 햇빛. 한쪽만 촬영할 수도, 하루에 둘 다(PLAN 02) 담을 수도 있습니다.',
         },
       ],
     },
@@ -230,8 +230,8 @@ export const PHOTOGRAPHER: Record<Locale, PhotographerContent> = {
       label: 'FOR OUR GUESTS',
       title: '한국어 상담',
       body: [
-        '상담부터 촬영 당일 안내까지 한국어 네이티브로 진행하니 안심하세요.',
-        '오키나와 체류 일정에 맞춰 시간과 장소를 함께 상담드립니다.',
+        '작가가 한국인이라 상담부터 촬영 당일 안내까지 모두 한국어로 진행됩니다. 마음 편하게 문의해 주세요.',
+        '오키나와 체류 일정에 맞춰 촬영 시간과 장소를 함께 정합니다.',
       ],
     },
     follow: {
@@ -241,12 +241,12 @@ export const PHOTOGRAPHER: Record<Locale, PhotographerContent> = {
         { label: '인스타그램', note: '@usherinmaking' },
         { label: '촬영후기', note: '촬영 기록', page: 'journal' },
       ],
-      note: '사이트의 갤러리는 인스타그램에서 고른 사진을 자사 서버에서 보여드립니다.',
+      note: '사이트의 갤러리는 인스타그램에 올린 사진 가운데 골라 저희 서버에서 직접 보여드립니다.',
     },
     meta: {
       title: '작가 소개 · 오키나와 웨딩 사진작가',
       description:
-        '오키나와에서 사진을 찍는 한국인 여성 작가입니다. 실내든 실외든 처음부터 끝까지 직접 담습니다. 상담은 한국어로 편하게 문의해 주세요.',
+        '2014년부터 오키나와에서 스냅 촬영을 이어온 한국인 여성 사진작가입니다. 실내든 야외든 처음부터 끝까지 직접 촬영하며, 상담은 한국어로 편하게 하실 수 있습니다.',
     },
   },
 };

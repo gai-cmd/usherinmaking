@@ -14,7 +14,7 @@ export const CONTACT = {
   definition: {
     ja: 'usherinmaking への問い合わせとは？ 撮影日と撮影内容をフォームまたはメッセージでお送りいただき、空き状況を確認したうえでご返信する流れです。',
     en: 'How do you get in touch with usherinmaking? You send us your dates and what you would like photographed, by form or by message, and we reply once we have checked availability.',
-    ko: 'usherinmaking 문의는 어떻게 하나요? 촬영 날짜와 촬영 내용을 폼이나 메신저로 보내주시면, 일정을 확인한 뒤 답변드리는 방식입니다.',
+    ko: '어셔린메이킹(usherinmaking) 문의는 어떻게 하나요? 촬영 날짜와 촬영 내용을 폼이나 카카오톡으로 보내주시면, 일정을 확인한 뒤 답변드리는 방식입니다.',
   } satisfies L10n,
 
   lead: {
@@ -23,12 +23,12 @@ export const CONTACT = {
       'オンラインの自動予約はありません。すべてご相談のうえで確定します。',
     ],
     en: [
-      'Send us your dates and what you would like to photograph. We check availability and usually reply within 1–2 days.',
-      'There is no automatic online booking — every session is arranged by message.',
+      'Send us your dates and what you’d like to photograph. We check availability and usually reply within 1–2 days.',
+      'There’s no automatic online booking — every session is arranged by message.',
     ],
     ko: [
-      '희망하시는 날짜와 촬영 내용을 남겨주세요. 일정 확인 후 보통 1~2일 이내에 답변드립니다.',
-      '온라인 자동 예약은 제공하지 않으며, 모든 촬영은 상담 후 확정됩니다.',
+      '희망하시는 날짜와 촬영 내용을 남겨주시면, 확인 후 보통 1~2일 안에 답변드립니다. 빠른 상담을 원하시면 카카오톡(amipaek)이 가장 빠릅니다.',
+      '온라인 자동 예약은 없습니다. 모든 촬영은 상담을 거쳐 확정됩니다.',
     ],
   } satisfies L10nList,
 
@@ -89,8 +89,8 @@ export const CONTACT = {
 
   sent: {
     ja: 'お問い合わせを受け付けました。1〜2日以内にご返信します。',
-    en: 'Your enquiry has arrived. We will reply within 1–2 days.',
-    ko: '문의가 접수되었습니다. 1~2일 이내에 답변드립니다.',
+    en: 'Your enquiry has arrived. We’ll reply within 1–2 days.',
+    ko: '문의가 접수되었습니다. 확인 후 1~2일 안에 답변드리겠습니다.',
   } satisfies L10n,
 
   invalid: {
@@ -101,8 +101,8 @@ export const CONTACT = {
 
   failed: {
     ja: '送信できませんでした。しばらくしてからもう一度お試しください。',
-    en: 'We could not send that. Please try again in a moment.',
-    ko: '보내지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    en: 'We couldn’t send that. Please try again in a moment.',
+    ko: '전송에 실패했습니다. 잠시 후 다시 시도해 주세요.',
   } satisfies L10n,
 
   /* ---------- 상담 채널 ---------- */
@@ -134,7 +134,7 @@ export const CONTACT = {
       a: {
         ja: 'スタジオ撮影は ¥25,000 から、ロケーション撮影は ¥76,000（税込）から承っています。プランごとの内容は料金ページに載せています。',
         en: 'Studio sessions start at ¥25,000 and location sessions at ¥76,000 including tax. Each plan is listed in full on the plans page.',
-        ko: '스튜디오 촬영은 ¥25,000부터, 로케이션 촬영은 ¥76,000(세금 포함)부터입니다. 플랜별 내용은 요금 페이지에 있습니다.',
+        ko: '스튜디오 촬영은 ¥25,000부터, 로케이션 촬영은 ¥76,000(세금 포함)부터입니다. 플랜별 자세한 내용은 요금 페이지에 정리되어 있습니다.',
       } satisfies L10n,
     },
     {
@@ -145,8 +145,8 @@ export const CONTACT = {
       } satisfies L10n,
       a: {
         ja: 'スタジオに駐車場が2台分あります。',
-        en: 'There is parking for two cars at the studio.',
-        ko: '스튜디오에 주차 2대가 가능합니다.',
+        en: 'There’s parking for two cars at the studio.',
+        ko: '스튜디오에 2대까지 주차하실 수 있습니다.',
       } satisfies L10n,
     },
     {
@@ -157,8 +157,8 @@ export const CONTACT = {
       } satisfies L10n,
       a: {
         ja: '雨天でもロケーション撮影を行うことがあります。当日の状況によっては、日程の変更をご相談いただけます。',
-        en: 'We do photograph location sessions in the rain. Depending on the day, the date can also be re-arranged by conversation.',
-        ko: '비가 와도 로케이션 촬영을 진행하는 경우가 있습니다. 당일 상황에 따라 날짜 변경을 상담하실 수 있습니다.',
+        en: 'We do shoot location sessions in the rain, and depending on the day we can also talk about moving the date.',
+        ko: '비가 와도 로케이션 촬영을 진행하는 경우가 있습니다. 당일 상황에 따라 날짜 변경도 상담하실 수 있습니다.',
       } satisfies L10n,
     },
     {
@@ -170,7 +170,7 @@ export const CONTACT = {
       a: {
         ja: '日本語・한국어・English でご相談いただけます。',
         en: 'We answer in English, Japanese and Korean.',
-        ko: '한국어 · 일본어 · 영어로 상담하실 수 있습니다.',
+        ko: '네, 괜찮습니다. 상담부터 촬영 당일까지 한국어로 진행되며, 일본어 · 영어 상담도 가능합니다.',
       } satisfies L10n,
     },
   ],
@@ -183,7 +183,7 @@ export const CONTACT = {
   landmark: {
     ja: '白い壁とアーチの一軒家が目印',
     en: 'look for the white house with the arch',
-    ko: '흰 벽과 아치가 있는 단독주택 건물입니다',
+    ko: '흰 벽에 아치가 있는 단독주택 건물입니다',
   } satisfies L10n,
 
   mapCaption: {
@@ -196,7 +196,7 @@ export const CONTACT = {
   footnote: {
     ja: 'ご返信の目安 1〜2日 ・ 撮影日はご相談のうえ確定します（自動予約・カレンダー予約はありません）',
     en: 'Replies usually within 1–2 days · dates are confirmed by message (no automatic or calendar booking)',
-    ko: '답변까지 보통 1~2일 · 촬영일은 상담으로 확정됩니다 (자동 예약 · 캘린더 예약 없음)',
+    ko: '답변은 보통 1~2일 이내 · 촬영일은 상담을 통해 확정됩니다 (자동 예약 · 캘린더 예약 없음)',
   } satisfies L10n,
 } as const;
 

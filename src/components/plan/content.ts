@@ -24,8 +24,8 @@ export const HERO = {
   /** 정의형 리드문 — AEO 인용 대상. 실제 텍스트로 노출한다. */
   lead: {
     ja: 'スタジオとロケーション、それぞれのプランと、追加できるオプションをまとめています。ご予約はお問い合わせから承ります（オンラインの自動予約はありません）。',
-    en: 'Studio and location sessions, and everything you can add to them. Bookings are arranged by message — there is no automatic online booking.',
-    ko: '웨딩 촬영과 기타 촬영, 그리고 선택 사항을 정리했습니다. 예약은 상담으로만 확정되며, 온라인 자동 예약은 없습니다.',
+    en: 'Studio and location sessions, and everything you can add to them. Bookings are arranged by message — there’s no automatic online booking.',
+    ko: '웨딩 촬영과 기타 촬영 요금, 추가할 수 있는 옵션을 한 페이지에 정리했습니다. 예약은 상담을 통해서만 확정되며, 온라인 자동 예약은 없습니다.',
   } satisfies L10n,
 };
 
@@ -164,7 +164,7 @@ export const LOCATION_PANEL = {
   note: {
     ja: 'ロケーションプランは税込表示です。',
     en: 'Location prices include tax.',
-    ko: '로케이션 요금은 세금 포함 금액입니다.',
+    ko: '로케이션 요금은 세금이 포함된 금액입니다.',
   } satisfies L10n,
 };
 
@@ -178,7 +178,7 @@ export const ANNIVERSARY_PANEL = {
   note: {
     ja: '記念写真プランは税込表示です。お問い合わせの際に詳細をご案内します。',
     en: 'Anniversary prices include tax. We confirm the details when you get in touch.',
-    ko: '기념사진 요금은 세금 포함 금액입니다. 문의 주시면 상세를 안내해 드립니다.',
+    ko: '기념사진 요금은 세금이 포함된 금액입니다. 문의 주시면 자세히 안내해 드립니다.',
   } satisfies L10n,
 };
 
@@ -189,7 +189,7 @@ export const OPTION_SECTION = {
   title: {
     ja: 'オプション',
     en: 'What you can add',
-    ko: '선택 사항',
+    ko: '추가 옵션',
   } satisfies L10n,
   lead: {
     ja: 'どのプランに追加できるかを、料金と一緒に記載しています。',

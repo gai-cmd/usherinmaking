@@ -16,9 +16,9 @@ export const META = {
     ko: '스튜디오 · 오키나와 실내 웨딩 촬영',
   } satisfies L10n,
   description: {
-    ja: '白いスタコの壁とアーチ窓、ヘリンボーンの床。沖縄の一軒家スタジオで、ヘアメイクからドレスまで整えて撮影します。4つのセット、撮影の流れ、スタジオプランのご案内。',
+    ja: '白いスタッコの壁とアーチ窓、ヘリンボーンの床。沖縄の一軒家スタジオで、ヘアメイクからドレスまで整えて撮影します。4つのセット、撮影の流れ、スタジオプランのご案内。',
     en: 'A house in Okinawa with white plaster walls, an arched window and a herringbone floor. Four sets, how a session runs, and the studio plans.',
-    ko: '흰 스타코 벽과 아치 창, 헤링본 바닥. 오키나와 단독주택 스튜디오의 4개 세트와 촬영 당일 스케줄, 스튜디오 플랜을 안내합니다.',
+    ko: '흰 스타코 벽과 아치 창, 헤링본 바닥. 오키나와의 단독주택 스튜디오입니다. 4개의 세트와 촬영 당일 스케줄, 스튜디오 플랜을 안내합니다.',
   } satisfies L10n,
 };
 
@@ -39,7 +39,7 @@ export const HERO = {
 /** 정의형 리드문 — AEO 핵심 표면이므로 반드시 실제 텍스트로 렌더한다 */
 export const LEAD: L10nLines = {
   ja: [
-    '白いスタコの壁と、アーチ窓と、ヘリンボーンの床。',
+    '白いスタッコの壁と、アーチ窓と、ヘリンボーンの床。',
     '沖縄の光がそのまま入る一軒家のスタジオで、',
     'ヘアメイクからドレスまで、ここで整えて撮影します。',
   ],
@@ -75,8 +75,8 @@ export const SETS = {
   title: { ja: '4つのセット', en: 'Four sets', ko: '4개의 세트' } satisfies L10n,
   lead: {
     ja: '一度の撮影で、いくつかの部屋を行き来できます',
-    en: 'You can move between more than one room in a single session',
-    ko: '한 번의 촬영에서 공간을 옮겨가며 담습니다',
+    en: 'Move between all four sets in a single session',
+    ko: '한 번의 촬영으로 네 개의 공간을 오가며 담습니다',
   } satisfies L10n,
 };
 
@@ -90,7 +90,7 @@ export const SET_COPY: Record<string, { title: L10n; body: L10n; alt: L10n }> = 
     body: {
       ja: 'アーチ型の窓、ヘリンボーンの床、シャンデリア。午前の光がいちばん柔らかい部屋です。',
       en: 'Natural light, herringbone floor and a chandelier — the softest light in the house.',
-      ko: '아치형 창과 헤링본 바닥, 샹들리에. 커튼을 지난 빛이 가장 부드럽게 도는 방입니다.',
+      ko: '아치형 창과 헤링본 바닥, 샹들리에. 커튼을 지나온 빛이 가장 부드럽게 도는 방입니다.',
     },
     alt: {
       ja: 'アーチ窓・自然光のセット',
@@ -103,7 +103,7 @@ export const SET_COPY: Record<string, { title: L10n; body: L10n; alt: L10n }> = 
     body: {
       ja: '白から色ドレスまで。ベールやアクセサリーもここでお選びいただけます。',
       en: 'White and coloured gowns, veils and accessories, chosen here on your session day.',
-      ko: '흰 드레스부터 색이 있는 옷까지. 베일과 액세서리도 이곳에서 함께 고릅니다.',
+      ko: '흰 드레스부터 컬러 드레스까지. 베일과 액세서리도 이곳에서 함께 고릅니다.',
     },
     alt: {
       ja: 'ドレスルーム',
@@ -193,7 +193,7 @@ export const FLOW = {
       note: {
         ja: '後日データでお渡し',
         en: 'Delivered as files afterwards',
-        ko: '후일 데이터로 전달',
+        ko: '촬영 후 데이터로 보내드립니다',
       } satisfies L10n,
     },
   ],
@@ -229,7 +229,7 @@ export const ACCESS = {
   landmark: {
     ja: '入口のウェルカムサイン',
     en: 'A white house with an arched entrance',
-    ko: '흰 벽과 아치가 있는 단독주택 건물입니다',
+    ko: '흰 벽에 아치가 있는 단독주택 건물입니다',
   } satisfies L10n,
   languages: {
     ja: '日本語 ・ 한국어 ・ English',

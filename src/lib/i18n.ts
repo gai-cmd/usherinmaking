@@ -107,7 +107,7 @@ export const UI = {
   close: { ja: '閉じる', en: 'CLOSE', ko: '닫기' },
   noAutoBooking: {
     ja: '自動予約・カレンダー予約はありません。お問い合わせいただいたあと、ご相談のうえで確定します。',
-    en: 'There is no automatic or calendar booking. Everything is confirmed through a conversation after you get in touch.',
-    ko: '자동 예약·캘린더 예약은 없습니다. 문의를 주시면 상담을 통해 확정합니다.',
+    en: 'There’s no automatic or calendar booking. Every session is confirmed through a conversation after you get in touch.',
+    ko: '자동 예약 · 캘린더 예약은 없습니다. 문의를 주시면 상담을 통해 일정을 확정해 드립니다.',
   },
 } as const satisfies Record<string, Record<Locale, string>>;
