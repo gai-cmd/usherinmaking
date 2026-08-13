@@ -1,6 +1,18 @@
 import type { Locale } from '@/lib/i18n';
+import { STUDIO_INFO } from '@/content/site';
+import { NOTES } from '@/components/plan/content';
 
 type L10n = Record<Locale, string>;
+
+/**
+ * 취소 규정은 요금 페이지가 정본이다(`components/plan/content` 의 NOTES).
+ * 여기에 문장을 다시 적으면 두 곳이 어긋나고, 법정 표기 쪽이 낡은 값을 말하게 된다.
+ */
+const cancelPolicy: L10n = {
+  ja: `${NOTES.cancel.ja} ${NOTES.cancelScale.ja} ${NOTES.typhoon.ja}`,
+  en: `${NOTES.cancel.en} ${NOTES.cancelScale.en} ${NOTES.typhoon.en}`,
+  ko: `${NOTES.cancel.ko} ${NOTES.cancelScale.ko} ${NOTES.typhoon.ko}`,
+};
 
 export const TOKUSHOHO_TITLE: L10n = {
   ja: '特定商取引法に基づく表記',
@@ -27,13 +39,10 @@ export const TOKUSHOHO_ROWS: Row[] = [
     pending: true,
   },
   {
+    // 주소는 2026-08-10 에 확정됐고 문의·스튜디오 페이지와 구조화 데이터에 이미 공개돼 있다.
+    // 법정 표기에서만 "(확인 필요)"로 두면 같은 사이트가 서로 다른 말을 하게 된다.
     label: { ja: '所在地', en: 'Address', ko: '소재지' },
-    pending: true,
-    note: {
-      ja: '請求があった場合は遅滞なく開示します。',
-      en: 'Disclosed without delay on request.',
-      ko: '청구가 있을 경우 지체 없이 공개합니다.',
-    },
+    value: STUDIO_INFO.address,
   },
   {
     label: { ja: '電話番号', en: 'Telephone', ko: '전화번호' },
@@ -57,7 +66,8 @@ export const TOKUSHOHO_ROWS: Row[] = [
     value: {
       ja: '各撮影プランのページに表示する料金によります。ロケーション・記念写真の料金は税込表示、スタジオプランはモニター価格の表示です。',
       en: 'As shown on each plan page. Location and anniversary prices include tax; studio plans are shown as monitor prices.',
-      ko: '각 촬영 플랜 페이지에 표시된 요금에 따릅니다. 로케이션·기념사진 요금은 세금 포함 표시이며, 스튜디오 플랜은 모니터 가격 표시입니다.',
+      // 한국 고객 상품은 원화 상품 두 갈래다 — 스튜디오 플랜·모니터 가격은 일본어 상품 얘기다.
+      ko: '각 촬영 플랜 페이지에 표시된 요금에 따릅니다. 웨딩 촬영과 기타 촬영 요금은 원화 표시이며, 의상·헤어메이크업 등은 옵션 요금이 별도로 발생합니다.',
     },
   },
   {
@@ -88,12 +98,13 @@ export const TOKUSHOHO_ROWS: Row[] = [
     },
   },
   {
+    // 취소 규정은 요금 페이지에 전문이 공개돼 있다 — 법정 표기가 가장 필요한 항목이기도 하다.
     label: {
       ja: 'キャンセル・変更について',
       en: 'Cancellation and changes',
       ko: '취소·변경',
     },
-    pending: true,
+    value: cancelPolicy,
     note: {
       ja: 'キャンセル料の発生時期と料率、日程変更の可否、悪天候時の取り扱いを含みます。',
       en: 'Covers when a cancellation fee applies and at what rate, whether a date can be moved, and what happens in bad weather.',
