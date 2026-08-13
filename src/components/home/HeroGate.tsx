@@ -12,6 +12,9 @@ import s from './HeroGate.module.css';
  * 홈 최상단의 갈림길. LOCATION(야외)과 STUDIO(실내)는 완전히 대등한 두 축이라
  * 좌우 같은 폭·같은 높이로 놓고, 패널 전체를 하나의 링크로 만든다.
  * 모바일에서는 250px 두 장으로 쌓아 한 화면에 두 축이 모두 보이게 한다.
+ *
+ * 한국어는 예외다 — 한국 고객 상품(usherinmaking.com/korean)에 스튜디오 플랜이
+ * 없으므로 로케이션 패널 하나만 전폭으로 놓는다.
  */
 export function HeroGate({
   locale,
@@ -23,6 +26,7 @@ export function HeroGate({
   text?: PageCopy;
 }) {
   const { location, studio } = HOME[locale].hero;
+  const solo = locale === 'ko';
 
   // 관리자가 고친 값이 있으면 그것을, 없으면 코드 기본값을 쓴다.
   const locationLines = text ? toLines(text['hero.location.lines']) : location.lines;
@@ -36,7 +40,7 @@ export function HeroGate({
   const studioImage = pickImage(images, 'hero.studio', locale, HERO_IMAGE.studio, studio.alt)!;
 
   return (
-    <div className={s.root}>
+    <div className={solo ? `${s.root} ${s.solo}` : s.root}>
       <Link href={path(locale, 'location')} className={s.panel}>
         <Image
           src={locationImage.src}
@@ -62,30 +66,32 @@ export function HeroGate({
         </span>
       </Link>
 
-      <Link href={path(locale, 'studio')} className={s.panel}>
-        <Image
-          src={studioImage.src}
-          alt={studioImage.alt}
-          fill
-          priority
-          sizes="(max-width: 767px) 100vw, 50vw"
-          className={s.image}
-        />
-        <span className={s.scrim} />
-        <span className={s.body}>
-          <span className={s.eyebrow}>{studio.eyebrow}</span>
-          <span className={s.display}>{studio.display}</span>
-          <span className={s.lines}>
-            {studioLines.map((line, i) => (
-              <Fragment key={line}>
-                {i > 0 && <br />}
-                {line}
-              </Fragment>
-            ))}
+      {!solo && (
+        <Link href={path(locale, 'studio')} className={s.panel}>
+          <Image
+            src={studioImage.src}
+            alt={studioImage.alt}
+            fill
+            priority
+            sizes="(max-width: 767px) 100vw, 50vw"
+            className={s.image}
+          />
+          <span className={s.scrim} />
+          <span className={s.body}>
+            <span className={s.eyebrow}>{studio.eyebrow}</span>
+            <span className={s.display}>{studio.display}</span>
+            <span className={s.lines}>
+              {studioLines.map((line, i) => (
+                <Fragment key={line}>
+                  {i > 0 && <br />}
+                  {line}
+                </Fragment>
+              ))}
+            </span>
+            <span className={s.cta}>{studioCta}</span>
           </span>
-          <span className={s.cta}>{studioCta}</span>
-        </span>
-      </Link>
+        </Link>
+      )}
     </div>
   );
 }

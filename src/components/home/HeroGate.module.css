@@ -7,6 +7,11 @@
   margin-inline: auto;
 }
 
+/* 한국어 홈 — 로케이션 패널 하나만 전폭으로 */
+.solo {
+  grid-template-columns: 1fr;
+}
+
 .panel {
   position: relative;
   display: block;
@@ -109,6 +114,11 @@
   /* 두 패널이 한 화면에 함께 들어오도록 250px씩 */
   .panel {
     height: 250px;
+  }
+
+  /* 단독 패널은 한 장이 화면을 채우도록 넉넉하게 */
+  .solo .panel {
+    height: 380px;
   }
 
   .body {

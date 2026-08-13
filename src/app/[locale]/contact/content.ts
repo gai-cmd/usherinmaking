@@ -134,19 +134,20 @@ export const CONTACT = {
       a: {
         ja: 'スタジオ撮影は ¥25,000 から、ロケーション撮影は ¥76,000（税込）から承っています。プランごとの内容は料金ページに載せています。',
         en: 'Studio sessions start at ¥25,000 and location sessions at ¥76,000 including tax. Each plan is listed in full on the plans page.',
-        ko: '스튜디오 촬영은 ¥25,000부터, 로케이션 촬영은 ¥76,000(세금 포함)부터입니다. 플랜별 자세한 내용은 요금 페이지에 정리되어 있습니다.',
+        ko: '웨딩 촬영은 88만원부터, 커플 · 가족 · 기념일 등 기타 촬영은 30만원부터입니다. 플랜별 자세한 내용은 요금 페이지에 정리되어 있습니다.',
       } satisfies L10n,
     },
     {
+      // 세 언어는 독립 본문 — 한국어 상품은 로케이션 전용이라 주차 대신 장소 선정 문답을 싣는다.
       q: {
         ja: '駐車場はありますか？',
         en: 'Is there parking?',
-        ko: '주차가 되나요?',
+        ko: '촬영 장소는 어떻게 정하나요?',
       } satisfies L10n,
       a: {
         ja: 'スタジオに駐車場が2台分あります。',
         en: 'There’s parking for two cars at the studio.',
-        ko: '스튜디오에 2대까지 주차하실 수 있습니다.',
+        ko: '지역만 미리 정해 두고, 정확한 장소는 촬영일에 임박해 날씨를 보고 추천드립니다. 유명 관광지보다는 한적한 시크릿 스팟 위주로 안내합니다.',
       } satisfies L10n,
     },
     {

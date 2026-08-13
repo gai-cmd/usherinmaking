@@ -57,7 +57,8 @@ export const JOURNAL_LOCALES: readonly Locale[] = ['ko'];
 
 /** 헤더 내비게이션 — 순서 고정, 라벨만 언어별. `locales` 가 있으면 그 언어에서만 보인다. */
 export const NAV: { key: PageKey; label: Record<Locale, string>; locales?: readonly Locale[] }[] = [
-  { key: 'studio', label: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' } },
+  // 한국 고객 상품에 스튜디오 플랜이 없어 한국어 메뉴에서는 뺀다 (페이지 자체는 살아 있다).
+  { key: 'studio', label: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' }, locales: ['ja', 'en'] },
   { key: 'location', label: { ja: 'LOCATION', en: 'LOCATION', ko: '로케이션' } },
   // 스튜디오·로케이션에서 찍은 것을 한데 모아 보는 페이지라 그 둘 바로 뒤에 둔다.
   { key: 'gallery', label: { ja: 'GALLERY', en: 'GALLERY', ko: '갤러리' } },

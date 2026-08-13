@@ -25,7 +25,8 @@ import {
   STUDIO_SETS,
   STUDIO_INFO,
 } from '@/content/site';
-import { HOME } from './home-content';
+import { KO_ETC_PLANS, KO_WEDDING_PLANS } from '@/components/plan/content';
+import { HOME, KO_HOME_PLAN_NOTES } from './home-content';
 import s from './page.module.css';
 
 export function generateStaticParams() {
@@ -68,6 +69,38 @@ export async function generateMetadata({
 function jsonLd(locale: Locale) {
   const copy = HOME[locale];
 
+  // 한국 고객 상품은 원화 상품(웨딩/기타 촬영)이 정본이다 — 엔화 스튜디오 플랜은 팔지 않는다.
+  const offers =
+    locale === 'ko'
+      ? [
+          {
+            '@type': 'Offer',
+            itemOffered: { '@type': 'Service', name: '웨딩 촬영' },
+            priceCurrency: 'KRW',
+            price: KO_WEDDING_PLANS[0].price,
+          },
+          {
+            '@type': 'Offer',
+            itemOffered: { '@type': 'Service', name: '기타 촬영' },
+            priceCurrency: 'KRW',
+            price: KO_ETC_PLANS[0].price,
+          },
+        ]
+      : [
+          {
+            '@type': 'Offer',
+            itemOffered: { '@type': 'Service', name: copy.studioPlans.title },
+            priceCurrency: 'JPY',
+            price: STUDIO_PLANS[0].price,
+          },
+          {
+            '@type': 'Offer',
+            itemOffered: { '@type': 'Service', name: copy.locationPlans.title },
+            priceCurrency: 'JPY',
+            price: LOCATION_PLANS[0].price,
+          },
+        ];
+
   return [
     {
       '@context': 'https://schema.org',
@@ -77,7 +110,10 @@ function jsonLd(locale: Locale) {
       description: copy.meta.description,
       url: `${SITE_URL}${path(locale, 'home')}`,
       logo: `${SITE_URL}/brand/logo.png`,
-      image: `${SITE_URL}/images/studio/IMG_0766.png`,
+      image:
+        locale === 'ko'
+          ? `${SITE_URL}/images/up/0f62c6d466bcea42.jpg`
+          : `${SITE_URL}/images/studio/IMG_0766.png`,
       // 같은 주체가 운영하는 채널임을 검색·AI 엔진에 알린다. 갤러리 사진의 출처가
       // 이 계정이므로, 연결이 없으면 같은 사진이 서로 무관한 두 곳에 있는 것으로 읽힌다.
       // 작품 계정 + 드레스 계정 둘 다 이 브랜드의 공식 채널이다 — 엔티티 일관성 신호.
@@ -101,20 +137,7 @@ function jsonLd(locale: Locale) {
         name: STUDIO_INFO.parking[locale],
         value: true,
       },
-      makesOffer: [
-        {
-          '@type': 'Offer',
-          itemOffered: { '@type': 'Service', name: copy.studioPlans.title },
-          priceCurrency: 'JPY',
-          price: STUDIO_PLANS[0].price,
-        },
-        {
-          '@type': 'Offer',
-          itemOffered: { '@type': 'Service', name: copy.locationPlans.title },
-          priceCurrency: 'JPY',
-          price: LOCATION_PLANS[0].price,
-        },
-      ],
+      makesOffer: offers,
     },
     {
       '@context': 'https://schema.org',
@@ -133,6 +156,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   if (!isLocale(locale)) notFound();
 
   const copy = HOME[locale];
+  // 한국어 홈은 로케이션 단독 구성이다 — 한국 고객 상품에 스튜디오 플랜이 없다.
+  const isKo = locale === 'ko';
   // 관리자가 건 사진을 한 번에 읽는다. 행이 없는 자리는 지금 쓰던 경로가 그대로 나온다.
   // 세트 그리드는 스튜디오 페이지와 같은 사진이므로 그쪽 슬롯을 함께 읽는다 —
   // 한 장을 갈아끼웠는데 홈에만 옛 사진이 남는 어긋남을 만들지 않기 위해서다.
@@ -141,8 +166,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     getPageCopy('home', locale),
     resolvePageImages('home'),
     resolvePageImages('studio'),
-    // 최근 작품 그리드 — 사진 풀이 정원(4장)을 채우면 그쪽, 아니면 코드 배열.
-    getWorksImages('home'),
+    // 최근 작품 그리드 — 사진 풀이 정원을 채우면 그쪽, 아니면 코드 배열.
+    // 한국어 홈은 로케이션 태그 사진만 고른다 (스튜디오 컷이 섞이지 않게).
+    getWorksImages(isKo ? 'location' : 'home'),
   ]);
 
   // 작가 소개 옆 사진도 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
@@ -150,7 +176,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     images,
     'photographer',
     locale,
-    '/images/studio/IMG_0769.png',
+    isKo ? '/images/up/adba32345d8088a3.jpg' : '/images/studio/IMG_0769.png',
     copy.photographer.alt,
   )!;
 
@@ -185,7 +211,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
-      {/* ---------- STUDIO PLAN ---------- */}
+      {/* ---------- STUDIO PLAN (한국어 상품에는 없는 라인업 — ko 미노출) ---------- */}
+      {!isKo && (
       <Section
         label={copy.studioPlans.label}
         title={text['studioPlans.title']}
@@ -224,8 +251,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </div>
         </div>
       </Section>
+      )}
 
-      {/* ---------- 스튜디오 세트 ---------- */}
+      {/* ---------- 스튜디오 세트 (ko 미노출) ---------- */}
+      {!isKo && (
       <Section
         label={copy.sets.label}
         title={text['sets.title']}
@@ -265,8 +294,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           })}
         </ul>
       </Section>
+      )}
 
-      {/* ---------- LOCATION PLAN ---------- */}
+      {/* ---------- LOCATION PLAN (ko 는 원화 상품 — 웨딩/기타 촬영) ---------- */}
       <Section
         alt
         label={copy.locationPlans.label}
@@ -275,7 +305,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         aside={copy.locationPlans.aside}
       >
         <ul className={s.locGrid}>
-          {LOCATION_PLANS.map((plan) => (
+          {(isKo ? KO_WEDDING_PLANS : LOCATION_PLANS).map((plan) => (
             <li key={plan.code}>
               <PlanCard plan={plan} locale={locale} />
             </li>
@@ -285,17 +315,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className={s.noteBox}>
           <p className="u-label">{copy.locationPlans.notesLabel}</p>
           <ul className={s.noteList}>
-            {LOCATION_NOTES[locale].map((note) => (
+            {(isKo ? KO_HOME_PLAN_NOTES : LOCATION_NOTES[locale]).map((note) => (
               <li key={note}>{note}</li>
             ))}
           </ul>
 
           <p className={s.anniversaryLabel}>{copy.locationPlans.anniversaryLabel}</p>
           <ul className={s.anniversary}>
-            {ANNIVERSARY_PLANS.map((plan) => (
+            {(isKo ? KO_ETC_PLANS : ANNIVERSARY_PLANS).map((plan) => (
               <li key={plan.code}>
                 <span>{plan.title[locale]}</span>
-                <span className="u-num">¥{plan.price.toLocaleString('en-US')}</span>
+                <span className="u-num">
+                  {plan.priceText ?? `¥${plan.price.toLocaleString('en-US')}`}
+                </span>
               </li>
             ))}
           </ul>
