@@ -75,12 +75,38 @@ export async function revalidateWorksSurfaces(): Promise<{
 }> {
   // 경로는 반드시 path() 로 조립한다 — ROUTE_SEGMENT 가 로케일별로 갈라져도 (en plan→plans 전례) 따라간다.
   const routes = LOCALES.flatMap((l) => [path(l, 'home'), path(l, 'studio'), path(l, 'location')]);
+  return revalidateRoutes('works', routes);
+}
+
+/**
+ * 드레스 룩북 페이지 무효화.
+ *
+ * 작품 그리드와 사진 풀이 갈린다(igAccount='dress'). 드레스 계정은 문안이 채워지면 곧장
+ * 전시로 가는데 이 페이지도 빌드 시점에 굳는 정적 페이지라, 무효화가 없으면 전시로 올라간
+ * 사진이 다음 배포 전까지 화면에 나오지 않는다. 실제로 이 경로를 무효화하는 코드가 한 군데도
+ * 없어 드레스 자동 전시가 화면까지 닿지 못하고 있었다.
+ */
+export async function revalidateDressSurfaces(): Promise<{
+  revalidated: boolean;
+  routes: string[];
+}> {
+  return revalidateRoutes(
+    'dress',
+    LOCALES.map((l) => path(l, 'dress')),
+  );
+}
+
+/** 두 무효화 함수가 같은 실패 규칙(삼키되 false 로 알린다)을 쓰도록 한 곳에 둔다. */
+async function revalidateRoutes(
+  tag: string,
+  routes: string[],
+): Promise<{ revalidated: boolean; routes: string[] }> {
   try {
     const { revalidatePath } = await import('next/cache');
     for (const r of routes) revalidatePath(r);
     return { revalidated: true, routes };
   } catch (err) {
-    console.error('[works] 재검증 실패', err);
+    console.error(`[${tag}] 재검증 실패`, err);
     return { revalidated: false, routes };
   }
 }

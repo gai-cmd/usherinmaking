@@ -35,6 +35,7 @@ import {
 import { parseCaption } from '@/lib/caption';
 import { blockedIgMediaIds } from '@/server/ig-blocklist';
 import { slugFromAlt, suggestCategories } from '@/server/ai-draft';
+import { revalidateDressSurfaces, revalidateWorksSurfaces } from '@/server/works';
 import type { AiSuggestion, Localized } from '@/server/photos';
 
 /* ============================ 예산 ============================ */
@@ -85,9 +86,15 @@ const FALLBACK_EXT = 'jpg';
 /**
  * 계정마다 수집 규칙이 다르다.
  *
- * 작품(main)은 갤러리에서 파생본(AVIF/WebP)으로 서빙되고 사람이 골라 전시한다.
- * 드레스(dress)는 룩북이라 원본을 next/image 가 그대로 최적화하고, 캡션 첫 줄이 곧 문안이므로
- * 문안이 채워진 것은 바로 전시된다 — 이 규칙은 기존 수동 스크립트(--publish)와 같다.
+ * 작품(main)은 갤러리에서 파생본(AVIF/WebP)으로 서빙된다.
+ * 드레스(dress)는 룩북이라 원본을 next/image 가 그대로 최적화하고, 캡션 첫 줄이 곧 문안이다.
+ *
+ * 두 계정 모두 문안(alt)이 3개 언어 다 차면 곧장 전시된다 — 기존 수동 스크립트(--publish)와
+ * 같은 규칙이다. 작품도 자동 전시로 돌린 것은 인스타에 올린 게시물이 사람 손을 거치지 않고도
+ * 홈에 닿게 하기 위해서다. 선별이 사라진 것은 아니다: 스튜디오 · 로케이션 그리드는 확정된
+ * 분류(termSlug)를 요구하므로, 사람이 태그를 붙이기 전까지 자동 전시된 사진은 홈과 갤러리에만
+ * 나오고 두 그리드에는 오르지 않는다. AI 초안이 붙지 않은 회차는 alt 가 비어 미선별로 남는다.
+ * 되돌리려면 main 의 autoPublish 를 false 로 되돌리면 된다 — 이미 전시된 사진은 그대로 남는다.
  */
 type AccountProfile = {
   /** 저장 키 앞자리. 계정이 섞이면 나중에 어느 쪽 원본인지 알 수 없다. */
@@ -102,7 +109,7 @@ const PROFILES: Record<IgAccount, AccountProfile> = {
   main: {
     keyPrefix: (id, ext) => originalKey(id, ext),
     renditions: true,
-    autoPublish: false,
+    autoPublish: true,
   },
   dress: {
     keyPrefix: (id, ext) => `photos/dress/${id}.${ext}`,
@@ -428,7 +435,11 @@ async function uniqueSlug(altEn: string): Promise<string | null> {
   return null;
 }
 
-type ItemOutcome = 'created' | 'duplicate';
+/**
+ * 'published' 는 'created' 중에서도 곧장 전시로 들어간 것이다.
+ * 전시가 하나도 없으면 공개 화면이 바뀌지 않으므로 재검증을 건너뛴다 — 그 판단의 근거다.
+ */
+type ItemOutcome = 'published' | 'created' | 'duplicate';
 
 /**
  * 한 건: 다운로드 → 원본 보관 → 실측 → 파생본 → AI 초안 → UNSORTED 저장.
@@ -477,6 +488,11 @@ async function ingestOne(media: InstagramMedia, account: IgAccount): Promise<Ite
   const draft = await draftPhotoMetadata(bytes, media.caption);
   const slug = await uniqueSlug(draft.alt.en);
 
+  // alt 3개 언어가 다 찬 것만 전시로 올린다. 문안 없는 사진을 전시하지 않는 것은 두 계정에
+  // 공통이다(접근성 규칙) — AI 초안이 붙지 않은 회차는 자동 전시 계정이라도 미선별로 남는다.
+  // 반환값으로도 내보내 호출부가 재검증 여부를 가른다.
+  const publish = profile.autoPublish && isAltFilled(draft.alt);
+
   try {
     await prisma.photo.create({
       data: {
@@ -490,10 +506,7 @@ async function ingestOne(media: InstagramMedia, account: IgAccount): Promise<Ite
         takenAt,
         mediaType: media.mediaType,
         ...(videoUrl ? { videoUrl } : {}),
-        // 작품은 예외 없이 미선별이다 — 전시는 관리자가 고른 것만 나간다.
-        // 드레스 룩북은 문안(alt)이 채워졌으면 곧장 전시로 간다. alt 없는 사진을 올리지 않는 것은
-        // 두 계정에 공통이다(접근성 규칙).
-        status: profile.autoPublish && isAltFilled(draft.alt) ? 'PUBLISHED' : 'UNSORTED',
+        status: publish ? 'PUBLISHED' : 'UNSORTED',
         lowRes: isLowRes(width, height),
         alt: draft.alt as unknown as Prisma.InputJsonValue,
         ...(draft.story ? { story: draft.story as unknown as Prisma.InputJsonValue } : {}),
@@ -533,7 +546,7 @@ async function ingestOne(media: InstagramMedia, account: IgAccount): Promise<Ite
     console.warn('[ingest] MediaAsset 기록 실패 (사진은 저장됨)', media.id, err);
   }
 
-  return 'created';
+  return publish ? 'published' : 'created';
 }
 
 /* ============================ 전체 실행 ============================ */
@@ -618,6 +631,8 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
 
   let fetched = 0;
   let created = 0;
+  // created 중 곧장 전시로 들어간 건수. 0 이면 공개 화면이 그대로라 재검증할 이유가 없다.
+  let published = 0;
   let failed = 0;
   let skipped = 0;
   let tooOld = 0;
@@ -652,8 +667,12 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
       }
 
       try {
-        if ((await ingestOne(item, account)) === 'created') created += 1;
-        else skipped += 1;
+        const outcome = await ingestOne(item, account);
+        if (outcome === 'duplicate') skipped += 1;
+        else {
+          created += 1;
+          if (outcome === 'published') published += 1;
+        }
       } catch (itemErr) {
         // 한 장의 실패가 나머지를 막지 않는다. 세어서 남기고 다음으로 간다.
         failed += 1;
@@ -663,10 +682,38 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
 
     const closed = await finishRun(run, { fetched, created, failed, error: null });
 
+    /*
+     * 수집만으로는 화면이 바뀌지 않는다. 홈 · 작품 그리드 · 드레스는 빌드 시점에 굳는 정적
+     * 페이지라, 전시(PUBLISHED)로 새 사진이 들어와도 무효화하지 않으면 다음 배포 전까지
+     * 예전 화면이 그대로 나간다. 관리자 경로(photos/[id]/status 등)는 이미 무효화를 부르는데
+     * 크론 경로에는 이 호출이 없어 자동 반영이 여기서 끊겨 있었다.
+     *
+     * 계정마다 사진이 실리는 표면이 다르다 — 작품은 홈 · 스튜디오 · 로케이션, 드레스는 드레스
+     * 페이지다. 갤러리는 searchParams 를 받아 매 요청 렌더라 무효화 대상이 아니다.
+     */
+    const revalidated =
+      published > 0
+        ? (await (account === 'dress' ? revalidateDressSurfaces() : revalidateWorksSurfaces()))
+            .revalidated
+        : null;
+
     await recordActivity({
       actor,
       action: `Instagram 동기화 (${account}) — 신규 ${created}건 수집`,
-      detail: { trigger, account, fetched, created, failed, skipped, tooOld, remaining },
+      // revalidated 가 false 면 저장은 됐고 화면 무효화만 실패한 것이다. null 은 전시 신규가
+      // 없어 무효화할 이유가 없었던 회차다 — 둘을 섞으면 원인 추적이 막힌다.
+      detail: {
+        trigger,
+        account,
+        fetched,
+        created,
+        published,
+        failed,
+        skipped,
+        tooOld,
+        remaining,
+        revalidated,
+      },
     });
 
     return { ok: true, trigger, run: closed, skipped, tooOld, remaining, aiUnavailable };
