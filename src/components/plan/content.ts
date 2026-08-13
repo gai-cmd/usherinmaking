@@ -538,5 +538,6 @@ export const KO_OPTION_NOTES = [
 export const META_TITLE: L10n = {
   ja: 'プラン ・ スタジオとロケーションの料金',
   en: 'Plans and pricing — studio and location',
-  ko: '요금 안내 · 스튜디오와 로케이션',
+  // 한국 고객 상품은 웨딩·기타 촬영 두 갈래다 — 스튜디오 플랜은 팔지 않는다.
+  ko: '요금 안내 · 웨딩 촬영과 기타 촬영',
 };

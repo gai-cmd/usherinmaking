@@ -14,7 +14,9 @@ export const HERO = {
   lead: {
     ja: '白いドレスから色のあるものまで、当日ドレスルームでお選びいただけます。スタジオプランはドレス代込み、ロケーションプランはレンタルとしてご利用いただけます。',
     en: 'From white gowns to colour, chosen in the dress room on your session day. Studio plans include the dress; for location sessions it is a rental.',
-    ko: '흰 드레스부터 컬러 드레스까지, 촬영 당일 드레스룸에서 직접 입어보고 고릅니다. 스튜디오 플랜에는 드레스가 포함되어 있으며, 로케이션 촬영은 대여로 이용하실 수 있습니다.',
+    // 한국 고객 상품은 의상이 포함되지 않는다 — 신부 드레스만 대여이고, 피팅은 없다.
+    // JA/EN 의 "스튜디오 플랜에 드레스 포함"을 옮겨 오면 없는 상품을 안내하게 된다.
+    ko: '흰 드레스부터 컬러 드레스까지, 신부 드레스에 한해 대여로 이용하실 수 있습니다. 드레스 1벌에 액세서리와 소품을 더해 10만원부터이며, 디자인과 사이즈는 상담을 통해 정합니다.',
   } satisfies L10n,
   imageAlt: {
     ja: 'スタジオのドレスコレクション',
@@ -126,6 +128,29 @@ export const RENTAL = {
     en: 'How rental works',
     ko: '대여 안내',
   } satisfies L10n,
+  /**
+   * 한국 고객 상품(usherinmaking.com/korean)의 대여 조건은 JA/EN 과 다르다 —
+   * 의상 미포함·신부 드레스만 대여·원화 표기·신랑 의상 직접 준비.
+   * 로케일별 행 구성 자체가 달라 아래 KO_ROWS 로 갈라 둔다.
+   */
+  koRows: [
+    {
+      head: '웨딩 촬영',
+      body: '드레스 1벌 + 액세서리 + 소품 10만원부터 / 신부 드레스만 대여 가능합니다',
+    },
+    {
+      head: '기타 촬영',
+      body: '의상은 제공하지 않으며, 웨딩 의상 착장은 불가합니다',
+    },
+    {
+      head: '소품 · 액세서리',
+      body: '드레스에 맞춰 작가가 매칭해 드리며, 개별 선택은 불가합니다',
+    },
+    {
+      head: '신랑 의상',
+      body: '직접 준비해 주셔야 합니다 (턱시도 대여는 없습니다)',
+    },
+  ],
   rows: [
     {
       head: { ja: 'スタジオプラン', en: 'Studio plans', ko: '스튜디오 플랜' } satisfies L10n,
@@ -184,11 +209,13 @@ export const FITTING = {
       'Final choice in the dress room on your session day',
       'Accessories matched to your hair and make-up',
     ],
+    // 한국 고객은 드레스 피팅이 없다 — 상담으로 디자인·사이즈를 정하고 촬영일에 받는다.
+    // "입어보고 최종 결정"은 스튜디오 드레스룸이 있는 JA/EN 안내라 KO 에 쓰면 사실과 어긋난다.
     ko: [
       '문의하실 때 원하시는 분위기를 알려주세요',
-      '어울리는 후보를 제안하고 사이즈를 확인합니다',
-      '촬영 당일 드레스룸에서 입어보고 최종 결정합니다',
-      '헤어메이크업에 맞춰 소품까지 함께 매칭합니다',
+      '인스타그램의 드레스 컬렉션에서 디자인을 함께 고릅니다',
+      '상담으로 사이즈를 확인해 드레스를 확정합니다 (피팅은 불가합니다)',
+      '촬영 당일, 액세서리와 소품까지 맞춰 가져다 드립니다',
     ],
   } satisfies Record<Locale, string[]>,
 };

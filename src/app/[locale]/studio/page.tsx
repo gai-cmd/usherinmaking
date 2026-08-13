@@ -6,7 +6,7 @@ import { Section } from '@/components/Section';
 import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
 import { STUDIO_SETS, STUDIO_PLANS, STUDIO_INFO, TBC } from '@/content/site';
-import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { SITE_URL, STUDIO_LOCALES, alternates, isLocale, path, type Locale } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
@@ -14,8 +14,9 @@ import { getWorksImages } from '@/server/works';
 import { ACCESS, FLOW, HERO, PLANS, SET_COPY, WORKS } from './content';
 import s from './page.module.css';
 
+/** 한국어에는 스튜디오 상품이 없어 페이지를 만들지 않는다 (STUDIO_LOCALES). */
 export function generateStaticParams() {
-  return LOCALES.map((locale) => ({ locale }));
+  return STUDIO_LOCALES.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata({

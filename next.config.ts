@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
        */
       { source: '/korean', destination: '/ko', permanent: true },
       { source: '/korean/:path*', destination: '/ko/:path*', permanent: true },
+      /*
+       * 한국어 스튜디오 페이지는 만들지 않는다(STUDIO_LOCALES) — 한국 고객 상품에
+       * 스튜디오 플랜이 없기 때문이다. 그동안 색인됐거나 공유된 주소가 404 로 떨어지지
+       * 않도록 로케이션으로 넘긴다. 구 주소 리다이렉트(/korean/*)가 여기로 이어질 수도 있다.
+       */
+      { source: '/ko/studio', destination: '/ko/location', permanent: true },
     ];
   },
   async headers() {

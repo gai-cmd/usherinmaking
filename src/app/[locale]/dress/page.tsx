@@ -98,11 +98,15 @@ export default async function DressPage({ params }: { params: Promise<{ locale: 
           <div>
             <p className="u-label">{C.RENTAL.label}</p>
             <h2 className={`u-h2 ${s.collTitle}`}>{text['rental.title']}</h2>
+            {/* 한국 고객 상품은 대여 조건이 따로다 — 행 구성부터 갈라진다 (content.ts koRows). */}
             <dl className={s.rental}>
-              {C.RENTAL.rows.map((row) => (
-                <div key={row.head[locale]} className={s.rentalRow}>
-                  <dt className={s.rentalHead}>{row.head[locale]}</dt>
-                  <dd className={`u-num ${s.rentalBody}`}>{row.body[locale]}</dd>
+              {(locale === 'ko'
+                ? C.RENTAL.koRows
+                : C.RENTAL.rows.map((row) => ({ head: row.head[locale], body: row.body[locale] }))
+              ).map((row) => (
+                <div key={row.head} className={s.rentalRow}>
+                  <dt className={s.rentalHead}>{row.head}</dt>
+                  <dd className={`u-num ${s.rentalBody}`}>{row.body}</dd>
                 </div>
               ))}
             </dl>

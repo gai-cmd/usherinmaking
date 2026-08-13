@@ -55,10 +55,20 @@ export function path(locale: Locale, page: PageKey, ...rest: string[]): string {
  */
 export const JOURNAL_LOCALES: readonly Locale[] = ['ko'];
 
+/**
+ * 스튜디오 페이지가 존재하는 언어.
+ *
+ * 한국 고객 상품(usherinmaking.com/korean)에는 스튜디오 플랜이 없다 — 웨딩·기타 촬영
+ * 두 갈래의 로케이션 상품뿐이다. 그래서 한국어에는 스튜디오 페이지를 두지 않는다.
+ * 이 값 하나가 내비게이션·hreflang·사이트맵·정적 생성을 모두 통제한다
+ * (`JOURNAL_LOCALES` 와 같은 구조). `/ko/studio` 로 들어오는 옛 링크는
+ * next.config 의 리다이렉트가 `/ko/location` 으로 보낸다.
+ */
+export const STUDIO_LOCALES: readonly Locale[] = ['ja', 'en'];
+
 /** 헤더 내비게이션 — 순서 고정, 라벨만 언어별. `locales` 가 있으면 그 언어에서만 보인다. */
 export const NAV: { key: PageKey; label: Record<Locale, string>; locales?: readonly Locale[] }[] = [
-  // 한국 고객 상품에 스튜디오 플랜이 없어 한국어 메뉴에서는 뺀다 (페이지 자체는 살아 있다).
-  { key: 'studio', label: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' }, locales: ['ja', 'en'] },
+  { key: 'studio', label: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' }, locales: STUDIO_LOCALES },
   { key: 'location', label: { ja: 'LOCATION', en: 'LOCATION', ko: '로케이션' } },
   // 스튜디오·로케이션에서 찍은 것을 한데 모아 보는 페이지라 그 둘 바로 뒤에 둔다.
   { key: 'gallery', label: { ja: 'GALLERY', en: 'GALLERY', ko: '갤러리' } },
@@ -88,9 +98,10 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://usherinmaki
 
 /** hreflang 상호 지정용 alternates 맵 */
 export function alternates(page: PageKey, ...rest: string[]) {
-  // 언어가 제한된 페이지(촬영후기)는 있는 언어만 가리킨다 —
+  // 언어가 제한된 페이지(촬영후기·스튜디오)는 있는 언어만 가리킨다 —
   // 없는 주소를 hreflang 으로 선언하면 검색엔진이 404 를 대안 언어로 읽는다.
-  const available = page === 'journal' ? JOURNAL_LOCALES : LOCALES;
+  const available =
+    page === 'journal' ? JOURNAL_LOCALES : page === 'studio' ? STUDIO_LOCALES : LOCALES;
   const languages: Record<string, string> = {};
   for (const l of available) languages[HTML_LANG[l]] = `${SITE_URL}${path(l, page, ...rest)}`;
   const xDefault = available.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : available[0];

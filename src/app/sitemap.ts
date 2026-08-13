@@ -1,5 +1,13 @@
 import type { MetadataRoute } from 'next';
-import { JOURNAL_LOCALES, LOCALES, SITE_URL, path, type Locale, type PageKey } from '@/lib/i18n';
+import {
+  JOURNAL_LOCALES,
+  LOCALES,
+  SITE_URL,
+  STUDIO_LOCALES,
+  path,
+  type Locale,
+  type PageKey,
+} from '@/lib/i18n';
 
 // 갤러리 필터가 쿼리스트링이 아니라 경로이므로, 필터 조합 하나하나가 독립 URL이다.
 // 여기서 누락되면 그 조합은 색인되지 않는다.
@@ -17,9 +25,11 @@ const PAGES: { key: PageKey; priority: number }[] = [
   { key: 'tokushoho', priority: 0.2 },
 ];
 
-/** 그 페이지가 실제로 존재하는 언어. 촬영후기만 한국어 전용이다. */
+/** 그 페이지가 실제로 존재하는 언어. 촬영후기는 한국어 전용, 스튜디오는 한국어에 없다. */
 function localesFor(key: PageKey): readonly Locale[] {
-  return key === 'journal' ? JOURNAL_LOCALES : LOCALES;
+  if (key === 'journal') return JOURNAL_LOCALES;
+  if (key === 'studio') return STUDIO_LOCALES;
+  return LOCALES;
 }
 
 /** 페이지가 있는 언어끼리만 hreflang 상호 지정 */
