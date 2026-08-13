@@ -7,6 +7,7 @@ import { useState } from 'react';
 import {
   LOCALES,
   LOCALE_SHORT,
+  homePath,
   navFor,
   UI,
   path,
@@ -24,13 +25,18 @@ export function Header({ locale, page }: { locale: Locale; page?: PageKey }) {
   const pathname = usePathname();
 
   // 현재 경로에서 로케일 세그먼트만 바꾼다. 페이지 키를 알면 그쪽이 더 정확하다(en/plans 대응).
+  // 홈은 예외 — 한국어에는 갈림길 홈이 없으므로 그 언어의 첫 화면으로 보낸다.
   const localeHref = (l: Locale) =>
-    page ? path(l, page) : `/${l}${pathname.replace(/^\/[a-z]{2}/, '')}` || `/${l}`;
+    page === 'home'
+      ? homePath(l)
+      : page
+        ? path(l, page)
+        : `/${l}${pathname.replace(/^\/[a-z]{2}/, '')}` || `/${l}`;
 
   return (
     <header className={s.root}>
       <div className={s.bar}>
-        <Link href={path(locale, 'home')} className={s.logo} aria-label="usherinmaking">
+        <Link href={homePath(locale)} className={s.logo} aria-label="usherinmaking">
           <Image
             src="/brand/logo.png"
             alt="usherinmaking"

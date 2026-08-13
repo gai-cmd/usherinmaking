@@ -5,9 +5,11 @@ import { notFound } from 'next/navigation';
 import { Section } from '@/components/Section';
 import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
-import { LOCATION_PLANS, LOCATION_NOTES } from '@/content/site';
+import { LOCATION_PLANS, LOCATION_NOTES, NAVER_BLOG_NOTICE_LOCALE } from '@/content/site';
 import { KO_ETC_PLANS, KO_WEDDING_PLANS } from '@/components/plan/content';
-import { KO_HOME_PLAN_NOTES } from '@/app/[locale]/home-content';
+import { HOME, KO_HOME_PLAN_NOTES } from '@/app/[locale]/home-content';
+import { HomeFaq } from '@/components/home/HomeFaq';
+import { NaverNotice } from '@/components/home/NaverNotice';
 import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
@@ -69,7 +71,18 @@ export default async function LocationPage({ params }: { params: Promise<{ local
   const plans = isKo ? [...KO_WEDDING_PLANS, ...KO_ETC_PLANS] : LOCATION_PLANS;
   const notes = isKo ? KO_HOME_PLAN_NOTES : LOCATION_NOTES[locale];
 
-  const jsonLd = {
+  // 한국어는 이 페이지가 메인이라 홈에 있던 FAQPage 도 여기서 내보낸다 — 화면의 FAQ 절과 한 쌍이다.
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: HOME[locale].faq.items.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  };
+
+  const serviceJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: text['meta.title'],
@@ -85,6 +98,8 @@ export default async function LocationPage({ params }: { params: Promise<{ local
       priceCurrency: plan.currency ?? 'JPY',
     })),
   };
+
+  const jsonLd = isKo ? [serviceJsonLd, faqJsonLd] : serviceJsonLd;
 
   return (
     <>
@@ -284,6 +299,21 @@ export default async function LocationPage({ params }: { params: Promise<{ local
           ))}
         </ul>
       </Section>
+
+      {/*
+       * 아래 두 절은 한국어에서만 나온다. 한국어의 메인은 `/ko` 가 아니라 이 페이지이므로
+       * (i18n HOME_LOCALES), 갈림길 홈에 있던 네이버 블로그 안내와 FAQ 를 여기로 옮겨 왔다.
+       * 옮기지 않으면 한국어 사이트에서 두 절이 통째로 사라진다 — FAQPage 구조화 데이터까지.
+       */}
+      {isKo && (
+        <>
+          {locale === NAVER_BLOG_NOTICE_LOCALE && <NaverNotice />}
+
+          <Section label={HOME[locale].faq.label} title={HOME[locale].faq.title}>
+            <HomeFaq locale={locale} />
+          </Section>
+        </>
+      )}
 
       <ContactCta locale={locale} />
     </>

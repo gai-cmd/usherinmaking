@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import {
+  HOME_LOCALES,
   JOURNAL_LOCALES,
   LOCALES,
   SITE_URL,
@@ -25,10 +26,15 @@ const PAGES: { key: PageKey; priority: number }[] = [
   { key: 'tokushoho', priority: 0.2 },
 ];
 
-/** 그 페이지가 실제로 존재하는 언어. 촬영후기는 한국어 전용, 스튜디오는 한국어에 없다. */
+/**
+ * 그 페이지가 실제로 존재하는 언어.
+ * 촬영후기는 한국어 전용, 스튜디오는 한국어에 없고, 갈림길 홈도 한국어에 없다
+ * (한국어 메인은 `/ko/location`). 없는 주소를 사이트맵에 넣으면 리다이렉트가 색인된다.
+ */
 function localesFor(key: PageKey): readonly Locale[] {
   if (key === 'journal') return JOURNAL_LOCALES;
   if (key === 'studio') return STUDIO_LOCALES;
+  if (key === 'home') return HOME_LOCALES;
   return LOCALES;
 }
 

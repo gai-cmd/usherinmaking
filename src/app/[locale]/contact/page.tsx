@@ -203,9 +203,16 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           <p className={s.studioBody}>
             {STUDIO_INFO.address[locale]}
             <br />
-            {STUDIO_INFO.parking[locale]}
-            {DOT[locale]}
-            {CONTACT.landmark[locale]}
+            {/* 한국 고객은 스튜디오로 오지 않는다 — 찾아오는 길 대신 거점 안내를 둔다 */}
+            {locale === 'ko' ? (
+              CONTACT.koStudioNote
+            ) : (
+              <>
+                {STUDIO_INFO.parking[locale]}
+                {DOT[locale]}
+                {CONTACT.landmark[locale]}
+              </>
+            )}
             <br />
             {STUDIO_INFO.languages[locale]}
           </p>

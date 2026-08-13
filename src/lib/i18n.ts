@@ -66,6 +66,26 @@ export const JOURNAL_LOCALES: readonly Locale[] = ['ko'];
  */
 export const STUDIO_LOCALES: readonly Locale[] = ['ja', 'en'];
 
+/**
+ * 갈림길 홈(`/{locale}`)을 두는 언어.
+ *
+ * 홈은 LOCATION / STUDIO 중 어디로 갈지 고르게 하는 화면이다. 한국어에는 고를 것이
+ * 하나뿐(로케이션)이라 그 갈림길이 의미가 없어, **`/ko/location` 이 한국어의 메인**이다.
+ * `/ko` 로 오는 링크는 next.config 가 그쪽으로 넘긴다.
+ *
+ * 이 값이 hreflang 과 사이트맵을 통제한다. ko 를 홈 쪽에 남겨 두면 `/ja` 와 `/ja/location`
+ * 두 페이지가 같은 `/ko/location` 을 자기 한국어판이라 주장해 hreflang 상호 지정이 깨진다.
+ */
+export const HOME_LOCALES: readonly Locale[] = ['ja', 'en'];
+
+/**
+ * 그 언어의 첫 화면 주소. 로고·홈 버튼·언어 전환은 전부 이 함수를 쓴다 —
+ * `path(locale, 'home')` 을 그대로 쓰면 한국어에서 리다이렉트를 한 번 더 타게 된다.
+ */
+export function homePath(locale: Locale): string {
+  return HOME_LOCALES.includes(locale) ? path(locale, 'home') : path(locale, 'location');
+}
+
 /** 헤더 내비게이션 — 순서 고정, 라벨만 언어별. `locales` 가 있으면 그 언어에서만 보인다. */
 export const NAV: { key: PageKey; label: Record<Locale, string>; locales?: readonly Locale[] }[] = [
   { key: 'studio', label: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' }, locales: STUDIO_LOCALES },
@@ -101,7 +121,13 @@ export function alternates(page: PageKey, ...rest: string[]) {
   // 언어가 제한된 페이지(촬영후기·스튜디오)는 있는 언어만 가리킨다 —
   // 없는 주소를 hreflang 으로 선언하면 검색엔진이 404 를 대안 언어로 읽는다.
   const available =
-    page === 'journal' ? JOURNAL_LOCALES : page === 'studio' ? STUDIO_LOCALES : LOCALES;
+    page === 'journal'
+      ? JOURNAL_LOCALES
+      : page === 'studio'
+        ? STUDIO_LOCALES
+        : page === 'home'
+          ? HOME_LOCALES
+          : LOCALES;
   const languages: Record<string, string> = {};
   for (const l of available) languages[HTML_LANG[l]] = `${SITE_URL}${path(l, page, ...rest)}`;
   const xDefault = available.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : available[0];

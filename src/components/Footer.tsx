@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { navFor, UI, path, type Locale } from '@/lib/i18n';
+import { homePath, navFor, UI, path, type Locale } from '@/lib/i18n';
 import { STUDIO_INFO } from '@/content/site';
 import s from './Footer.module.css';
 
@@ -20,7 +20,7 @@ export function Footer({ locale }: { locale: Locale }) {
   return (
     <footer className={s.root}>
       <div className={s.inner}>
-        <Link href={path(locale, 'home')} aria-label="usherinmaking">
+        <Link href={homePath(locale)} aria-label="usherinmaking">
           <Image src="/brand/logo.png" alt="usherinmaking" width={260} height={64} className={s.logo} />
         </Link>
 
@@ -39,8 +39,12 @@ export function Footer({ locale }: { locale: Locale }) {
 
         <p className={s.note}>{UI.noAutoBooking[locale]}</p>
 
+        {/* 주차는 스튜디오로 찾아오는 손님에게만 필요한 정보다 —
+            한국어는 로케이션 촬영뿐이라 상담 언어만 남긴다. */}
         <p className={s.meta}>
-          {STUDIO_INFO.parking[locale]} · {STUDIO_INFO.languages[locale]}
+          {locale === 'ko'
+            ? STUDIO_INFO.languages[locale]
+            : `${STUDIO_INFO.parking[locale]} · ${STUDIO_INFO.languages[locale]}`}
         </p>
 
         <ul className={s.legal}>

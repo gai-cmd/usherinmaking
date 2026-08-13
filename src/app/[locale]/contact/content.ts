@@ -187,6 +187,15 @@ export const CONTACT = {
     ko: '흰 벽에 아치가 있는 단독주택 건물입니다',
   } satisfies L10n,
 
+  /**
+   * 한국어 전용 — 주소 아래에 들어가는 한 줄.
+   *
+   * 한국 고객은 스튜디오로 찾아오지 않는다(로케이션 촬영뿐이다). 그래서 JA·EN 이 쓰는
+   * "주차 2대 · 흰 벽에 아치가 있는 건물이 목표물" 같은 찾아오는 길 안내를 그대로 두면
+   * 스튜디오로 오라는 뜻으로 읽힌다. 주소는 사업장 정보로 남기되, 안내는 이 문장으로 바꾼다.
+   */
+  koStudioNote: '작가가 활동하는 거점입니다. 촬영 장소는 상담 후 따로 안내드립니다.',
+
   mapCaption: {
     ja: 'Google マップの埋め込みは住所の確定後に入ります。',
     en: 'The Google Maps embed will appear once the address is confirmed.',

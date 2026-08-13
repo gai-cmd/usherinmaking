@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { DEFAULT_LOCALE, isLocale, path, type Locale, type PageKey } from '@/lib/i18n';
+import { DEFAULT_LOCALE, homePath, isLocale, path, type Locale, type PageKey } from '@/lib/i18n';
 import s from './error.module.css';
 
 /**
@@ -123,7 +123,12 @@ export default function LocaleError({
               {c.retry}
             </button>
             {c.actions.map((a) => (
-              <Link key={a.page} href={path(locale, a.page)} className="u-btn" data-tap>
+              <Link
+                key={a.page}
+                href={a.page === 'home' ? homePath(locale) : path(locale, a.page)}
+                className="u-btn"
+                data-tap
+              >
                 {a.label}
               </Link>
             ))}

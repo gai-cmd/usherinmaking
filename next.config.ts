@@ -26,8 +26,11 @@ const nextConfig: NextConfig = {
        * 평문으로 박아 뒀고(우리 저널로 옮겨온 30편 중 12편), 네이버 원본은 우리가
        * 고칠 수 없다. 도메인이 넘어온 뒤에도 그 링크들이 계속 닿도록 /ko 로 넘긴다.
        */
-      { source: '/korean', destination: '/ko', permanent: true },
+      // 한국어 메인은 갈림길 홈이 아니라 로케이션이다 (i18n HOME_LOCALES).
+      // 구 사이트 링크는 리다이렉트를 두 번 타지 않도록 여기서 바로 보낸다.
+      { source: '/korean', destination: '/ko/location', permanent: true },
       { source: '/korean/:path*', destination: '/ko/:path*', permanent: true },
+      { source: '/ko', destination: '/ko/location', permanent: true },
       /*
        * 한국어 스튜디오 페이지는 만들지 않는다(STUDIO_LOCALES) — 한국 고객 상품에
        * 스튜디오 플랜이 없기 때문이다. 그동안 색인됐거나 공유된 주소가 404 로 떨어지지
