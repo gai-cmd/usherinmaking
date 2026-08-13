@@ -6,6 +6,8 @@ import { Section } from '@/components/Section';
 import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
 import { LOCATION_PLANS, LOCATION_NOTES } from '@/content/site';
+import { KO_ETC_PLANS, KO_WEDDING_PLANS } from '@/components/plan/content';
+import { KO_HOME_PLAN_NOTES } from '@/app/[locale]/home-content';
 import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
@@ -59,6 +61,14 @@ export default async function LocationPage({ params }: { params: Promise<{ local
   // 히어로는 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
   const heroImage = pickImage(images, 'hero', locale, HERO.image, HERO.alt[locale])!;
 
+  /**
+   * 한국 고객 상품은 원화 상품(웨딩 · 기타 촬영)이 정본이다 — 엔화 로케이션 플랜은
+   * 일본어·영어 고객용이라 한국어 화면에 그대로 두면 홈·요금 페이지의 금액과 어긋난다.
+   */
+  const isKo = locale === 'ko';
+  const plans = isKo ? [...KO_WEDDING_PLANS, ...KO_ETC_PLANS] : LOCATION_PLANS;
+  const notes = isKo ? KO_HOME_PLAN_NOTES : LOCATION_NOTES[locale];
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -68,11 +78,11 @@ export default async function LocationPage({ params }: { params: Promise<{ local
     url: `${SITE_URL}${path(locale, 'location')}`,
     areaServed: { '@type': 'Place', name: 'Okinawa, Japan' },
     provider: { '@type': 'Organization', name: 'usherinmaking', url: SITE_URL },
-    offers: LOCATION_PLANS.map((plan) => ({
+    offers: plans.map((plan) => ({
       '@type': 'Offer',
       name: `${plan.badge} — ${plan.title[locale]}`,
       price: plan.price,
-      priceCurrency: 'JPY',
+      priceCurrency: plan.currency ?? 'JPY',
     })),
   };
 
@@ -238,13 +248,13 @@ export default async function LocationPage({ params }: { params: Promise<{ local
         }
       >
         <div className={s.plans}>
-          {LOCATION_PLANS.map((plan) => (
+          {plans.map((plan) => (
             <PlanCard key={plan.code} plan={plan} locale={locale} />
           ))}
         </div>
 
         <ul className={s.notes}>
-          {LOCATION_NOTES[locale].map((note) => (
+          {notes.map((note) => (
             <li key={note}>{note}</li>
           ))}
         </ul>

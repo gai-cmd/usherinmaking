@@ -64,8 +64,10 @@ export const LEAD_NOTE: L10nLines = {
     'Sessions run from 1 to 3.5 hours across 1 to 3 spots, travelling time (10–15 minutes) included.',
     'We suggest the spots based on where you are staying and the weather on your session day.',
   ],
+  // 촬영 시간·장소 수는 한국 고객 상품 기준이다 (스탠다드 1시간/1곳 ~ 에프터풀 4시간/3곳).
+  // 일본어판 플랜(1~3시간 30분)을 옮겨 오면 실제 상품과 어긋난다.
   ko: [
-    '촬영 1시간 ~ 3시간 30분 · 1~3개 장소 · 이동 시간(10~15분) 포함',
+    '촬영 1시간 ~ 4시간 · 1~3개 장소 · 탈착의 시간과 이동 시간 포함',
     '머무시는 숙소 위치에 맞춰 촬영 장소를 제안해 드립니다',
     '오키나와에서 다년간 촬영해 온 작가의 노하우를 믿고 맡겨주세요',
   ],
@@ -103,7 +105,8 @@ export const CATEGORIES = [
     body: {
       ja: '前撮り ・ 後撮り ・ セルフウェディング。沖縄の屋外で撮影します。衣装・ヘアメイクはオプションでご用意できます。Simple / Basic / Afterfull の3プラン。',
       en: 'Pre-wedding, post-wedding and self-wedding sessions outdoors. Clothing and hair & make-up can be added. Simple / Basic / Afterfull.',
-      ko: '본식 전 웨딩 촬영 · 결혼 후 리마인드 웨딩 · 셀프 웨딩. 의상과 헤어메이크업은 옵션으로 준비해 드립니다. 플랜은 Simple / Basic / Afterfull 세 가지입니다.',
+      // 한국 고객 상품은 베이직 · 에프터풀 두 가지다 (JA/EN 의 Simple 3종 구성과 다르다).
+      ko: '본식 전 웨딩 촬영 · 결혼 후 리마인드 웨딩 · 셀프 웨딩. 의상과 헤어메이크업은 옵션으로 준비해 드립니다. 플랜은 베이직 88만원 / 에프터풀 110만원 두 가지입니다.',
     } satisfies L10n,
     link: {
       ja: 'ウェディングを見る',
@@ -128,7 +131,7 @@ export const CATEGORIES = [
     body: {
       ja: '家族 ・ 七五三 ・ マタニティ ・ デート ・ 記念日。Standard ¥38,000 / Half ¥60,000 でご案内しています。',
       en: 'Family, 100-day and first-birthday, maternity, couples and birthdays. Standard ¥38,000 / Half ¥60,000.',
-      ko: '가족 · 백일 · 돌 · 만삭 · 커플 · 기념일. Standard ¥38,000 / Half ¥60,000.',
+      ko: '가족 · 백일 · 돌 · 만삭 · 커플 · 기념일. 스탠다드 30만원 / 업투 50만원.',
     } satisfies L10n,
     link: {
       ja: '記念写真を見る',
@@ -155,7 +158,7 @@ export const DETAILS = [
     note: {
       ja: '撮影データのみのプランです。衣装・ヘアメイクはオプションでご用意できます。',
       en: 'Location plans cover photography only. Clothing and hair & make-up are available as add-ons.',
-      ko: '로케이션 플랜에는 촬영 데이터만 포함됩니다. 의상과 헤어메이크업은 옵션으로 추가하실 수 있습니다.',
+      ko: '플랜에는 촬영 데이터만 포함됩니다. 신부 드레스 대여(10만원부터)와 헤어메이크업은 옵션으로 추가하실 수 있습니다.',
     } satisfies L10n,
   },
   {
@@ -180,7 +183,8 @@ export const DETAILS = [
     note: {
       ja: '大人2名 + 子供2名まで ・ 追加 1名 ＋¥3,000 ／ 土・日・祝 ＋¥8,000',
       en: 'Up to 2 adults and 2 children · +¥3,000 per extra person · weekends and holidays +¥8,000',
-      ko: '성인 2명 + 아이 2명까지 · 1명 추가 +¥3,000 · 주말·공휴일 +¥8,000',
+      // 한국 고객 상품에는 인원 추가 요금 항목이 없다 — 의상 관련 제약이 실제 안내 사항이다.
+      ko: '의상은 제공하지 않으며, 웨딩 의상 착장은 불가합니다',
     } satisfies L10n,
   },
 ];
