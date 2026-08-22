@@ -1,4 +1,4 @@
-import { STUDIO_OPTIONS, type Plan } from '@/content/site';
+import type { Plan } from '@/content/site';
 import type { Locale } from '@/lib/i18n';
 
 type L10n = Record<Locale, string>;
@@ -206,69 +206,9 @@ export const OPTION_SECTION = {
 export type OptionRow = { label: string; price: string; note: string };
 
 /**
- * 옵션은 어느 페이지가 그 플랜을 갖고 있느냐로 가른다.
- *
- * 스튜디오 플랜의 옵션(신랑 의상 · 원본 JPEG · 프리미엄 드레스 · 인원/헤어 추가 · 휴일 요금)은
- * 스튜디오 페이지가 정본이므로 studioOptionRows 가 갖고, 이 페이지에는 로케이션 옵션만 남는다.
- * 한 표에 섞여 있을 때는 "STUDIO 01 / 02" 처럼 어느 플랜인지 밝혀야 했지만, 표가 그 플랜
- * 카드 바로 아래로 내려가면 그 접두사는 같은 말을 두 번 하는 것이 된다 — 그래서 뗐다.
- *
- * 가격은 site.ts STUDIO_OPTIONS 를 그대로 쓴다. 여기서 다시 적으면 두 곳이 어긋난다.
+ * 스튜디오 플랜의 옵션은 여기 없다 — 스튜디오 페이지가 플랜별로 나눠서 보여주고,
+ * 그 정본은 site.ts STUDIO_PLAN_OPTIONS 다. 이 페이지에는 로케이션 옵션만 남는다.
  */
-export function studioOptionRows(locale: Locale): OptionRow[] {
-  const [groom, raw, premium] = STUDIO_OPTIONS;
-
-  // 어느 플랜에 붙는지. 표가 스튜디오 플랜 카드 바로 아래에 있으므로 카드와 같은
-  // "PLAN 01" 표기를 쓴다 — 화면에서 눈으로 이을 수 있어야 한다.
-  const notes: L10nList = {
-    ja: [
-      'PLAN 01 / 02 ・ サイズは M のみ',
-      '全プラン ・ 編集前の全カット',
-      'PLAN 01 / 02 ・ ドレスにより異なります',
-      'PLAN 04',
-      'PLAN 04',
-      'PLAN 01 / 02 ＋¥18,000 ・ 03 / 04 ＋¥11,000',
-    ],
-    en: [
-      'Plan 01 / 02 · size M only',
-      'All plans · every unedited frame',
-      'Plan 01 / 02 · depends on the dress',
-      'Plan 04',
-      'Plan 04',
-      'Plan 01 / 02 +¥18,000 · 03 / 04 +¥11,000',
-    ],
-    ko: [
-      'PLAN 01 / 02 · M 사이즈만',
-      '전 플랜 · 보정 전 전체 컷',
-      'PLAN 01 / 02 · 드레스에 따라 다름',
-      'PLAN 04',
-      'PLAN 04',
-      'PLAN 01 / 02 +¥18,000 · 03 / 04 +¥11,000',
-    ],
-  };
-
-  const extra: L10nList = {
-    ja: ['1名様 追加', 'ヘアメイク 追加', '休日料金（土・日・祝）'],
-    en: ['Extra person', 'Hair & make-up', 'Weekends and holidays'],
-    ko: ['인원 추가', '헤어메이크업 추가', '주말 · 공휴일 요금'],
-  };
-
-  const extraPrices: L10nList = {
-    ja: ['＋¥3,300', '＋¥22,000', '＋¥11,000 〜 ¥18,000'],
-    en: ['+¥3,300', '+¥22,000', '+¥11,000–18,000'],
-    ko: ['+¥3,300', '+¥22,000', '+¥11,000~18,000'],
-  };
-
-  return [
-    { label: groom.label[locale], price: groom.price[locale], note: notes[locale][0] },
-    { label: raw.label[locale], price: raw.price[locale], note: notes[locale][1] },
-    { label: premium.label[locale], price: premium.price[locale], note: notes[locale][2] },
-    { label: extra[locale][0], price: extraPrices[locale][0], note: notes[locale][3] },
-    { label: extra[locale][1], price: extraPrices[locale][1], note: notes[locale][4] },
-    { label: extra[locale][2], price: extraPrices[locale][2], note: notes[locale][5] },
-  ];
-}
-
 /**
  * 플랜 페이지에 남는 옵션 — 로케이션 촬영에 붙는 것들.
  *

@@ -4,10 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Section } from '@/components/Section';
 import { PlanCard } from '@/components/PlanCard';
-import { OptionTable } from '@/components/plan/OptionTable';
-import { studioOptionRows } from '@/components/plan/content';
 import { ContactCta } from '@/components/ContactCta';
-import { STUDIO_SETS, STUDIO_PLANS, STUDIO_INFO, TBC } from '@/content/site';
+import { STUDIO_SETS, STUDIO_PLANS, STUDIO_PLAN_OPTIONS, STUDIO_INFO, TBC } from '@/content/site';
 import { SITE_URL, STUDIO_LOCALES, alternates, isLocale, path, type Locale } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
@@ -185,15 +183,34 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
         </div>
       </Section>
 
-      {/* 스튜디오 옵션은 플랜 페이지가 아니라 이 카드들 바로 아래가 제자리다.
-          카드가 PLAN 01…04 로 이름을 달고 있으므로 표는 그 번호만 가리키면 된다. */}
-      <OptionTable
-        label={OPTION.label[locale]}
-        title={OPTION.title[locale]}
-        lead={OPTION.lead[locale]}
-        head={OPTION.head[locale]}
-        rows={studioOptionRows(locale)}
-      />
+      {/* 옵션은 플랜마다 붙는 것이 다르다. 한 표에 몰아넣고 행마다 "어느 플랜"을
+          적으면 읽는 사람이 자기 플랜의 줄만 골라내야 한다 — 플랜별로 묶어서 보여준다. */}
+      <section className="u-section u-section--alt">
+        <div className="u-wrap">
+          <div className={s.optHead}>
+            <p className="u-label">{OPTION.label[locale]}</p>
+            <h2 className={`u-h2 ${s.optTitle}`}>{OPTION.title[locale]}</h2>
+            <p className={s.optLead}>{OPTION.lead[locale]}</p>
+          </div>
+
+          <div className={s.optGroups}>
+            {STUDIO_PLAN_OPTIONS.map((group) => (
+              <div key={group.heading.en} className={s.optGroup}>
+                <h3 className={s.optGroupTitle}>{group.heading[locale]}</h3>
+                <ul className={s.optList}>
+                  {group.items.map((item) => (
+                    <li key={item.label.en} className={s.optRow}>
+                      <span className={s.optLabel}>{item.label[locale]}</span>
+                      <span className={`u-num ${s.optPrice}`}>{item.price[locale]}</span>
+                    </li>
+                  ))}
+                </ul>
+                {group.note && <p className={s.optNote}>{group.note[locale]}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className={s.access}>
         <div className={s.accessFigure}>

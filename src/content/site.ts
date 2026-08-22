@@ -298,29 +298,109 @@ export type PlanOption = {
   scope: L10n;
 };
 
-export const STUDIO_OPTIONS: PlanOption[] = [
-  {
+/**
+ * 옵션 하나하나의 이름과 금액. 표시되는 자리가 여럿이라(홈 요약 · 스튜디오 페이지의
+ * 플랜별 목록 · 관리자 번역 · 시드) 금액을 각자 적으면 한 곳만 고쳐지고 어긋난다.
+ * 그래서 여기 한 번만 적고 아래 두 구조가 이것을 가리킨다.
+ *
+ * 휴일 요금은 플랜에 따라 금액이 다르다 — 웨딩(01/02)은 ＋¥18,000, 마타니티와
+ * 기념일(03/04)은 ＋¥11,000 이라 별개 항목으로 둔다.
+ */
+const OPTION_ITEM = {
+  groom: {
     label: { ja: '新郎衣装（Mサイズ）', en: "Groom's outfit (size M)", ko: '신랑 의상 (M 사이즈)' },
     price: { ja: '＋¥20,000', en: '+¥20,000', ko: '+¥20,000' },
-    scope: { ja: 'PLAN 01 / 02', en: 'PLAN 01 / 02', ko: 'PLAN 01 / 02' },
   },
-  {
+  rawJpeg: {
     label: { ja: '原本データ JPEG', en: 'Original JPEG data', ko: '원본 데이터 JPEG' },
     price: { ja: '＋¥5,500', en: '+¥5,500', ko: '+¥5,500' },
-    scope: { ja: 'PLAN 01 / 02', en: 'PLAN 01 / 02', ko: 'PLAN 01 / 02' },
   },
-  {
+  premiumDress: {
     label: { ja: 'プレミアムドレス', en: 'Premium dress', ko: '프리미엄 드레스' },
     price: { ja: '＋¥20,000〜', en: '+¥20,000 and up', ko: '+¥20,000부터' },
+  },
+  holidayWedding: {
+    label: { ja: '休日料金', en: 'Weekend and holiday surcharge', ko: '주말·공휴일 요금' },
+    price: { ja: '＋¥18,000', en: '+¥18,000', ko: '+¥18,000' },
+  },
+  holidayOther: {
+    label: { ja: '休日料金', en: 'Weekend and holiday surcharge', ko: '주말·공휴일 요금' },
+    price: { ja: '＋¥11,000', en: '+¥11,000', ko: '+¥11,000' },
+  },
+  extraPerson: {
+    label: { ja: '1名様 追加', en: 'Extra person', ko: '인원 추가' },
+    price: { ja: '＋¥3,300', en: '+¥3,300', ko: '+¥3,300' },
+  },
+  hairMake: {
+    label: { ja: 'ヘアメイク 追加', en: 'Hair & make-up', ko: '헤어메이크업 추가' },
+    price: { ja: '＋¥22,000', en: '+¥22,000', ko: '+¥22,000' },
+  },
+} satisfies Record<string, { label: L10n; price: L10n }>;
+
+/**
+ * 홈의 옵션 요약과 관리자 번역 · 시드가 쓰는 평평한 목록.
+ * 어느 플랜에 붙는지는 scope 문장이 들고 있고, seedOptions() 가 그 문장에서
+ * 플랜 번호를 되읽는다 — 문장을 고칠 때 그 파서도 같이 볼 것.
+ */
+export const STUDIO_OPTIONS: PlanOption[] = [
+  { ...OPTION_ITEM.groom, scope: { ja: 'PLAN 01 / 02', en: 'PLAN 01 / 02', ko: 'PLAN 01 / 02' } },
+  { ...OPTION_ITEM.rawJpeg, scope: { ja: 'PLAN 01 / 02', en: 'PLAN 01 / 02', ko: 'PLAN 01 / 02' } },
+  {
+    ...OPTION_ITEM.premiumDress,
     scope: { ja: 'PLAN 01 / 02', en: 'PLAN 01 / 02', ko: 'PLAN 01 / 02' },
   },
   {
-    label: { ja: '休日料金', en: 'Weekend and holiday surcharge', ko: '주말·공휴일 요금' },
-    price: { ja: '＋¥18,000', en: '+¥18,000', ko: '+¥18,000' },
+    ...OPTION_ITEM.holidayWedding,
     scope: {
       ja: 'スタジオ・ロケーション共通',
       en: 'Studio and location alike',
       ko: '스튜디오·로케이션 공통',
+    },
+  },
+];
+
+export type PlanOptionGroup = {
+  /** 어느 플랜의 옵션인지. 스튜디오 페이지 카드가 PLAN 01…04 로 이름을 달고 있어 그 번호를 쓴다. */
+  heading: L10n;
+  items: { label: L10n; price: L10n }[];
+  note?: L10n;
+};
+
+/**
+ * 스튜디오 페이지의 플랜별 옵션. 시안 카드(Wedding / Maternity / Memorial)의 OPTION 절을
+ * 그대로 옮긴 것이다 — 옵션은 플랜마다 붙는 것이 다르므로 한 표에 몰아넣지 않는다.
+ * 01 과 02 는 시안에서도 "PLAN.01 / 02 共通" 한 묶음이라 함께 둔다.
+ */
+export const STUDIO_PLAN_OPTIONS: PlanOptionGroup[] = [
+  {
+    heading: {
+      ja: 'PLAN 01 / 02 共通',
+      en: 'Plan 01 / 02',
+      ko: 'PLAN 01 / 02 공통',
+    },
+    items: [
+      OPTION_ITEM.groom,
+      OPTION_ITEM.premiumDress,
+      OPTION_ITEM.rawJpeg,
+      OPTION_ITEM.holidayWedding,
+    ],
+  },
+  {
+    heading: { ja: 'PLAN 03', en: 'Plan 03', ko: 'PLAN 03' },
+    items: [OPTION_ITEM.rawJpeg, OPTION_ITEM.holidayOther],
+  },
+  {
+    heading: { ja: 'PLAN 04', en: 'Plan 04', ko: 'PLAN 04' },
+    items: [
+      OPTION_ITEM.extraPerson,
+      OPTION_ITEM.hairMake,
+      OPTION_ITEM.rawJpeg,
+      OPTION_ITEM.holidayOther,
+    ],
+    note: {
+      ja: '※ ドレス撮影をご希望の方は ウェディングフォトプランへお問い合わせください。',
+      en: 'For a dress session, please ask about the wedding photo plans.',
+      ko: '※ 드레스 촬영을 원하시면 웨딩포토 플랜으로 문의해 주세요.',
     },
   },
 ];
