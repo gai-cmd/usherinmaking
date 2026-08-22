@@ -209,7 +209,7 @@ export const PLANS = {
   link: {
     ja: 'PLAN & OPTION 詳細 →',
     en: 'PLANS & ADD-ONS →',
-    ko: '요금 · 옵션 자세히 →',
+    ko: '플랜 · 옵션 자세히 →',
   } satisfies L10n,
 };
 

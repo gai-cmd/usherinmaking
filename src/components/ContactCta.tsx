@@ -27,7 +27,7 @@ export function ContactCta({ locale }: { locale: Locale }) {
             {UI.contactCta[locale]}
           </Link>
           <Link href={path(locale, 'plan')} className="u-btn" data-tap>
-            {locale === 'ko' ? '요금 · 옵션' : locale === 'en' ? 'PLANS & OPTIONS' : 'PLAN & OPTION'}
+            {locale === 'ko' ? '플랜 · 옵션' : locale === 'en' ? 'PLANS & OPTIONS' : 'PLAN & OPTION'}
           </Link>
         </div>
         <p className={s.note}>{UI.noAutoBooking[locale]}</p>

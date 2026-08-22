@@ -827,7 +827,7 @@ export const PAGE_SLOTS: PageSlots[] = [
   { page: 'studio', label: '스튜디오', note: '리드문 · 세트 · 촬영 흐름 · 찾아오는 길', slots: STUDIO_SLOTS },
   { page: 'location', label: '로케이션', note: '리드문 · 촬영 종류 · 월별 아카이브', slots: LOCATION_SLOTS },
   { page: 'dress', label: '드레스', note: '리드문 · 컬렉션 · 대여 안내 · 고르는 순서', slots: DRESS_SLOTS },
-  { page: 'plan', label: '요금', note: '리드문 · 세금 표기 · 예약 순서 · 취소 규정', slots: PLAN_SLOTS },
+  { page: 'plan', label: '플랜', note: '리드문 · 세금 표기 · 예약 순서 · 취소 규정', slots: PLAN_SLOTS },
   { page: 'photographer', label: '작가 소개', note: '도입 문단 · 이름의 뜻 · 촬영에 대하여', slots: PHOTOGRAPHER_SLOTS },
   { page: 'journal', label: '촬영후기', note: '목록 제목 · 리드문 · 글 하단 안내', slots: JOURNAL_SLOTS },
   { page: 'gallery', label: '갤러리', note: '리드문 · 필터 안내 · 결과 없음 문구', slots: GALLERY_SLOTS },

@@ -55,7 +55,7 @@ export const GALLERY = {
     dress: { ja: 'ドレス', en: 'Dress', ko: '드레스' } satisfies L10n,
   },
 
-  planCta: { ja: 'PLAN 詳細', en: 'VIEW PLANS', ko: '요금 상세' } satisfies L10n,
+  planCta: { ja: 'PLAN 詳細', en: 'VIEW PLANS', ko: '플랜 상세' } satisfies L10n,
 
   // 영문만 'BOOK'(예약) 어감이라 자동 예약이 없다는 규칙과 어긋났다.
   // JA·KO 처럼 상담을 청하는 말로 맞춘다 — 누르면 문의 폼으로 가지 예약이 되지 않는다.

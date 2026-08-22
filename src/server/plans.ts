@@ -109,7 +109,7 @@ export function affectedSurfaces(plan: Pick<AdminPlan, 'code' | 'scope'>): Affec
   const surfaces: AffectedSurface[] = [
     { label: '홈 — 플랜 목록', routes: LOCALES.map((l) => path(l, 'home')) },
     { label: '플랜 상세', routes: LOCALES.map((l) => path(l, 'plan', plan.code)) },
-    { label: '요금 목록', routes: LOCALES.map((l) => path(l, 'plan')) },
+    { label: '플랜 목록', routes: LOCALES.map((l) => path(l, 'plan')) },
   ];
 
   if (plan.scope === 'STUDIO') {

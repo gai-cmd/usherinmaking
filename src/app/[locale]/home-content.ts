@@ -286,9 +286,9 @@ export const HOME: Record<Locale, HomeCopy> = {
       title: '스튜디오 플랜',
       aside: '모니터 가격 · 엔화 표기',
       optionLabel: '옵션 ( PLAN 01 / 02 공통 )',
-      optionNote: 'PLAN 03 / 04 옵션은 요금 페이지에 있습니다',
-      note: '플랜별 포함 내역과 옵션 조건은 요금 페이지에서 확인하실 수 있습니다.',
-      detail: '요금 · 옵션 자세히 →',
+      optionNote: 'PLAN 03 / 04 옵션은 플랜 페이지에 있습니다',
+      note: '플랜별 포함 내역과 옵션 조건은 플랜 페이지에서 확인하실 수 있습니다.',
+      detail: '플랜 · 옵션 자세히 →',
     },
     sets: {
       label: 'STUDIO',
@@ -303,7 +303,7 @@ export const HOME: Record<Locale, HomeCopy> = {
       aside: 'FROM 88만원',
       notesLabel: '옵션 · 안내',
       anniversaryLabel: '기타 촬영 · 커플 / 가족 / 기념일',
-      detail: '요금 자세히 →',
+      detail: '플랜 자세히 →',
     },
     works: {
       label: 'GALLERY · 인스타그램에서 선별',
@@ -327,7 +327,7 @@ export const HOME: Record<Locale, HomeCopy> = {
       items: [
         {
           q: '촬영 비용은 얼마부터인가요?',
-          a: '웨딩 촬영은 88만원부터, 커플 · 가족 · 기념일 등 기타 촬영은 30만원부터입니다. 플랜별 자세한 내용은 요금 페이지에 정리되어 있습니다.',
+          a: '웨딩 촬영은 88만원부터, 커플 · 가족 · 기념일 등 기타 촬영은 30만원부터입니다. 플랜별 자세한 내용은 플랜 페이지에 정리되어 있습니다.',
         },
         {
           q: '온라인으로 바로 예약할 수 있나요?',
@@ -351,7 +351,7 @@ export const HOME: Record<Locale, HomeCopy> = {
         },
       ],
     },
-    sticky: { plan: '요금 보기', contact: '문의하기' },
+    sticky: { plan: '플랜 보기', contact: '문의하기' },
   },
 };
 
@@ -439,7 +439,7 @@ export const NAVER_NOTICE = {
 /* ---------------- 한국어 홈 · 웨딩/기타 촬영 옵션 안내 ----------------
  *
  * 한국 고객 상품(usherinmaking.com/korean)의 옵션 절에서 옮겼다.
- * 홈에는 요약만 싣고, 전체 옵션 표는 요금 페이지(KO_OPTION_ROWS)가 정본이다. */
+ * 홈에는 요약만 싣고, 전체 옵션 표는 플랜 페이지(KO_OPTION_ROWS)가 정본이다. */
 
 export const KO_HOME_PLAN_NOTES: string[] = [
   '의상은 제공하지 않습니다. 신부 드레스는 소품 · 액세서리 포함 10만원부터 대여하실 수 있습니다.',

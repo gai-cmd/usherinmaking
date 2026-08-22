@@ -1,0 +1,291 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a-gap);
+  padding: 22px var(--a-pad);
+}
+
+/* ---------- 금고 키 경고 ---------- */
+
+.vaultWarn {
+  padding: 14px 18px;
+  border: 1px solid var(--a-danger);
+  background: var(--a-danger-soft);
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--a-body);
+}
+
+.vaultWarn b {
+  font-weight: 500;
+  color: var(--a-ink);
+}
+
+.vaultWarnBody {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  line-height: 1.9;
+}
+
+/* ---------- 미설정 요약 ---------- */
+
+.summary {
+  padding: 14px 18px;
+  border: 1px dashed var(--a-accent);
+  background: var(--a-ok-soft);
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--a-body);
+}
+
+.summary b {
+  font-weight: 500;
+  color: var(--a-ink);
+}
+
+.summaryList {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.summaryNote {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--a-muted-2);
+}
+
+/* ---------- 그룹 ---------- */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.groupTitle {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--a-muted);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--a-gap);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- 카드 ---------- */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--a-line);
+  background: var(--a-panel);
+}
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--a-ink);
+}
+
+.purpose {
+  margin-top: 5px;
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--a-muted);
+}
+
+/* ---------- 메타 ---------- */
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--a-bg);
+  border: 1px solid var(--a-line-2);
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 10px;
+  font-size: 11.5px;
+  line-height: 1.8;
+}
+
+.metaRow dt {
+  color: var(--a-muted-2);
+}
+
+.link {
+  color: var(--a-accent);
+  word-break: break-all;
+}
+
+.code,
+.codeMissing {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border: 1px solid var(--a-line);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  color: var(--a-body);
+}
+
+/* 서버에 값이 없는 환경변수는 눈에 띄어야 한다 — 이 화면의 핵심 신호다 */
+.codeMissing {
+  border-color: var(--a-danger);
+  background: var(--a-danger-soft);
+  color: var(--a-danger);
+}
+
+/* ---------- 입력 ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fieldLabel {
+  font-size: 11.5px;
+  color: var(--a-muted-2);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--a-line);
+  background: var(--a-field);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--a-ink);
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.input:focus-visible,
+.textarea:focus-visible {
+  outline: 2px solid var(--a-accent);
+  outline-offset: -1px;
+}
+
+.input:disabled {
+  background: var(--a-bg);
+  color: var(--a-muted-2);
+  cursor: not-allowed;
+}
+
+/* ---------- 자격 증명 ---------- */
+
+.secrets {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--a-line-2);
+  background: var(--a-bg);
+}
+
+.secretsHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+  color: var(--a-ink);
+}
+
+.secretRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.secretLabel {
+  font-size: 11.5px;
+  color: var(--a-muted-2);
+}
+
+.secretBody {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.secretCurrent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.secretValue {
+  flex: 1;
+  padding: 6px 9px;
+  border: 1px solid var(--a-line);
+  background: var(--a-panel);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--a-body);
+  word-break: break-all;
+}
+
+.reveal {
+  flex: none;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--a-line);
+  background: var(--a-panel);
+  font: inherit;
+  font-size: 11px;
+  color: var(--a-accent);
+  cursor: pointer;
+}
+
+.reveal:hover {
+  border-color: var(--a-accent);
+}
+
+/* ---------- 하단 ---------- */
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.formMessage {
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--a-muted);
+}
+
+.dim {
+  font-size: 11px;
+  color: var(--a-muted-2);
+}

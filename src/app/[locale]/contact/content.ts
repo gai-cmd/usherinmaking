@@ -134,7 +134,7 @@ export const CONTACT = {
       a: {
         ja: 'スタジオ撮影は ¥25,000 から、ロケーション撮影は ¥76,000（税込）から承っています。プランごとの内容は料金ページに載せています。',
         en: 'Studio sessions start at ¥25,000 and location sessions at ¥76,000 including tax. Each plan is listed in full on the plans page.',
-        ko: '웨딩 촬영은 88만원부터, 커플 · 가족 · 기념일 등 기타 촬영은 30만원부터입니다. 플랜별 자세한 내용은 요금 페이지에 정리되어 있습니다.',
+        ko: '웨딩 촬영은 88만원부터, 커플 · 가족 · 기념일 등 기타 촬영은 30만원부터입니다. 플랜별 자세한 내용은 플랜 페이지에 정리되어 있습니다.',
       } satisfies L10n,
     },
     {
@@ -226,7 +226,7 @@ export const SESSION_TYPES = [
   },
   {
     value: 'location',
-    // 한국어 상품명은 '웨딩 촬영'(베이직 · 에프터풀)이다 — 요금 페이지 탭과 같은 말을 쓴다.
+    // 한국어 상품명은 '웨딩 촬영'(베이직 · 에프터풀)이다 — 플랜 페이지와 같은 말을 쓴다.
     label: { ja: 'ロケーション', en: 'Location', ko: '웨딩 촬영' } satisfies L10n,
   },
   {

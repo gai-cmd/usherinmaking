@@ -16,7 +16,7 @@ export const HTML_LANG: Record<Locale, string> = {
   ko: 'ko-KR',
 };
 
-/** 페이지 키 → 로케일별 URL 세그먼트. 요금 페이지는 전 로케일 'plan' (구 /en/plans 는 redirect). */
+/** 페이지 키 → 로케일별 URL 세그먼트. 플랜 페이지는 전 로케일 'plan' (구 /en/plans 는 redirect). */
 export const ROUTE_SEGMENT = {
   home: { ja: '', en: '', ko: '' },
   studio: { ja: 'studio', en: 'studio', ko: 'studio' },

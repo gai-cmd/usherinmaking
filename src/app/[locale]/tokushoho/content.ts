@@ -5,7 +5,7 @@ import { NOTES } from '@/components/plan/content';
 type L10n = Record<Locale, string>;
 
 /**
- * 취소 규정은 요금 페이지가 정본이다(`components/plan/content` 의 NOTES).
+ * 취소 규정은 플랜 페이지가 정본이다(`components/plan/content` 의 NOTES).
  * 여기에 문장을 다시 적으면 두 곳이 어긋나고, 법정 표기 쪽이 낡은 값을 말하게 된다.
  */
 const cancelPolicy: L10n = {
@@ -79,7 +79,7 @@ export const TOKUSHOHO_ROWS: Row[] = [
     value: {
       ja: 'ロケーション地までの交通費・出張費、ドレスレンタル等のオプション料金、振込手数料等が別途発生する場合があります。詳細は料金ページまたは個別のお見積りにてご案内します。',
       en: 'Travel to a location, optional charges such as dress rental, and bank transfer fees may apply separately. The plan page or an individual quote sets these out.',
-      ko: '로케이션 장소까지의 교통비·출장비, 드레스 대여 등 옵션 요금, 송금 수수료 등이 별도로 발생할 수 있습니다. 자세한 내용은 요금 페이지 또는 개별 견적으로 안내합니다.',
+      ko: '로케이션 장소까지의 교통비·출장비, 드레스 대여 등 옵션 요금, 송금 수수료 등이 별도로 발생할 수 있습니다. 자세한 내용은 플랜 페이지 또는 개별 견적으로 안내합니다.',
     },
   },
   { label: { ja: '支払方法', en: 'Payment method', ko: '지불 방법' }, pending: true },
@@ -98,7 +98,7 @@ export const TOKUSHOHO_ROWS: Row[] = [
     },
   },
   {
-    // 취소 규정은 요금 페이지에 전문이 공개돼 있다 — 법정 표기가 가장 필요한 항목이기도 하다.
+    // 취소 규정은 플랜 페이지에 전문이 공개돼 있다 — 법정 표기가 가장 필요한 항목이기도 하다.
     label: {
       ja: 'キャンセル・変更について',
       en: 'Cancellation and changes',

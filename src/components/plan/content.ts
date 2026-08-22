@@ -20,19 +20,19 @@ export const HERO = {
     en: 'PLANS & ADD-ONS',
     ko: 'PLAN & OPTION',
   } satisfies L10n,
-  title: { ja: 'Plans', en: 'Plans', ko: '요금 안내' } satisfies L10n,
+  title: { ja: 'Plans', en: 'Plans', ko: '플랜 안내' } satisfies L10n,
   /** 정의형 리드문 — AEO 인용 대상. 실제 텍스트로 노출한다. */
   lead: {
     ja: 'スタジオとロケーション、それぞれのプランと、追加できるオプションをまとめています。ご予約はお問い合わせから承ります（オンラインの自動予約はありません）。',
     en: 'Studio and location sessions, and everything you can add to them. Bookings are arranged by message — there’s no automatic online booking.',
-    ko: '웨딩 촬영과 기타 촬영 요금, 추가할 수 있는 옵션을 한 페이지에 정리했습니다. 예약은 상담을 통해서만 확정되며, 온라인 자동 예약은 없습니다.',
+    ko: '웨딩 촬영과 기타 촬영 플랜, 추가할 수 있는 옵션을 한 페이지에 정리했습니다. 예약은 상담을 통해서만 확정되며, 온라인 자동 예약은 없습니다.',
   } satisfies L10n,
 };
 
 /**
  * 플랜 목록 절의 제목. 화면에는 보이지 않고 보조기기에만 읽힌다.
  *
- * 시안에는 이 자리에 제목이 없고 탭이 바로 온다. 그런데 h1(요금 안내) 다음에
+ * 시안에는 이 자리에 제목이 없고 탭이 바로 온다. 그런데 h1(플랜 안내) 다음에
  * 카드 제목이 h3 로 나오면 그 사이 h2 가 비어, 제목으로 문서를 훑는 사용자에게는
  * 존재하지 않는 상위 절 아래에 플랜이 매달린 것처럼 읽힌다.
  * 보이지 않는 h2 를 두어 시안을 그대로 두면서 목차만 바로잡는다.
@@ -539,5 +539,5 @@ export const META_TITLE: L10n = {
   ja: 'プラン ・ スタジオとロケーションの料金',
   en: 'Plans and pricing — studio and location',
   // 한국 고객 상품은 웨딩·기타 촬영 두 갈래다 — 스튜디오 플랜은 팔지 않는다.
-  ko: '요금 안내 · 웨딩 촬영과 기타 촬영',
+  ko: '플랜 안내 · 웨딩 촬영과 기타 촬영',
 };
