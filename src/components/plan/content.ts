@@ -23,8 +23,8 @@ export const HERO = {
   title: { ja: 'Plans', en: 'Plans', ko: '플랜 안내' } satisfies L10n,
   /** 정의형 리드문 — AEO 인용 대상. 실제 텍스트로 노출한다. */
   lead: {
-    ja: 'スタジオとロケーション、それぞれのプランと、追加できるオプションをまとめています。ご予約はお問い合わせから承ります（オンラインの自動予約はありません）。',
-    en: 'Studio and location sessions, and everything you can add to them. Bookings are arranged by message — there’s no automatic online booking.',
+    ja: 'ロケーション撮影と記念写真のプラン、そして追加できるオプションをまとめています。ご予約はお問い合わせから承ります（オンラインの自動予約はありません）。',
+    en: 'Location sessions and anniversary portraits, and everything you can add to them. Bookings are arranged by message — there’s no automatic online booking.',
     ko: '웨딩 촬영과 기타 촬영 플랜, 추가할 수 있는 옵션을 한 페이지에 정리했습니다. 예약은 상담을 통해서만 확정되며, 온라인 자동 예약은 없습니다.',
   } satisfies L10n,
 };
@@ -531,8 +531,8 @@ export const KO_OPTION_NOTES = [
 ];
 
 export const META_TITLE: L10n = {
-  ja: 'プラン ・ スタジオとロケーションの料金',
-  en: 'Plans and pricing — studio and location',
+  ja: 'プラン ・ ロケーション撮影と記念写真の料金',
+  en: 'Plans and pricing — location and anniversary sessions',
   // 한국 고객 상품은 웨딩·기타 촬영 두 갈래다 — 스튜디오 플랜은 팔지 않는다.
   ko: '플랜 안내 · 웨딩 촬영과 기타 촬영',
 };
