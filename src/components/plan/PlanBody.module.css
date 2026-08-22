@@ -15,7 +15,28 @@
   color: var(--muted);
 }
 
-/* ---------- 탭 패널 안의 플랜 그리드 ---------- */
+/* ---------- 플랜 묶음 (탭 없이 한 페이지에 이어 붙인다) ---------- */
+
+.group {
+  padding-block: var(--section-y);
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* 첫 묶음은 리드문 바로 아래라 위 여백을 조금 줄인다 */
+.group:first-child {
+  padding-top: calc(var(--section-y) * 0.6);
+}
+
+.groupHead {
+  margin-bottom: 28px;
+}
+
+.groupTitle {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* ---------- 플랜 그리드 ---------- */
 
 .grid {
   display: grid;
@@ -71,8 +92,12 @@
 
 /* ---------- 헤어메이크업 패널 ---------- */
 
-.hairTitle {
-  margin: 10px 0 18px;
+/* 묶음 제목과 다른 말일 때만 나오는 보조 한 줄 (en: For location sessions) */
+.hairSub {
+  margin-bottom: 18px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--muted);
 }
 
 .hairList {

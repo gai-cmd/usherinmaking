@@ -3,11 +3,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Section } from '@/components/Section';
-import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
-import { LOCATION_PLANS, LOCATION_NOTES, NAVER_BLOG_NOTICE_LOCALE } from '@/content/site';
-import { KO_ETC_PLANS, KO_WEDDING_PLANS } from '@/components/plan/content';
-import { HOME, KO_HOME_PLAN_NOTES } from '@/app/[locale]/home-content';
+import { NAVER_BLOG_NOTICE_LOCALE } from '@/content/site';
+import { HOME } from '@/app/[locale]/home-content';
 import { HomeFaq } from '@/components/home/HomeFaq';
 import { NaverNotice } from '@/components/home/NaverNotice';
 import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
@@ -65,13 +63,8 @@ export default async function LocationPage({ params }: { params: Promise<{ local
   // 히어로는 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
   const heroImage = pickImage(images, 'hero', locale, HERO.image, HERO.alt[locale])!;
 
-  /**
-   * 한국 고객 상품은 원화 상품(웨딩 · 기타 촬영)이 정본이다 — 엔화 로케이션 플랜은
-   * 일본어·영어 고객용이라 한국어 화면에 그대로 두면 홈·요금 페이지의 금액과 어긋난다.
-   */
+  // 플랜 카드는 플랜 페이지가 정본이다 — 여기서 값을 두 벌 들고 있으면 금액이 어긋난다.
   const isKo = locale === 'ko';
-  const plans = isKo ? [...KO_WEDDING_PLANS, ...KO_ETC_PLANS] : LOCATION_PLANS;
-  const notes = isKo ? KO_HOME_PLAN_NOTES : LOCATION_NOTES[locale];
 
   // 한국어는 이 페이지가 메인이라 홈에 있던 FAQPage 도 여기서 내보낸다 — 화면의 FAQ 절과 한 쌍이다.
   const faqJsonLd = {
@@ -93,12 +86,7 @@ export default async function LocationPage({ params }: { params: Promise<{ local
     url: `${SITE_URL}${path(locale, 'location')}`,
     areaServed: { '@type': 'Place', name: 'Okinawa, Japan' },
     provider: { '@type': 'Organization', name: 'usherinmaking', url: SITE_URL },
-    offers: plans.map((plan) => ({
-      '@type': 'Offer',
-      name: `${plan.badge} — ${plan.title[locale]}`,
-      price: plan.price,
-      priceCurrency: plan.currency ?? 'JPY',
-    })),
+    // 요금은 플랜 페이지가 정본이라 이 페이지의 구조화 데이터에는 offers 를 싣지 않는다.
   };
 
   const jsonLd = isKo ? [serviceJsonLd, faqJsonLd] : serviceJsonLd;
@@ -254,28 +242,6 @@ export default async function LocationPage({ params }: { params: Promise<{ local
           </div>
         </div>
       </section>
-
-      <Section
-        label="PLAN"
-        title={text['plans.title']}
-        aside={
-          <Link href={path(locale, 'plan')} className="u-btn" data-tap>
-            {text['plans.link']}
-          </Link>
-        }
-      >
-        <div className={s.plans}>
-          {plans.map((plan) => (
-            <PlanCard key={plan.code} plan={plan} locale={locale} />
-          ))}
-        </div>
-
-        <ul className={s.notes}>
-          {notes.map((note) => (
-            <li key={note}>{note}</li>
-          ))}
-        </ul>
-      </Section>
 
       <Section
         label={WORKS.label[locale]}

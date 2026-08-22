@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
 import {
@@ -10,7 +11,6 @@ import {
 } from '@/content/site';
 import { SITE_URL, alternates, path, type Locale } from '@/lib/i18n';
 import { getPageCopy, toLines, type PageCopy } from '@/server/page-content';
-import { PlanTabs, type PlanTab } from './PlanTabs';
 import * as C from './content';
 import s from './PlanBody.module.css';
 
@@ -81,6 +81,9 @@ function faqLd(locale: Locale) {
 
 /* ---------------- 패널 ---------------- */
 
+/** 한 페이지에 이어 붙이는 플랜 묶음 (구 탭 하나에 해당) */
+type PlanGroup = { id: string; label: string; panel: ReactNode };
+
 /** site.ts 가격은 그대로 두고, 이 페이지에서만 쓰는 표기(모니터 가격·포함 내역)를 덧입힌다. */
 function studioPlans(locale: Locale, text: PageCopy): Plan[] {
   return STUDIO_PLANS.map((plan) => ({
@@ -143,11 +146,12 @@ function AnniversaryPanel({ locale, text }: { locale: Locale; text: PageCopy }) 
   );
 }
 
-function HairPanel({ locale }: { locale: Locale }) {
+/** 제목은 절 머리(그룹 헤더)가 이미 달고 있다 — 여기서는 같은 말을 두 번 쓰지 않는다. */
+function HairPanel({ locale, heading }: { locale: Locale; heading: string }) {
+  const title = C.HAIR.title[locale];
   return (
     <div className={`u-wrap ${s.hair}`}>
-      <p className="u-label">{C.HAIR.label[locale]}</p>
-      <h3 className={`u-h2 ${s.hairTitle}`}>{C.HAIR.title[locale]}</h3>
+      {title !== heading && <p className={s.hairSub}>{title}</p>}
       <dl className={s.hairList}>
         {C.HAIR.shops.map((shop) => (
           <div key={shop.name[locale]} className={s.hairRow}>
@@ -206,8 +210,9 @@ function KoPlansPanel({
 
 export async function PlanBody({ locale }: { locale: Locale }) {
   const text = await getPageCopy('plan', locale);
-  // ko 는 한국 고객 전용 상품(웨딩/기타 · 원화)이라 탭 구성 자체가 다르다.
-  const tabs: PlanTab[] =
+  // ko 는 한국 고객 전용 상품(웨딩/기타 · 원화)이라 묶음 구성 자체가 다르다.
+  // 탭으로 접어 두면 한 번에 한 묶음만 보인다 — 전부 한 페이지에 이어서 편다.
+  const groups: PlanGroup[] =
     locale === 'ko'
       ? [
           {
@@ -229,7 +234,11 @@ export async function PlanBody({ locale }: { locale: Locale }) {
             label: C.TABS.anniversary[locale],
             panel: <AnniversaryPanel locale={locale} text={text} />,
           },
-          { id: 'hair', label: C.TABS.hair[locale], panel: <HairPanel locale={locale} /> },
+          {
+            id: 'hair',
+            label: C.TABS.hair[locale],
+            panel: <HairPanel locale={locale} heading={C.TABS.hair[locale]} />,
+          },
         ];
 
   const questions = C.FAQ_QUESTIONS[locale];
@@ -256,11 +265,15 @@ export async function PlanBody({ locale }: { locale: Locale }) {
 
       {/* 카드 제목이 h3 이므로 그 위에 h2 가 있어야 제목 목차가 이어진다.
           시안에는 이 자리에 제목이 없으니 화면에서는 감추고 보조기기에만 읽힌다. */}
-      <section aria-labelledby="plan-list-heading">
-        <h2 id="plan-list-heading" className="u-visually-hidden">
-          {C.PLAN_LIST_SECTION[locale]}
-        </h2>
-        <PlanTabs tabs={tabs} />
+      <section aria-label={C.PLAN_LIST_SECTION[locale]}>
+        {groups.map((group) => (
+          <section key={group.id} id={`plan-${group.id}`} className={s.group}>
+            <div className={`u-wrap ${s.groupHead}`}>
+              <h2 className={`u-h2 ${s.groupTitle}`}>{group.label}</h2>
+            </div>
+            {group.panel}
+          </section>
+        ))}
       </section>
 
       {/* 옵션 표 — 어떤 플랜에 붙일 수 있는지까지 같은 줄에서 읽히게 한다 */}
