@@ -273,9 +273,10 @@ export async function PlanBody({ locale }: { locale: Locale }) {
               </div>
               {group.panel}
             </section>
-            {/* 옵션 표는 그 옵션이 붙는 플랜 바로 아래에 둔다 — ko 는 웨딩 촬영,
-                ja·en 은 로케이션 촬영이 그 자리다. 묶음 사이라 배경은 깔지 않는다. */}
-            {i === 0 && <OptionSection locale={locale} text={text} alt={false} />}
+            {/* ko 만 옵션 표를 둔다 — 한국 고객 상품은 옵션 구성이 상품과 별개다.
+                ja·en 의 로케이션 옵션은 바로 위 주의사항 목록이 이미 같은 말을 하고 있어
+                표를 함께 두면 같은 내용이 두 번 나온다. 묶음 사이라 배경은 깔지 않는다. */}
+            {locale === 'ko' && i === 0 && <OptionSection locale={locale} text={text} alt={false} />}
           </Fragment>
         ))}
       </section>

@@ -210,47 +210,14 @@ export type OptionRow = { label: string; price: string; note: string };
  * 그 정본은 site.ts STUDIO_PLAN_OPTIONS 다. 이 페이지에는 로케이션 옵션만 남는다.
  */
 /**
- * 플랜 페이지에 남는 옵션 — 로케이션 촬영에 붙는 것들.
+ * 플랜 페이지의 옵션 표는 ko 전용이다.
  *
- * 표가 로케이션 플랜 절 바로 아래로 내려갔으므로 "LOCATION" 접두사는 뗐다.
- * 기념사진의 인원 추가(＋¥3,000)와 휴일 요금(＋¥8,000)은 여기에 싣지 않는다 —
- * ANNIVERSARY_PANEL.surcharge 가 기념사진 카드 바로 아래에서 이미 같은 말을 한다.
+ * ja·en 로케이션 옵션(드레스 대여 · 영상 · 휴일 요금)은 로케이션 플랜 카드 아래
+ * 주의사항 목록이 이미 같은 금액을 말한다 — 표를 함께 두면 한 화면에서 같은 내용을
+ * 두 번 읽게 된다. 스튜디오 옵션은 스튜디오 페이지(site.ts STUDIO_PLAN_OPTIONS)에 있다.
  */
 export function optionRows(locale: Locale): OptionRow[] {
-  // ko 는 한국 고객 전용 옵션 구성(원화)을 쓴다 — JA/EN 옵션 표와 별개.
-  if (locale === 'ko') return KO_OPTION_ROWS;
-
-  const labels: L10nList = {
-    ja: ['ドレスレンタル', '動画 + ドローン撮影', '休日料金（土・日・祝）'],
-    en: ['Dress rental', 'Video + drone', 'Weekends and holidays'],
-    ko: ['드레스 대여', '영상 + 드론 촬영', '주말 · 공휴일 요금'],
-  };
-
-  const prices: L10nList = {
-    ja: ['¥10,000 台〜', '¥35,000', '＋¥18,000'],
-    en: ['from ¥10,000', '¥35,000', '+¥18,000'],
-    ko: ['¥10,000대부터', '¥35,000', '+¥18,000'],
-  };
-
-  const notes: L10nList = {
-    ja: [
-      '〜¥50,000 台 ／ タキシードはありません。小物・ブーケ・アクセサリー込み',
-      '1分30秒 ／ 単体でのご依頼は不可',
-      '',
-    ],
-    en: [
-      'Up to the ¥50,000 range, no tuxedos. Small items, bouquet and accessories included',
-      '1 min 30 sec · not available on its own',
-      '',
-    ],
-    ko: ['~¥50,000대 / 턱시도는 없습니다. 소품 · 부케 · 액세서리 포함', '1분 30초 / 단독 의뢰 불가', ''],
-  };
-
-  return labels[locale].map((label, i) => ({
-    label,
-    price: prices[locale][i],
-    note: notes[locale][i],
-  }));
+  return locale === 'ko' ? KO_OPTION_ROWS : [];
 }
 
 /* ---------------- 헤어메이크업 ---------------- */
