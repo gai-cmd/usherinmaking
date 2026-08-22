@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Section } from '@/components/Section';
 import { PlanCard } from '@/components/PlanCard';
+import { OptionTable } from '@/components/plan/OptionTable';
+import { studioOptionRows } from '@/components/plan/content';
 import { ContactCta } from '@/components/ContactCta';
 import { STUDIO_SETS, STUDIO_PLANS, STUDIO_INFO, TBC } from '@/content/site';
 import { SITE_URL, STUDIO_LOCALES, alternates, isLocale, path, type Locale } from '@/lib/i18n';
@@ -11,7 +13,7 @@ import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
 import { getWorksImages } from '@/server/works';
-import { ACCESS, FLOW, HERO, PLANS, SET_COPY, WORKS } from './content';
+import { ACCESS, FLOW, HERO, OPTION, PLANS, SET_COPY, WORKS } from './content';
 import s from './page.module.css';
 
 /** 한국어에는 스튜디오 상품이 없어 페이지를 만들지 않는다 (STUDIO_LOCALES). */
@@ -182,6 +184,16 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
           ))}
         </div>
       </Section>
+
+      {/* 스튜디오 옵션은 플랜 페이지가 아니라 이 카드들 바로 아래가 제자리다.
+          카드가 PLAN 01…04 로 이름을 달고 있으므로 표는 그 번호만 가리키면 된다. */}
+      <OptionTable
+        label={OPTION.label[locale]}
+        title={OPTION.title[locale]}
+        lead={OPTION.lead[locale]}
+        head={OPTION.head[locale]}
+        rows={studioOptionRows(locale)}
+      />
 
       <section className={s.access}>
         <div className={s.accessFigure}>

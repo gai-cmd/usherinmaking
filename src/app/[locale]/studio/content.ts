@@ -199,6 +199,29 @@ export const FLOW = {
   ],
 };
 
+/**
+ * 스튜디오 플랜에 붙는 옵션 표. 행 자체는 plan/content 의 studioOptionRows 가 갖는다 —
+ * 가격이 두 곳에 적히면 한쪽만 고쳐지기 때문이다. 여기는 절 제목만 갖는다.
+ */
+export const OPTION = {
+  label: { ja: 'OPTION', en: 'ADD-ONS', ko: 'OPTION' } satisfies L10n,
+  title: {
+    ja: 'スタジオプランのオプション',
+    en: 'Studio add-ons',
+    ko: '스튜디오 플랜 옵션',
+  } satisfies L10n,
+  lead: {
+    ja: 'どのプランに追加できるかを、料金と一緒に記載しています。',
+    en: '',
+    ko: '',
+  } satisfies L10n,
+  head: {
+    ja: ['OPTION', 'PRICE', '対象プラン ・ 備考'],
+    en: ['ADD-ON', 'PRICE', 'APPLIES TO'],
+    ko: ['OPTION', 'PRICE', '비고'],
+  } satisfies L10nLines,
+};
+
 export const PLANS = {
   label: {
     ja: 'PLAN ・ モニター価格',

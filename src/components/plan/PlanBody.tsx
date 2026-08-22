@@ -11,6 +11,7 @@ import {
 import { SITE_URL, alternates, path, type Locale } from '@/lib/i18n';
 import { getPageCopy, toLines, type PageCopy } from '@/server/page-content';
 import * as C from './content';
+import { OptionTable } from './OptionTable';
 import s from './PlanBody.module.css';
 
 /* ---------------- metadata ---------------- */
@@ -184,49 +185,22 @@ function KoPlansPanel({
 function OptionSection({
   locale,
   text,
-  alt = true,
+  alt,
 }: {
   locale: Locale;
   text: PageCopy;
-  /** 플랜 묶음 사이에 끼울 때는 배경을 깔지 않는다 — 줄무늬처럼 보인다 */
   alt?: boolean;
 }) {
   return (
-    <section className={`u-section ${alt ? 'u-section--alt' : ''}`}>
-      <div className="u-wrap">
-        <div className={s.optHead}>
-          <p className="u-label">{C.OPTION_SECTION.label[locale]}</p>
-          <h2 className={`u-h2 ${s.optTitle}`}>{text['option.title']}</h2>
-          {text['option.lead'] && <p className={s.optLead}>{text['option.lead']}</p>}
-        </div>
-        <table className={s.table}>
-          <thead>
-            <tr>
-              {C.OPTION_SECTION.head[locale].map((cell) => (
-                <th key={cell} scope="col">
-                  {cell}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {C.optionRows(locale).map((row) => (
-              <tr key={row.label}>
-                <th scope="row">{row.label}</th>
-                <td className={`u-num ${s.optPrice}`}>{row.price}</td>
-                <td className={s.optNote}>{row.note}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {locale === 'ko' &&
-          C.KO_OPTION_NOTES.map((line) => (
-            <p key={line} className={s.optNote}>
-              {line}
-            </p>
-          ))}
-      </div>
-    </section>
+    <OptionTable
+      label={C.OPTION_SECTION.label[locale]}
+      title={text['option.title']}
+      lead={text['option.lead']}
+      head={C.OPTION_SECTION.head[locale]}
+      rows={C.optionRows(locale)}
+      footNotes={locale === 'ko' ? C.KO_OPTION_NOTES : undefined}
+      alt={alt}
+    />
   );
 }
 
@@ -266,7 +240,6 @@ export async function PlanBody({ locale }: { locale: Locale }) {
           },
         ];
 
-  const isKo = locale === 'ko';
   const questions = C.FAQ_QUESTIONS[locale];
   const faq = faqLd(locale);
 
@@ -300,13 +273,12 @@ export async function PlanBody({ locale }: { locale: Locale }) {
               </div>
               {group.panel}
             </section>
-            {/* ko 는 드레스 · 헤어메이크업 옵션이 웨딩 촬영에 붙는 이야기라 기타 촬영 앞에 둔다 */}
-            {isKo && i === 0 && <OptionSection locale={locale} text={text} alt={false} />}
+            {/* 옵션 표는 그 옵션이 붙는 플랜 바로 아래에 둔다 — ko 는 웨딩 촬영,
+                ja·en 은 로케이션 촬영이 그 자리다. 묶음 사이라 배경은 깔지 않는다. */}
+            {i === 0 && <OptionSection locale={locale} text={text} alt={false} />}
           </Fragment>
         ))}
       </section>
-
-      {!isKo && <OptionSection locale={locale} text={text} />}
 
       {/* 계약까지의 4단계 */}
       <section className="u-section">
