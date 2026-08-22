@@ -26,9 +26,9 @@ export const GALLERY = {
   sort: 'NEWEST FIRST',
 
   filterNote: {
-    ja: '絞り込みはそれぞれ独立したページになります（例 /ja/gallery/studio/self-wedding）。写真はすべて自社ドメインから配信しています。',
-    en: 'Each filter is its own page (for example /en/gallery/studio/self-wedding). All photos are served from our own domain.',
-    ko: '필터마다 주소가 따로 있어 마음에 드는 조합은 그대로 저장해 두실 수 있습니다 (예 /ko/gallery/studio/self-wedding). 사진은 모두 저희 서버에서 불러옵니다.',
+    ja: '絞り込みはそれぞれ独立したページになります（例 /ja/gallery/studio/wedding）。写真はすべて自社ドメインから配信しています。',
+    en: 'Each filter is its own page (for example /en/gallery/studio/wedding). All photos are served from our own domain.',
+    ko: '필터마다 주소가 따로 있어 마음에 드는 조합은 그대로 저장해 두실 수 있습니다 (예 /ko/gallery/studio/wedding). 사진은 모두 저희 서버에서 불러옵니다.',
   } satisfies L10n,
 
   empty: {

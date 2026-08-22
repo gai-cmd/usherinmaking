@@ -16,7 +16,7 @@ import {
 import { SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
 
 /**
- * 필터 조합마다 실제 URL을 갖는다 — /ja/gallery/studio/self-wedding 형태.
+ * 필터 조합마다 실제 URL을 갖는다 — /ja/gallery/studio/wedding 형태.
  * 단일 term과 place 짝만 미리 만들고, 나머지 유효 조합은 요청 시 렌더링한다.
  */
 export function generateStaticParams({ params }: { params: { locale: string } }) {

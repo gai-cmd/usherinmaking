@@ -37,6 +37,34 @@ const nextConfig: NextConfig = {
        * 않도록 로케이션으로 넘긴다. 구 주소 리다이렉트(/korean/*)가 여기로 이어질 수도 있다.
        */
       { source: '/ko/studio', destination: '/ko/location', permanent: true },
+      /*
+       * 촬영 종류 필터 통합(2026-08) — 본식 전 웨딩 · 리마인드 웨딩 · 셀프 웨딩을
+       * 'wedding' 하나로 합쳤다. 갤러리 필터는 쿼리스트링이 아니라 경로이므로
+       * 사라진 슬러그가 곧 죽은 주소가 된다. 앞(장소)·뒤(세트/계절) 세그먼트가
+       * 붙는 조합까지 네 가지 모양을 모두 넘긴다.
+       */
+      ...['remind-wedding', 'self-wedding'].flatMap((old) => [
+        {
+          source: `/:locale/gallery/${old}`,
+          destination: '/:locale/gallery/wedding',
+          permanent: true,
+        },
+        {
+          source: `/:locale/gallery/${old}/:mood`,
+          destination: '/:locale/gallery/wedding/:mood',
+          permanent: true,
+        },
+        {
+          source: `/:locale/gallery/:place/${old}`,
+          destination: '/:locale/gallery/:place/wedding',
+          permanent: true,
+        },
+        {
+          source: `/:locale/gallery/:place/${old}/:mood`,
+          destination: '/:locale/gallery/:place/wedding/:mood',
+          permanent: true,
+        },
+      ]),
     ];
   },
   async headers() {

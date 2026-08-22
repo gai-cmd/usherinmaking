@@ -78,10 +78,9 @@ function sessionTerms(text) {
   if (/만삭|태교/.test(text)) out.push('maternity');
   if (/가족|대가족|돌|백일|칠순|환갑|아기/.test(text)) out.push('family');
   if (/기념일|결혼기념|주년/.test(text)) out.push('anniversary');
-  if (/셀프웨딩/.test(text)) out.push('self-wedding');
-  if (/리마인드/.test(text)) out.push('remind-wedding');
   if (/데이트스냅|커플스냅/.test(text)) out.push('couples');
-  if (/웨딩스냅|본식|채플|전촬영|웨딩촬영/.test(text)) out.push('wedding');
+  // 본식 전 · 리마인드 · 셀프는 2026-08 에 'wedding' 하나로 합쳤다.
+  if (/웨딩스냅|본식|채플|전촬영|웨딩촬영|셀프웨딩|리마인드/.test(text)) out.push('wedding');
   return [...new Set(out)];
 }
 

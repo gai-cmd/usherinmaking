@@ -55,53 +55,45 @@ export const TERMS: Term[] = [
 
   /* ---- session ---- */
   {
+    /*
+     * 본식 전 웨딩 · 리마인드 웨딩 · 셀프 웨딩을 하나로 묶은 term 이다(2026-08).
+     * 셋 다 "예복을 입고 둘이 찍는 촬영"이라 고르는 쪽에서 구분이 되지 않았고,
+     * 리마인드는 사진이 0장이라 빈 필터로 남아 있었다.
+     * 사라진 두 슬러그(remind-wedding · self-wedding)는 next.config.ts 에서
+     * 이 주소로 넘긴다 — 필터가 곧 URL 이라 지우면 살아 있는 주소가 끊긴다.
+     */
     key: 'session-wedding',
     taxonomy: 'session',
     slug: 'wedding',
     order: 1,
-    label: { ja: 'ウェディング・前撮り', en: 'Wedding', ko: '본식 전 웨딩' },
-  },
-  {
-    // 한국어 카드에만 있는 항목이라 ko 번역만 둔다.
-    key: 'session-remind-wedding',
-    taxonomy: 'session',
-    slug: 'remind-wedding',
-    order: 2,
-    label: { ko: '리마인드 웨딩' },
-  },
-  {
-    key: 'session-self-wedding',
-    taxonomy: 'session',
-    slug: 'self-wedding',
-    order: 3,
-    label: { ja: 'セルフウェディング', en: 'Self-wedding', ko: '셀프 웨딩' },
+    label: { ja: 'ウェディング', en: 'Wedding', ko: '웨딩' },
   },
   {
     key: 'session-maternity',
     taxonomy: 'session',
     slug: 'maternity',
-    order: 4,
+    order: 2,
     label: { ja: 'マタニティ', en: 'Maternity', ko: '만삭' },
   },
   {
     key: 'session-anniversary',
     taxonomy: 'session',
     slug: 'anniversary',
-    order: 5,
+    order: 3,
     label: { ja: '記念日', en: 'Anniversary', ko: '기념일' },
   },
   {
     key: 'session-family',
     taxonomy: 'session',
     slug: 'family',
-    order: 6,
+    order: 4,
     label: { ja: '家族・七五三', en: 'Family', ko: '가족 · 백일 · 돌' },
   },
   {
     key: 'session-couples',
     taxonomy: 'session',
     slug: 'couples',
-    order: 7,
+    order: 5,
     label: { ja: 'デート', en: 'Couples', ko: '커플' },
   },
 
