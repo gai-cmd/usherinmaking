@@ -404,3 +404,21 @@
     font-size: 11px;
   }
 }
+
+/* 옵션 표를 촬영 절 안에 둘 때. 별도 절로 빼면 배경 띠가 갈리면서 다른 이야기처럼
+   보인다 — 이 플랜들에 붙는 것이므로 카드 바로 아래, 같은 절 안에 붙인다.
+   그래서 제목도 절 제목(h2)이 아니라 한 단 아래의 작은 제목이고 가운데 정렬하지 않는다. */
+.optInline {
+  margin-top: 44px;
+}
+
+.optInlineTitle {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--ff-heading);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text);
+}

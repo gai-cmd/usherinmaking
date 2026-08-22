@@ -320,11 +320,11 @@ const OPTION_ITEM = {
     price: { ja: '＋¥20,000〜', en: '+¥20,000 and up', ko: '+¥20,000부터' },
   },
   holidayWedding: {
-    label: { ja: '休日料金', en: 'Weekend and holiday surcharge', ko: '주말·공휴일 요금' },
+    label: { ja: '休日料金', en: 'Weekend surcharge', ko: '주말·공휴일 요금' },
     price: { ja: '＋¥18,000', en: '+¥18,000', ko: '+¥18,000' },
   },
   holidayOther: {
-    label: { ja: '休日料金', en: 'Weekend and holiday surcharge', ko: '주말·공휴일 요금' },
+    label: { ja: '休日料金', en: 'Weekend surcharge', ko: '주말·공휴일 요금' },
     price: { ja: '＋¥11,000', en: '+¥11,000', ko: '+¥11,000' },
   },
   extraPerson: {

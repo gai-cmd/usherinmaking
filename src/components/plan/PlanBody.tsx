@@ -11,7 +11,6 @@ import {
 import { SITE_URL, alternates, path, type Locale } from '@/lib/i18n';
 import { getPageCopy, toLines, type PageCopy } from '@/server/page-content';
 import * as C from './content';
-import { OptionTable } from './OptionTable';
 import s from './PlanBody.module.css';
 
 /* ---------------- metadata ---------------- */
@@ -146,11 +145,17 @@ function KoPlansPanel({
   plans,
   notes,
   noticeLabel,
+  options,
 }: {
   plans: Plan[];
   notes: string[];
   /** 있으면 노트를 라벨 달린 안내 박스로 묶는다 — 맨줄 문장 나열은 성의 없어 보인다 */
   noticeLabel?: string;
+  /**
+   * 이 촬영에 붙일 수 있는 옵션. 별도 절로 빼면 배경 띠가 갈리면서 다른 이야기처럼 보인다 —
+   * 옵션은 이 플랜들에 붙는 것이므로 같은 절 안, 플랜 카드 바로 아래에 둔다.
+   */
+  options?: { title: string; head: readonly string[]; rows: C.OptionRow[]; footNotes?: string[] };
 }) {
   return (
     <div className="u-wrap">
@@ -177,30 +182,38 @@ function KoPlansPanel({
           </p>
         ))
       )}
-    </div>
-  );
-}
 
-/** 옵션 표 — 어떤 플랜에 붙일 수 있는지까지 같은 줄에서 읽히게 한다 */
-function OptionSection({
-  locale,
-  text,
-  alt,
-}: {
-  locale: Locale;
-  text: PageCopy;
-  alt?: boolean;
-}) {
-  return (
-    <OptionTable
-      label={C.OPTION_SECTION.label[locale]}
-      title={text['option.title']}
-      lead={text['option.lead']}
-      head={C.OPTION_SECTION.head[locale]}
-      rows={C.optionRows(locale)}
-      footNotes={locale === 'ko' ? C.KO_OPTION_NOTES : undefined}
-      alt={alt}
-    />
+      {options && (
+        <div className={s.optInline}>
+          <h3 className={s.optInlineTitle}>{options.title}</h3>
+          <table className={s.table}>
+            <thead>
+              <tr>
+                {options.head.map((cell) => (
+                  <th key={cell} scope="col">
+                    {cell}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {options.rows.map((row) => (
+                <tr key={row.label}>
+                  <th scope="row">{row.label}</th>
+                  <td className={`u-num ${s.optPrice}`}>{row.price}</td>
+                  <td className={s.optNote}>{row.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {options.footNotes?.map((line) => (
+            <p key={line} className={s.optNote}>
+              {line}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -216,7 +229,18 @@ export async function PlanBody({ locale }: { locale: Locale }) {
           {
             id: 'wedding',
             label: C.KO_TABS.wedding,
-            panel: <KoPlansPanel plans={C.KO_WEDDING_PLANS} notes={[C.KO_WEDDING_NOTE]} />,
+            panel: (
+              <KoPlansPanel
+                plans={C.KO_WEDDING_PLANS}
+                notes={[C.KO_WEDDING_NOTE]}
+                options={{
+                  title: text['option.title'],
+                  head: C.OPTION_SECTION.head[locale],
+                  rows: C.optionRows(locale),
+                  footNotes: C.KO_OPTION_NOTES,
+                }}
+              />
+            ),
           },
           {
             id: 'etc',
@@ -265,7 +289,7 @@ export async function PlanBody({ locale }: { locale: Locale }) {
       {/* 카드 제목이 h3 이므로 그 위에 h2 가 있어야 제목 목차가 이어진다.
           시안에는 이 자리에 제목이 없으니 화면에서는 감추고 보조기기에만 읽힌다. */}
       <section aria-label={C.PLAN_LIST_SECTION[locale]}>
-        {groups.map((group, i) => (
+        {groups.map((group) => (
           <Fragment key={group.id}>
             <section id={`plan-${group.id}`} className={s.group}>
               <div className={`u-wrap ${s.groupHead}`}>
@@ -273,10 +297,6 @@ export async function PlanBody({ locale }: { locale: Locale }) {
               </div>
               {group.panel}
             </section>
-            {/* ko 만 옵션 표를 둔다 — 한국 고객 상품은 옵션 구성이 상품과 별개다.
-                ja·en 의 로케이션 옵션은 바로 위 주의사항 목록이 이미 같은 말을 하고 있어
-                표를 함께 두면 같은 내용이 두 번 나온다. 묶음 사이라 배경은 깔지 않는다. */}
-            {locale === 'ko' && i === 0 && <OptionSection locale={locale} text={text} alt={false} />}
           </Fragment>
         ))}
       </section>
