@@ -181,9 +181,18 @@ function KoPlansPanel({
 }
 
 /** 옵션 표 — 어떤 플랜에 붙일 수 있는지까지 같은 줄에서 읽히게 한다 */
-function OptionSection({ locale, text }: { locale: Locale; text: PageCopy }) {
+function OptionSection({
+  locale,
+  text,
+  alt = true,
+}: {
+  locale: Locale;
+  text: PageCopy;
+  /** 플랜 묶음 사이에 끼울 때는 배경을 깔지 않는다 — 줄무늬처럼 보인다 */
+  alt?: boolean;
+}) {
   return (
-    <section className="u-section u-section--alt">
+    <section className={`u-section ${alt ? 'u-section--alt' : ''}`}>
       <div className="u-wrap">
         <div className={s.optHead}>
           <p className="u-label">{C.OPTION_SECTION.label[locale]}</p>
@@ -292,7 +301,7 @@ export async function PlanBody({ locale }: { locale: Locale }) {
               {group.panel}
             </section>
             {/* ko 는 드레스 · 헤어메이크업 옵션이 웨딩 촬영에 붙는 이야기라 기타 촬영 앞에 둔다 */}
-            {isKo && i === 0 && <OptionSection locale={locale} text={text} />}
+            {isKo && i === 0 && <OptionSection locale={locale} text={text} alt={false} />}
           </Fragment>
         ))}
       </section>
