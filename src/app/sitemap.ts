@@ -45,6 +45,18 @@ function withAlternates(key: PageKey, ...rest: string[]) {
   return languages;
 }
 
+/**
+ * 사이트맵을 빌드 시점에 고정하지 않는다.
+ *
+ * 저널 글과 작품은 관리자에서 수시로 늘어나는데, 정적으로 굳으면 다음 배포 전까지
+ * 새 주소가 사이트맵에 없다 — 검색엔진이 발견을 못 하는 게 아니라 "제출된 목록에
+ * 없는 페이지"가 되어 색인이 늦어진다. 한 시간마다 다시 만들어 그 격차를 없앤다.
+ *
+ * force-dynamic 이 아니라 ISR 인 이유: 이 함수는 매번 DB 전체(작품·저널)를 읽는다.
+ * 크롤러가 사이트맵을 두드릴 때마다 그 질의를 태우면 비용이 그대로 늘어난다.
+ */
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const entries: MetadataRoute.Sitemap = [];

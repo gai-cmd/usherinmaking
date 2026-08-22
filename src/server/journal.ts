@@ -1,7 +1,8 @@
 import { logAdminAction } from '@/server/activity';
 import { isDatabaseConfigured, prisma } from '@/server/db';
 import { NotFoundError, NotImplementedError } from '@/server/errors';
-import { LOCALES, type Locale } from '@/lib/i18n';
+import { LOCALES, path, type Locale } from '@/lib/i18n';
+import { pingIndexNow } from '@/server/indexnow';
 import {
   CATEGORY_LABEL,
   JOURNAL_POSTS,
@@ -406,6 +407,12 @@ export async function publishJournalPost(slug: string, locale: Locale): Promise<
   });
 
   await logAdminAction('촬영후기 게시', `${slug}:${locale}`);
+
+  // 사이트맵은 한 시간마다 다시 만들어지므로 새 글도 결국 실린다. 그것과 별개로
+  // 지금 바로 알려 두면 네이버 쪽 발견이 그 한 시간을 기다리지 않는다.
+  // 실패해도 게시 자체는 이미 끝났다 — pingIndexNow 는 던지지 않는다.
+  await pingIndexNow([path(locale, 'journal', slug)]);
+
   return fromDb(row as DbPost);
 }
 

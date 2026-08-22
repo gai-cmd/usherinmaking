@@ -1,11 +1,21 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { DEFAULT_LOCALE, LOCALES, type Locale } from '@/lib/i18n';
+import { LOCALES, SITE_URL, type Locale } from '@/lib/i18n';
 
 const LOCALE_COOKIE = 'uim_locale';
 
+/**
+ * 어느 언어권에도 속하지 않는 방문자가 받을 언어.
+ *
+ * DEFAULT_LOCALE('ja')과 일부러 다르다. DEFAULT_LOCALE 은 hreflang 의 x-default,
+ * 즉 "이 사이트의 대표 언어판"을 가리키는 SEO 신호다. 반면 여기는 사람을 어디로
+ * 보낼지의 문제라, 일본어도 한국어도 못 읽는 방문자에게는 영어판이 맞다.
+ * 둘을 하나로 합치면 프랑스어 브라우저가 일본어 페이지를 받는다.
+ */
+const FALLBACK_LOCALE: Locale = 'en';
+
 /** Accept-Language 헤더에서 지원 로케일 중 가장 앞선 것을 고른다. */
 function pickLocale(header: string | null): Locale {
-  if (!header) return DEFAULT_LOCALE;
+  if (!header) return FALLBACK_LOCALE;
   const ranked = header
     .split(',')
     .map((part) => {
@@ -18,7 +28,7 @@ function pickLocale(header: string | null): Locale {
     const base = tag.split('-')[0];
     if ((LOCALES as readonly string[]).includes(base)) return base as Locale;
   }
-  return DEFAULT_LOCALE;
+  return FALLBACK_LOCALE;
 }
 
 /**
@@ -74,8 +84,46 @@ function guardAdmin(req: NextRequest): NextResponse | null {
   return NextResponse.redirect(url);
 }
 
+/**
+ * 정본 호스트. NEXT_PUBLIC_SITE_URL 이 곧 canonical·hreflang·사이트맵이 쓰는 주소이므로,
+ * 사람이 실제로 받는 주소도 같아야 두 신호가 어긋나지 않는다.
+ */
+const CANONICAL_HOST = new URL(SITE_URL).host;
+
+/**
+ * 정본이 아닌 호스트로 들어온 요청을 정본으로 넘긴다.
+ *
+ * 도메인을 붙이고 나면 같은 사이트가 usherinmaking.com 과 usherinmaking.vercel.app
+ * 두 주소로 동시에 열린다. 둘 다 열려 있으면 검색엔진에는 같은 내용의 사이트가 두 개
+ * 있는 셈이라, 어느 쪽을 실을지 갈리고 링크 신호도 둘로 쪼개진다. canonical 태그는
+ * 권고일 뿐 접근 자체를 막지 못하므로, 여기서 주소를 하나로 모은다.
+ *
+ * 프로덕션에서만 돈다 — 미리보기 배포는 각자의 vercel.app 주소로 열려야 하고,
+ * 로컬은 localhost 로 열려야 한다. 정본이 아직 vercel.app 이면(도메인 연결 전)
+ * 아무것도 하지 않는다.
+ */
+function canonicalHost(req: NextRequest): NextResponse | null {
+  if (process.env.VERCEL_ENV !== 'production') return null;
+  if (CANONICAL_HOST.endsWith('.vercel.app')) return null;
+
+  const host = req.headers.get('host');
+  if (!host || host === CANONICAL_HOST) return null;
+
+  const url = req.nextUrl.clone();
+  url.host = CANONICAL_HOST;
+  url.port = '';
+  url.protocol = 'https:';
+  // 308 은 메서드와 본문을 보존하는 영구 이동이다. 검색엔진은 301 과 같게 취급한다.
+  return NextResponse.redirect(url, 308);
+}
+
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+
+  // 호스트 정리가 먼저다. 로케일을 붙인 뒤에 호스트를 옮기면 방문자가 리다이렉트를
+  // 두 번 타고, 검색엔진에는 그 사슬이 그대로 노출된다.
+  const hostRedirect = canonicalHost(req);
+  if (hostRedirect) return hostRedirect;
 
   const adminRedirect = guardAdmin(req);
   if (adminRedirect) return adminRedirect;

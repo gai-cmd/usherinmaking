@@ -11,6 +11,8 @@
 import { Prisma } from '@prisma/client';
 import { isDatabaseConfigured, prisma } from '@/server/db';
 import { recordActivity } from '@/server/activity';
+import { pingIndexNow } from '@/server/indexnow';
+import { LOCALES, path } from '@/lib/i18n';
 import { AppError, DependencyUnavailableError } from '@/server/errors';
 import {
   fetchInstagramMedia,
@@ -696,6 +698,15 @@ export async function runInstagramIngest(options: RunOptions): Promise<IngestRes
         ? (await (account === 'dress' ? revalidateDressSurfaces() : revalidateWorksSurfaces()))
             .revalidated
         : null;
+
+    /*
+     * 새 사진이 전시로 들어갔으면 목록 주소가 바뀐 것이므로 검색엔진에 알린다.
+     * 개별 사진 상세 주소는 여기서 모으지 않는다 — ingestOne 이 결과만 돌려주고 slug 를
+     * 돌려주지 않아서다. 상세는 한 시간마다 다시 만들어지는 사이트맵이 실어 나른다.
+     */
+    if (published > 0) {
+      await pingIndexNow(LOCALES.map((l) => path(l, account === 'dress' ? 'dress' : 'gallery')));
+    }
 
     await recordActivity({
       actor,
