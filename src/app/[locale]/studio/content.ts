@@ -199,24 +199,6 @@ export const FLOW = {
   ],
 };
 
-/**
- * 스튜디오 플랜 옵션 절의 제목. 행 자체는 site.ts STUDIO_PLAN_OPTIONS 가 갖는다 —
- * 금액이 두 곳에 적히면 한쪽만 고쳐진다.
- */
-export const OPTION = {
-  label: { ja: 'OPTION', en: 'ADD-ONS', ko: 'OPTION' } satisfies L10n,
-  title: {
-    ja: 'オプション',
-    en: 'Add-ons',
-    ko: '옵션',
-  } satisfies L10n,
-  lead: {
-    ja: 'プランごとに追加できるものと、その料金です。',
-    en: 'What each plan can add, and what it costs.',
-    ko: '플랜별로 추가할 수 있는 항목과 요금입니다.',
-  } satisfies L10n,
-};
-
 export const PLANS = {
   label: {
     ja: 'PLAN ・ モニター価格',

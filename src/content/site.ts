@@ -360,8 +360,8 @@ export const STUDIO_OPTIONS: PlanOption[] = [
 ];
 
 export type PlanOptionGroup = {
-  /** 어느 플랜의 옵션인지. 스튜디오 페이지 카드가 PLAN 01…04 로 이름을 달고 있어 그 번호를 쓴다. */
-  heading: L10n;
+  /** 이 옵션 묶음이 붙는 플랜. 01 과 02 는 붙는 옵션이 같아 한 묶음이 두 플랜을 가리킨다. */
+  planCodes: string[];
   items: { label: L10n; price: L10n }[];
   note?: L10n;
 };
@@ -373,11 +373,7 @@ export type PlanOptionGroup = {
  */
 export const STUDIO_PLAN_OPTIONS: PlanOptionGroup[] = [
   {
-    heading: {
-      ja: 'PLAN 01 / 02 共通',
-      en: 'Plan 01 / 02',
-      ko: 'PLAN 01 / 02 공통',
-    },
+    planCodes: ['studio-01', 'studio-02'],
     items: [
       OPTION_ITEM.groom,
       OPTION_ITEM.premiumDress,
@@ -386,11 +382,11 @@ export const STUDIO_PLAN_OPTIONS: PlanOptionGroup[] = [
     ],
   },
   {
-    heading: { ja: 'PLAN 03', en: 'Plan 03', ko: 'PLAN 03' },
+    planCodes: ['studio-03'],
     items: [OPTION_ITEM.rawJpeg, OPTION_ITEM.holidayOther],
   },
   {
-    heading: { ja: 'PLAN 04', en: 'Plan 04', ko: 'PLAN 04' },
+    planCodes: ['studio-04'],
     items: [
       OPTION_ITEM.extraPerson,
       OPTION_ITEM.hairMake,
@@ -404,6 +400,11 @@ export const STUDIO_PLAN_OPTIONS: PlanOptionGroup[] = [
     },
   },
 ];
+
+/** 플랜 코드로 그 플랜에 붙는 옵션 묶음을 찾는다. 없으면 undefined — 옵션 없는 플랜도 있다. */
+export function planOptions(code: string): PlanOptionGroup | undefined {
+  return STUDIO_PLAN_OPTIONS.find((g) => g.planCodes.includes(code));
+}
 
 /** 로케이션 주의사항 — 촬영 데이터만 포함, 의상/헤어메이크업 별도 */
 export const LOCATION_NOTES: L10nList = {

@@ -63,3 +63,44 @@
   line-height: 1.9;
   color: var(--muted);
 }
+
+/* 옵션은 카드 안에 함께 산다 — 플랜과 그 플랜에 붙는 것을 한눈에 본다.
+   포함사항(.includes)과 구분되어야 하므로 위에 실선을 한 줄 더 긋는다.
+   margin-top:auto 로 카드 높이가 달라도 옵션 블록의 윗선이 가로로 맞는다. */
+.options {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.optionLabel {
+  font-family: var(--ff-latin);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.4em;
+  color: var(--brass);
+  margin-bottom: 4px;
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+}
+
+.optionRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline-2);
+  font-size: var(--fs-small);
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.optionNote {
+  margin-top: 12px;
+  font-size: var(--fs-meta);
+  line-height: 1.9;
+  color: var(--muted-2);
+}
