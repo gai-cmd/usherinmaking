@@ -45,7 +45,7 @@ export const PLAN_LIST_SECTION: L10n = {
 
 export const TABS = {
   studio: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' } satisfies L10n,
-  location: { ja: 'LOCATION', en: 'LOCATION', ko: '로케이션' } satisfies L10n,
+  location: { ja: 'ウェディングフォト', en: 'LOCATION', ko: '로케이션' } satisfies L10n,
   anniversary: { ja: '記念写真', en: 'ANNIVERSARY', ko: '기념사진' } satisfies L10n,
   hair: { ja: 'ヘアメイク', en: 'HAIR & MAKE-UP', ko: '헤어메이크업' } satisfies L10n,
 };

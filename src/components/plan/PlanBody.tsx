@@ -6,7 +6,6 @@ import {
   ANNIVERSARY_PLANS,
   LOCATION_NOTES,
   LOCATION_PLANS,
-  STUDIO_PLANS,
   type Plan,
 } from '@/content/site';
 import { SITE_URL, alternates, path, type Locale } from '@/lib/i18n';
@@ -36,7 +35,8 @@ function serviceLd(locale: Locale) {
   const plans =
     locale === 'ko'
       ? [...C.KO_WEDDING_PLANS, ...C.KO_ETC_PLANS]
-      : [...STUDIO_PLANS, ...LOCATION_PLANS, ...ANNIVERSARY_PLANS];
+      : // 스튜디오 플랜은 이 페이지에 없다 — 스튜디오 페이지의 구조화 데이터가 정본이다.
+        [...LOCATION_PLANS, ...ANNIVERSARY_PLANS];
   const offers = plans.map((plan) => ({
     '@type': 'Offer',
     name: plan.title[locale],
@@ -83,32 +83,6 @@ function faqLd(locale: Locale) {
 
 /** 한 페이지에 이어 붙이는 플랜 묶음 (구 탭 하나에 해당) */
 type PlanGroup = { id: string; label: string; panel: ReactNode };
-
-/** site.ts 가격은 그대로 두고, 이 페이지에서만 쓰는 표기(모니터 가격·포함 내역)를 덧입힌다. */
-function studioPlans(locale: Locale, text: PageCopy): Plan[] {
-  return STUDIO_PLANS.map((plan) => ({
-    ...plan,
-    badge: `${plan.badge} · ${text['monitorPrice']}`,
-    duration: C.STUDIO_DURATION[plan.code] ?? plan.duration,
-    includes: C.STUDIO_INCLUDES[plan.code] ?? plan.includes,
-  }));
-}
-
-function StudioPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
-  const plans = studioPlans(locale, text);
-  return (
-    <div className={`u-wrap ${s.grid}`}>
-      {plans.map((plan, i) => (
-        <div
-          key={plan.code}
-          className={`${s.cardSlot} ${i === 0 ? s.featured : ''} ${i === 1 ? s.tinted : ''}`}
-        >
-          <PlanCard plan={plan} locale={locale} />
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function LocationPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
   return (
@@ -227,17 +201,18 @@ export async function PlanBody({ locale }: { locale: Locale }) {
           },
         ]
       : [
-          { id: 'studio', label: C.TABS.studio[locale], panel: <StudioPanel locale={locale} text={text} /> },
+          // 스튜디오 플랜은 스튜디오 페이지가 정본이라 이 페이지에서는 빼고,
+          // 헤어메이크업은 로케이션 촬영에 붙는 옵션이라 기념사진 앞에 둔다.
           { id: 'location', label: C.TABS.location[locale], panel: <LocationPanel locale={locale} text={text} /> },
-          {
-            id: 'anniversary',
-            label: C.TABS.anniversary[locale],
-            panel: <AnniversaryPanel locale={locale} text={text} />,
-          },
           {
             id: 'hair',
             label: C.TABS.hair[locale],
             panel: <HairPanel locale={locale} heading={C.TABS.hair[locale]} />,
+          },
+          {
+            id: 'anniversary',
+            label: C.TABS.anniversary[locale],
+            panel: <AnniversaryPanel locale={locale} text={text} />,
           },
         ];
 

@@ -175,15 +175,7 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
         </div>
       </section>
 
-      <Section
-        label={PLANS.label[locale]}
-        title={text['plans.title']}
-        aside={
-          <Link href={path(locale, 'plan')} className="u-btn" data-tap>
-            {text['plans.link']}
-          </Link>
-        }
-      >
+      <Section label={PLANS.label[locale]} title={text['plans.title']}>
         <div className={s.plans}>
           {STUDIO_PLANS.map((plan) => (
             <PlanCard key={plan.code} plan={plan} locale={locale} />
