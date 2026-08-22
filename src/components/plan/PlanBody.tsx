@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
 import {
@@ -180,6 +180,47 @@ function KoPlansPanel({
   );
 }
 
+/** 옵션 표 — 어떤 플랜에 붙일 수 있는지까지 같은 줄에서 읽히게 한다 */
+function OptionSection({ locale, text }: { locale: Locale; text: PageCopy }) {
+  return (
+    <section className="u-section u-section--alt">
+      <div className="u-wrap">
+        <div className={s.optHead}>
+          <p className="u-label">{C.OPTION_SECTION.label[locale]}</p>
+          <h2 className={`u-h2 ${s.optTitle}`}>{text['option.title']}</h2>
+          {text['option.lead'] && <p className={s.optLead}>{text['option.lead']}</p>}
+        </div>
+        <table className={s.table}>
+          <thead>
+            <tr>
+              {C.OPTION_SECTION.head[locale].map((cell) => (
+                <th key={cell} scope="col">
+                  {cell}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {C.optionRows(locale).map((row) => (
+              <tr key={row.label}>
+                <th scope="row">{row.label}</th>
+                <td className={`u-num ${s.optPrice}`}>{row.price}</td>
+                <td className={s.optNote}>{row.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {locale === 'ko' &&
+          C.KO_OPTION_NOTES.map((line) => (
+            <p key={line} className={s.optNote}>
+              {line}
+            </p>
+          ))}
+      </div>
+    </section>
+  );
+}
+
 /* ---------------- 본문 ---------------- */
 
 export async function PlanBody({ locale }: { locale: Locale }) {
@@ -216,6 +257,7 @@ export async function PlanBody({ locale }: { locale: Locale }) {
           },
         ];
 
+  const isKo = locale === 'ko';
   const questions = C.FAQ_QUESTIONS[locale];
   const faq = faqLd(locale);
 
@@ -241,53 +283,21 @@ export async function PlanBody({ locale }: { locale: Locale }) {
       {/* 카드 제목이 h3 이므로 그 위에 h2 가 있어야 제목 목차가 이어진다.
           시안에는 이 자리에 제목이 없으니 화면에서는 감추고 보조기기에만 읽힌다. */}
       <section aria-label={C.PLAN_LIST_SECTION[locale]}>
-        {groups.map((group) => (
-          <section key={group.id} id={`plan-${group.id}`} className={s.group}>
-            <div className={`u-wrap ${s.groupHead}`}>
-              <h2 className={`u-h2 ${s.groupTitle}`}>{group.label}</h2>
-            </div>
-            {group.panel}
-          </section>
+        {groups.map((group, i) => (
+          <Fragment key={group.id}>
+            <section id={`plan-${group.id}`} className={s.group}>
+              <div className={`u-wrap ${s.groupHead}`}>
+                <h2 className={`u-h2 ${s.groupTitle}`}>{group.label}</h2>
+              </div>
+              {group.panel}
+            </section>
+            {/* ko 는 드레스 · 헤어메이크업 옵션이 웨딩 촬영에 붙는 이야기라 기타 촬영 앞에 둔다 */}
+            {isKo && i === 0 && <OptionSection locale={locale} text={text} />}
+          </Fragment>
         ))}
       </section>
 
-      {/* 옵션 표 — 어떤 플랜에 붙일 수 있는지까지 같은 줄에서 읽히게 한다 */}
-      <section className="u-section u-section--alt">
-        <div className="u-wrap">
-          <div className={s.optHead}>
-            <p className="u-label">{C.OPTION_SECTION.label[locale]}</p>
-            <h2 className={`u-h2 ${s.optTitle}`}>{text['option.title']}</h2>
-            {text['option.lead'] && <p className={s.optLead}>{text['option.lead']}</p>}
-          </div>
-
-          <table className={s.table}>
-            <thead>
-              <tr>
-                {C.OPTION_SECTION.head[locale].map((cell) => (
-                  <th key={cell} scope="col">
-                    {cell}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {C.optionRows(locale).map((row) => (
-                <tr key={row.label}>
-                  <th scope="row">{row.label}</th>
-                  <td className={`u-num ${s.optPrice}`}>{row.price}</td>
-                  <td className={s.optNote}>{row.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {locale === 'ko' &&
-            C.KO_OPTION_NOTES.map((line) => (
-              <p key={line} className={s.optNote}>
-                {line}
-              </p>
-            ))}
-        </div>
-      </section>
+      {!isKo && <OptionSection locale={locale} text={text} />}
 
       {/* 계약까지의 4단계 */}
       <section className="u-section">
