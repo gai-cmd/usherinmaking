@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { EnquiryForm } from '@/components/contact/EnquiryForm';
-import { CHANNELS, STUDIO_INFO, NAVER_BLOG_NOTICE_LOCALE } from '@/content/site';
+import { CHANNELS, STUDIO_INFO, NAVER_BLOG_NOTICE_LOCALE, type Channel } from '@/content/site';
 import { getSiteSettings } from '@/server/settings';
 import { LOCALES, SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
 import { getPageCopy, toLines } from '@/server/page-content';
@@ -27,6 +28,13 @@ const MAP_OPEN: Record<Locale, string> = {
 };
 
 const DOT: Record<Locale, string> = { ja: ' ・ ', en: ' · ', ko: ' · ' };
+
+/** 각 채널의 실제 브랜드 로고. 폼은 사이트 자체 채널이라 로고를 두지 않는다. */
+const CHANNEL_ICON: Partial<Record<Channel['id'], string>> = {
+  kakao: '/images/sns/kakao.png',
+  line: '/images/sns/line.png',
+  instagram: '/images/sns/instagram.png',
+};
 
 export async function generateMetadata({
   params,
@@ -97,15 +105,25 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
 
           <ul className={s.channels}>
             {channels.map((channel) => {
-              const body = (
-                <>
-                  <span className={s.channelName}>{channel.label[locale]}</span>
-                  {channel.note[locale] && (
-                    <span className={s.channelNote}>{channel.note[locale]}</span>
+              const icon = CHANNEL_ICON[channel.id];
+              const content = (
+                <span className={s.channelMain}>
+                  {icon && (
+                    <span className={s.channelIcon} data-brand={channel.id} aria-hidden="true">
+                      <Image src={icon} alt="" width={20} height={20} className={s.channelIconImg} />
+                    </span>
                   )}
-                </>
+                  <span className={s.channelText}>
+                    <span className={s.channelName}>{channel.label[locale]}</span>
+                    {channel.note[locale] && (
+                      <span className={s.channelNote}>{channel.note[locale]}</span>
+                    )}
+                  </span>
+                </span>
               );
 
+              // 로고가 있는 채널만 그 브랜드 색을 입힌다 — 폼은 사이트 자체 채널이라 색을 바꾸지 않는다.
+              const brand = icon ? channel.id : undefined;
               const externalUrl = channel.id === 'form' ? null : (urlById.get(channel.id) ?? null);
 
               return (
@@ -119,7 +137,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                       data-primary={channel.primary || undefined}
                       data-tap
                     >
-                      {body}
+                      {content}
                       <span className={s.channelOpen}>OPEN →</span>
                     </a>
                   ) : externalUrl ? (
@@ -127,16 +145,21 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                       href={externalUrl}
                       className={s.channel}
                       data-primary={channel.primary || undefined}
+                      data-brand={brand}
                       target="_blank"
                       rel="noreferrer"
                       data-tap
                     >
-                      {body}
+                      {content}
                       <span className={s.channelOpen}>OPEN →</span>
                     </a>
                   ) : (
-                    <div className={s.channel} data-primary={channel.primary || undefined}>
-                      {body}
+                    <div
+                      className={s.channel}
+                      data-primary={channel.primary || undefined}
+                      data-brand={brand}
+                    >
+                      {content}
                     </div>
                   )}
                 </li>
@@ -144,28 +167,39 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             })}
 
             {showNaverBlog &&
-              (settings.naverBlog.url ? (
-                <li>
-                  <a
-                    href={settings.naverBlog.url}
-                    className={s.channel}
-                    target="_blank"
-                    rel="noreferrer"
-                    data-tap
-                  >
-                    <span className={s.channelName}>{CONTACT.naverBlog.label[locale]}</span>
-                    <span className={s.channelNote}>{CONTACT.naverBlog.note[locale]}</span>
-                    <span className={s.channelOpen}>OPEN →</span>
-                  </a>
-                </li>
-              ) : (
-                <li>
-                  <div className={s.channel}>
-                    <span className={s.channelName}>{CONTACT.naverBlog.label[locale]}</span>
-                    <span className={s.channelNote}>{CONTACT.naverBlog.note[locale]}</span>
-                  </div>
-                </li>
-              ))}
+              (() => {
+                // 네이버는 로고 파일이 없어 공식 초록(#03C75A) 배지에 'N' 글자로 대신한다.
+                const naverContent = (
+                  <span className={s.channelMain}>
+                    <span className={s.channelIcon} data-brand="naver" aria-hidden="true">
+                      N
+                    </span>
+                    <span className={s.channelText}>
+                      <span className={s.channelName}>{CONTACT.naverBlog.label[locale]}</span>
+                      <span className={s.channelNote}>{CONTACT.naverBlog.note[locale]}</span>
+                    </span>
+                  </span>
+                );
+
+                return settings.naverBlog.url ? (
+                  <li>
+                    <a
+                      href={settings.naverBlog.url}
+                      className={s.channel}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-tap
+                    >
+                      {naverContent}
+                      <span className={s.channelOpen}>OPEN →</span>
+                    </a>
+                  </li>
+                ) : (
+                  <li>
+                    <div className={s.channel}>{naverContent}</div>
+                  </li>
+                );
+              })()}
           </ul>
 
           <p className={`u-meta ${s.noBooking}`}>{UI.noAutoBooking[locale]}</p>

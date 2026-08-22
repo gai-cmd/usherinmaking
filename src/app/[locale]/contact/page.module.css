@@ -92,6 +92,59 @@
   color: var(--bg);
 }
 
+.channelMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.channelText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* 브랜드 로고 배지 — 카카오(검정 아이콘)/LINE(흰 아이콘)은 아이콘 자체가
+   브랜드 색 위에 놓이도록 그려져 있어 배지 배경만 브랜드 색으로 맞추면 된다. */
+.channelIcon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-family: var(--ff-latin);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.channelIconImg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.channelIcon[data-brand='kakao'] {
+  background: #fee500;
+}
+
+.channelIcon[data-brand='line'] {
+  background: #06c755;
+}
+
+.channelIcon[data-brand='instagram'] {
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+}
+
+.channelIcon[data-brand='naver'] {
+  background: #03c75a;
+  color: #fff;
+}
+
 .channelName {
   display: block;
   line-height: 1.4;
@@ -107,6 +160,35 @@
 
 .channel[data-primary] .channelNote {
   color: #cfc7b7;
+}
+
+/* 1순위 채널이 브랜드가 있는 채널(카카오/LINE)이면 다크 블록 대신 그 브랜드 색을 쓴다 */
+.channel[data-brand='kakao'][data-primary] {
+  background: #fee500;
+  border-color: #fee500;
+  color: #3a2e00;
+}
+
+.channel[data-brand='kakao'][data-primary] .channelNote {
+  color: #6b5a12;
+}
+
+.channel[data-brand='kakao'][data-primary] .channelOpen {
+  color: #3a2e00;
+}
+
+.channel[data-brand='line'][data-primary] {
+  background: #06c755;
+  border-color: #06c755;
+  color: #fff;
+}
+
+.channel[data-brand='line'][data-primary] .channelNote {
+  color: #d8f7e4;
+}
+
+.channel[data-brand='line'][data-primary] .channelOpen {
+  color: #fff;
 }
 
 .channelOpen {

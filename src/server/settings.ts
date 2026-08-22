@@ -97,6 +97,8 @@ const CONFIRMED_CHANNEL_URLS: Record<string, string> = {
   line: 'https://line.me/ti/p/8Udy1kYg1l',
   // 콘택트의 인스타 창구는 프로필이 아니라 DM 입구다 — ig.me 는 DM 화면을 바로 연다.
   instagram: `https://ig.me/m/${BRAND.instagram}`,
+  // 카카오톡 "바로 친구 추가" QR 코드에서 확인한 고정 링크 (2026-08-22 사장님 전달).
+  kakao: 'http://qr.kakao.com/talk/YdBfdGeaBd1EXL3ZVVpEJrSpzMU-',
 };
 
 function defaultChannels(): Record<Locale, ChannelSetting[]> {
@@ -109,7 +111,12 @@ function defaultChannels(): Record<Locale, ChannelSetting[]> {
   });
   return {
     ko: [
-      { id: 'kakao', handle: null, url: envOrNull('KAKAO_CHANNEL_URL'), order: 0 },
+      {
+        id: 'kakao',
+        handle: null,
+        url: envOrNull('KAKAO_CHANNEL_URL') ?? CONFIRMED_CHANNEL_URLS.kakao,
+        order: 0,
+      },
       instagram(1),
       { id: 'form', handle: null, url: null, order: 2 },
     ],
