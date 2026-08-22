@@ -10,100 +10,27 @@ export const CONTACT = {
 
   title: { ja: 'Contact', en: 'Contact', ko: '문의하기' } satisfies L10n,
 
-  /** 정의형 리드 — AEO 인용 대상 */
+  /** 정의형 리드 — AEO 인용 대상. 창구는 메신저뿐이므로 폼을 언급하지 않는다. */
   definition: {
-    ja: 'usherinmaking への問い合わせとは？ 撮影日と撮影内容をフォームまたはメッセージでお送りいただき、空き状況を確認したうえでご返信する流れです。',
-    en: 'How do you get in touch with usherinmaking? You send us your dates and what you would like photographed, by form or by message, and we reply once we have checked availability.',
-    ko: '어셔린메이킹(usherinmaking) 문의는 어떻게 하나요? 촬영 날짜와 촬영 내용을 폼이나 카카오톡으로 보내주시면, 일정을 확인한 뒤 답변드리는 방식입니다.',
+    ja: 'usherinmaking への問い合わせとは？ 撮影日と撮影内容を LINE または Instagram でお送りいただき、空き状況を確認したうえでご返信する流れです。',
+    en: 'How do you get in touch with usherinmaking? You send us your dates and what you would like photographed by Instagram DM, and we reply once we have checked availability.',
+    ko: '어셔린메이킹(usherinmaking) 문의는 어떻게 하나요? 촬영 날짜와 촬영 내용을 카카오톡이나 인스타그램으로 보내주시면, 일정을 확인한 뒤 답변드리는 방식입니다.',
   } satisfies L10n,
 
   lead: {
     ja: [
-      'ご希望の日程・撮影内容をお知らせください。空き状況を確認のうえ、通常 1〜2日以内にご返信します。',
+      'ご希望の日程・撮影内容をメッセージでお知らせください。空き状況を確認のうえ、通常 1〜2日以内にご返信します。',
       'オンラインの自動予約はありません。すべてご相談のうえで確定します。',
     ],
     en: [
-      'Send us your dates and what you’d like to photograph. We check availability and usually reply within 1–2 days.',
+      'Send us your dates and what you’d like to photograph by Instagram DM. We check availability and usually reply within 1–2 days.',
       'There’s no automatic online booking — every session is arranged by message.',
     ],
     ko: [
-      '희망하시는 날짜와 촬영 내용을 남겨주시면, 확인 후 보통 1~2일 안에 답변드립니다. 빠른 상담을 원하시면 카카오톡(amipaek)이 가장 빠릅니다.',
+      '희망하시는 날짜와 촬영 내용을 카카오톡(amipaek)으로 보내주시면, 확인 후 보통 1~2일 안에 답변드립니다.',
       '온라인 자동 예약은 없습니다. 모든 촬영은 상담을 거쳐 확정됩니다.',
     ],
   } satisfies L10nList,
-
-  /* ---------- 폼 ---------- */
-  formLabel: 'FORM',
-
-  formTitle: {
-    ja: 'お問い合わせフォーム',
-    en: 'Enquiry form',
-    ko: '문의 폼',
-  } satisfies L10n,
-
-  fields: {
-    name: { ja: 'お名前 *', en: 'NAME *', ko: '이름 *' } satisfies L10n,
-    email: { ja: 'メールアドレス *', en: 'EMAIL *', ko: '이메일 *' } satisfies L10n,
-    sessionType: { ja: '撮影の種類 *', en: 'TYPE OF SESSION *', ko: '촬영 종류 *' } satisfies L10n,
-    dates: { ja: 'ご希望の日程', en: 'PREFERRED DATES', ko: '희망 날짜' } satisfies L10n,
-    people: { ja: '人数', en: 'PEOPLE', ko: '인원' } satisfies L10n,
-    replyIn: { ja: 'ご連絡の言語', en: 'REPLY IN', ko: '답변 언어' } satisfies L10n,
-    message: { ja: 'ご相談内容', en: 'MESSAGE', ko: '상담 내용' } satisfies L10n,
-  },
-
-  placeholders: {
-    name: { ja: '山田 花子', en: 'Emma Clarke', ko: '김서연' } satisfies L10n,
-    email: {
-      ja: 'hanako@example.com',
-      en: 'emma@example.com',
-      ko: 'seoyeon@example.com',
-    } satisfies L10n,
-    dates: {
-      ja: '2026 / 08 上旬',
-      en: 'Early August 2026',
-      ko: '2026년 8월 초',
-    } satisfies L10n,
-    people: { ja: '2名', en: '2', ko: '2명' } satisfies L10n,
-    message: {
-      ja: 'ドレスの雰囲気、撮影したい場所、滞在スケジュールなど',
-      en: 'The look you have in mind, where you are staying, and your schedule in Okinawa',
-      ko: '원하는 드레스 분위기, 촬영하고 싶은 장소, 오키나와 체류 일정 등',
-    } satisfies L10n,
-  },
-
-  privacyNote: {
-    ja: 'お預かりした内容は撮影のご相談のみに使用します',
-    en: 'Your details are used only to answer your enquiry',
-    ko: '보내주신 내용은 촬영 상담에만 사용합니다',
-  } satisfies L10n,
-
-  privacyLink: {
-    ja: 'プライバシーポリシー',
-    en: 'privacy policy',
-    ko: '개인정보 처리방침',
-  } satisfies L10n,
-
-  submit: { ja: '送信する', en: 'SEND', ko: '보내기' } satisfies L10n,
-
-  sending: { ja: '送信中…', en: 'SENDING…', ko: '보내는 중…' } satisfies L10n,
-
-  sent: {
-    ja: 'お問い合わせを受け付けました。1〜2日以内にご返信します。',
-    en: 'Your enquiry has arrived. We’ll reply within 1–2 days.',
-    ko: '문의가 접수되었습니다. 확인 후 1~2일 안에 답변드리겠습니다.',
-  } satisfies L10n,
-
-  invalid: {
-    ja: '入力内容をご確認ください。',
-    en: 'Please check the form.',
-    ko: '입력 내용을 확인해 주세요.',
-  } satisfies L10n,
-
-  failed: {
-    ja: '送信できませんでした。しばらくしてからもう一度お試しください。',
-    en: 'We couldn’t send that. Please try again in a moment.',
-    ko: '전송에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-  } satisfies L10n,
 
   /* ---------- 상담 채널 ---------- */
   directLabel: 'DIRECT',
@@ -253,8 +180,3 @@ export const SESSION_TYPES = [
 ] as const;
 
 export type SessionTypeValue = (typeof SESSION_TYPES)[number]['value'];
-
-/** 그 언어의 폼에 실제로 보여줄 촬영 종류. 폼의 초기 선택값도 이 목록의 첫 항목이어야 한다. */
-export function sessionTypesFor(locale: Locale) {
-  return SESSION_TYPES.filter((t) => !('locales' in t) || t.locales.includes(locale));
-}

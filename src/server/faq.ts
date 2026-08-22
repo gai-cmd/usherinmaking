@@ -8,9 +8,10 @@ import { NotFoundError, NotImplementedError } from '@/server/errors';
 /**
  * FAQ 저장소.
  *
- * FAQ는 우리가 지어낸 문장이 아니라 실제로 들어온 문의 문장 그대로다.
- * 관리자가 INBOX(=src/server/inquiries.ts)에서 승격시키며, 승격 시 원문을 다듬지 않는다.
+ * FAQ는 우리가 지어낸 문장이 아니라 실제로 손님이 물어본 문장 그대로다.
  * 고객이 실제로 쓰는 표현이 그대로 남아야 AI 검색이 우리 답변을 인용할 수 있다.
+ * (문의 폼 접수를 운영하던 시기에는 INBOX 에서 승격시켰다. 지금은 상담이 메신저로만
+ *  들어오므로 관리자가 직접 등록한다.)
  *
  * 읽기는 DB 우선 · 시드 폴백이다. DATABASE_URL 이 없는 환경에서 빈 화면을 보여 주는 것보다
  * 구조를 보여 주는 편이 낫고, 실데이터가 있으면 언제나 DB가 이긴다.
@@ -30,8 +31,6 @@ export type Faq = {
   answer: L10n;
   order: number;
   page: FaqPage | null;
-  /** 이 FAQ가 승격되어 나온 문의 id. 직접 작성한 항목은 빈 배열. */
-  sourceInquiryIds: string[];
 };
 
 /**
@@ -56,7 +55,6 @@ export const SEED_FAQS: Faq[] = [
     },
     order: 0,
     page: 'studio',
-    sourceInquiryIds: ['inq-2026-0724-tanaka'],
   },
   {
     id: 'faq-dress-count',
@@ -72,7 +70,6 @@ export const SEED_FAQS: Faq[] = [
     },
     order: 1,
     page: 'plan',
-    sourceInquiryIds: ['inq-2026-0724-tanaka'],
   },
   // 2026-08-11: '両親も同席できますか？'(부모님 동석) 항목을 뺐다. 문의에서 뽑아 두었지만
   // 답을 확정하지 않은 채 남아 있어서, 답변 없는 FAQ 로 SEO 점검에만 걸리고 있었다.
@@ -100,7 +97,6 @@ type DbFaq = {
   answer: unknown;
   order: number;
   page: string | null;
-  inquiries?: { id: string }[];
 };
 
 function fromDb(row: DbFaq): Faq {
@@ -110,19 +106,14 @@ function fromDb(row: DbFaq): Faq {
     answer: toL10n(row.answer),
     order: row.order,
     page: (row.page as FaqPage | null) ?? null,
-    sourceInquiryIds: (row.inquiries ?? []).map((i) => i.id),
   };
 }
-
-/** 승격 출처는 Inquiry.promotedFaqId 역방향이라 관계를 함께 읽는다. */
-const WITH_SOURCES = { inquiries: { select: { id: true } } } as const;
 
 export async function listFaqs(page?: FaqPage): Promise<Faq[]> {
   if (isDatabaseConfigured()) {
     const rows = await prisma.faq.findMany({
       where: page ? { page } : {},
       orderBy: { order: 'asc' },
-      include: WITH_SOURCES,
     });
     if (rows.length > 0) return rows.map((r) => fromDb(r as DbFaq));
   }
@@ -133,7 +124,7 @@ export async function listFaqs(page?: FaqPage): Promise<Faq[]> {
 
 export async function getFaq(id: string): Promise<Faq | null> {
   if (isDatabaseConfigured()) {
-    const row = await prisma.faq.findUnique({ where: { id }, include: WITH_SOURCES });
+    const row = await prisma.faq.findUnique({ where: { id } });
     if (row) return fromDb(row as DbFaq);
   }
   return SEED_FAQS.find((f) => f.id === id) ?? null;
@@ -153,53 +144,31 @@ export async function countSchemaReadyFaqs(): Promise<number> {
 }
 
 export type CreateFaqInput = {
-  /** 문의 원문 그대로. 요약·의역 금지. */
+  /** 손님이 물어본 문장 그대로. 요약·의역 금지. */
   question: L10n;
   answer: L10n;
   page: FaqPage | null;
-  sourceInquiryId?: string;
 };
 
-/**
- * FAQ 생성.
- *
- * sourceInquiryId 가 있으면 문의의 promotedFaqId 까지 한 트랜잭션에서 잇는다.
- * 둘이 갈라지면 "승격했는데 출처를 모르는 FAQ" 또는 그 반대가 남는다.
- */
 export async function createFaq(input: CreateFaqInput): Promise<Faq> {
   if (!isDatabaseConfigured()) throw new NotImplementedError('FAQ 생성');
 
   const last = await prisma.faq.findFirst({ orderBy: { order: 'desc' }, select: { order: true } });
   const order = (last?.order ?? -1) + 1;
 
-  const created = await prisma.$transaction(async (tx) => {
-    const faq = await tx.faq.create({
-      data: {
-        question: input.question,
-        answer: input.answer,
-        page: input.page,
-        order,
-      },
-      include: WITH_SOURCES,
-    });
-
-    if (input.sourceInquiryId) {
-      await tx.inquiry.update({
-        where: { id: input.sourceInquiryId },
-        data: { promotedFaqId: faq.id },
-      });
-    }
-    return faq;
+  const created = await prisma.faq.create({
+    data: {
+      question: input.question,
+      answer: input.answer,
+      page: input.page,
+      order,
+    },
   });
 
-  // 문의 원문은 로그에 넣지 않는다 — 고객 문장이 그대로 다른 화면에 실릴 경로를 만들지 않는다.
+  // 질문 원문은 로그에 넣지 않는다 — 고객 문장이 그대로 다른 화면에 실릴 경로를 만들지 않는다.
   await logAdminAction('FAQ 생성', created.id, { page: input.page });
 
-  return fromDb({
-    ...(created as DbFaq),
-    // 트랜잭션 안에서 이은 연결은 위 include 스냅샷에 잡히지 않는다.
-    inquiries: input.sourceInquiryId ? [{ id: input.sourceInquiryId }] : [],
-  });
+  return fromDb(created as DbFaq);
 }
 
 export async function updateFaq(id: string, input: Partial<CreateFaqInput>): Promise<Faq> {
@@ -215,7 +184,6 @@ export async function updateFaq(id: string, input: Partial<CreateFaqInput>): Pro
       ...(input.answer ? { answer: input.answer } : {}),
       ...(input.page !== undefined ? { page: input.page } : {}),
     },
-    include: WITH_SOURCES,
   });
 
   await logAdminAction('FAQ 수정', id, { page: row.page });

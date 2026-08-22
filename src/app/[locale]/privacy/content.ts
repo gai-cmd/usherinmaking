@@ -22,9 +22,9 @@ export const PRIVACY_SUBTITLE: L10n = {
  * - 자동 예약 기능이 없어졌으므로 「ご予約フォーム」 문구를 문의 폼으로 정리
  */
 export const PRIVACY_INTRO: L10n = {
-  ja: 'usherinmaking（以下「当スタジオ」といいます）は、沖縄でのウェディングフォト・記念日撮影等のサービスを提供するにあたり、お客様の個人情報の重要性を認識し、個人情報の保護に関する法律（個人情報保護法）その他の関係法令・ガイドラインを遵守し、適切に取り扱います。本ポリシーは、当ウェブサイトのお問い合わせフォーム等を通じて取得する個人情報の取り扱いについて定めるものです。',
-  en: 'usherinmaking (below, "the studio") provides wedding and anniversary photography in Okinawa. We treat the personal information you give us as important, and we handle it in line with Japan\'s Act on the Protection of Personal Information and the related guidance. This policy covers the information we receive through the enquiry form on this site.',
-  ko: 'usherinmaking(이하 「스튜디오」)은 오키나와에서 웨딩·기념일 촬영 서비스를 제공하면서 고객의 개인정보를 중요하게 다루며, 일본 개인정보보호법과 관련 법령·지침을 준수해 적절히 취급합니다. 본 방침은 이 웹사이트의 문의 폼을 통해 취득하는 개인정보의 취급을 정합니다.',
+  ja: 'usherinmaking（以下「当スタジオ」といいます）は、沖縄でのウェディングフォト・記念日撮影等のサービスを提供するにあたり、お客様の個人情報の重要性を認識し、個人情報の保護に関する法律（個人情報保護法）その他の関係法令・ガイドラインを遵守し、適切に取り扱います。本ポリシーは、LINE・Instagram 等のメッセージでのお問い合わせを通じて取得する個人情報の取り扱いについて定めるものです。',
+  en: 'usherinmaking (below, "the studio") provides wedding and anniversary photography in Okinawa. We treat the personal information you give us as important, and we handle it in line with Japan\'s Act on the Protection of Personal Information and the related guidance. This policy covers the information we receive through the messages you send us.',
+  ko: 'usherinmaking(이하 「스튜디오」)은 오키나와에서 웨딩·기념일 촬영 서비스를 제공하면서 고객의 개인정보를 중요하게 다루며, 일본 개인정보보호법과 관련 법령·지침을 준수해 적절히 취급합니다. 본 방침은 카카오톡·인스타그램 등 메신저 문의를 통해 취득하는 개인정보의 취급을 정합니다.',
 };
 
 export const PRIVACY_CLAUSES: Clause[] = [
@@ -163,9 +163,9 @@ export const PRIVACY_CLAUSES: Clause[] = [
     },
     body: [
       {
-        ja: '個人情報の取り扱いに関するお問い合わせ・ご請求は、当ウェブサイトのお問い合わせフォーム、LINE、または Instagram（@usherinmaking）よりご連絡ください。フォーム送信後、当スタジオよりご連絡いたします。',
-        en: 'For anything about how we handle your information, use the enquiry form on this site or Instagram (@usherinmaking). We will come back to you after you send the form.',
-        ko: '개인정보 취급에 관한 문의·청구는 이 웹사이트의 문의 폼, 카카오톡, 또는 Instagram(@usherinmaking)으로 연락 주십시오. 폼을 보내주시면 스튜디오에서 연락드립니다.',
+        ja: '個人情報の取り扱いに関するお問い合わせ・ご請求は、LINE または Instagram（@usherinmaking）よりご連絡ください。メッセージをいただいたのち、当スタジオよりご連絡いたします。',
+        en: 'For anything about how we handle your information, message us on Instagram (@usherinmaking). We will come back to you after you get in touch.',
+        ko: '개인정보 취급에 관한 문의·청구는 카카오톡 또는 Instagram(@usherinmaking)으로 연락 주십시오. 메시지를 보내주시면 스튜디오에서 연락드립니다.',
       },
     ],
   },

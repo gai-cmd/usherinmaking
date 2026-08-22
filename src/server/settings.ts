@@ -11,31 +11,30 @@ import type { L10n } from '@/server/translations';
  * 공개 페이지가 이 모듈을 읽으므로, 읽기는 어떤 경우에도 던지지 않는다.
  *
  * 두 가지는 설정으로도 못 바꾸는 규칙이다.
- *  1) 언어별 1순위 채널 (KO 카카오톡 / JA LINE / EN 문의 폼) — 업무 규칙이다.
+ *  1) 언어별 1순위 채널 (KO 카카오톡 / JA LINE / EN Instagram) — 업무 규칙이다.
  *  2) 이메일 주소는 어떤 경로로도 페이지에 렌더되지 않는다.
  */
 
-export type ChannelId = 'kakao' | 'line' | 'instagram' | 'form';
+export type ChannelId = 'kakao' | 'line' | 'instagram';
 
 export const CHANNEL_LABEL: Record<ChannelId, string> = {
   kakao: '카카오톡',
   line: 'LINE',
   instagram: 'Instagram',
-  form: '문의 폼',
 };
 
 /**
  * 언어별 1순위 채널. 선호가 아니라 업무 규칙이므로 상수로 못박는다.
- * EN 의 1순위는 문의 폼이다 (이메일은 폼 뒤에 있고 화면에 노출되지 않는다).
+ * 상담은 메신저로만 받는다 — 문의 폼과 메일 접수는 운영하지 않는다.
  */
 export const REQUIRED_PRIMARY: Record<Locale, ChannelId> = {
   ko: 'kakao',
   ja: 'line',
-  en: 'form',
+  en: 'instagram',
 };
 
-/** Instagram 은 어느 언어에서도 보조 채널이다. */
-export const SECONDARY_EVERYWHERE: ChannelId = 'instagram';
+/** Instagram 은 모든 언어에 둔다 — EN 에서는 1순위이자 유일한 창구다. */
+export const EVERYWHERE: ChannelId = 'instagram';
 
 /** 네이버 블로그 안내는 한국어에만 노출한다. */
 export const NAVER_NOTICE_LOCALE: Locale = 'ko';
@@ -50,7 +49,7 @@ export type ChannelSetting = {
   order: number;
 };
 
-export type OutstandingKey = 'address' | 'fromAirport' | 'representativeEmail' | 'logoSvg';
+export type OutstandingKey = 'address' | 'fromAirport' | 'logoSvg';
 
 /** 아직 못 받은 사실. 빈 칸이 아니라 "미확인"으로 보여야 한다. */
 export type OutstandingItem = {
@@ -72,11 +71,6 @@ export type SiteSettings = {
   parking: L10n;
   languages: L10n;
   geo: { lat: number | null; lng: number | null };
-  /**
-   * 대표 이메일은 "설정되어 있는지" 여부만 노출한다.
-   * 주소 문자열 자체는 이 타입 어디에도 없다 — 캐시되는 페이지로 새어나갈 경로를 만들지 않기 위해서다.
-   */
-  representativeEmail: { configured: boolean };
   channels: Record<Locale, ChannelSetting[]>;
   naverBlog: { url: string | null; noticeLocale: Locale };
 };
@@ -118,17 +112,13 @@ function defaultChannels(): Record<Locale, ChannelSetting[]> {
         order: 0,
       },
       instagram(1),
-      { id: 'form', handle: null, url: null, order: 2 },
     ],
     ja: [
       { id: 'line', handle: null, url: envOrNull('LINE_OFFICIAL_URL') ?? CONFIRMED_CHANNEL_URLS.line, order: 0 },
       instagram(1),
-      { id: 'form', handle: null, url: null, order: 2 },
     ],
-    en: [
-      { id: 'form', handle: null, url: null, order: 0 },
-      instagram(1),
-    ],
+    // 영어권 창구는 Instagram 하나다.
+    en: [instagram(0)],
   };
 }
 
@@ -205,8 +195,6 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       lat: storedSite?.lat ?? (Number.isFinite(lat) && process.env.STUDIO_LAT ? lat : null),
       lng: storedSite?.lng ?? (Number.isFinite(lng) && process.env.STUDIO_LNG ? lng : null),
     },
-    // 값이 아니라 존재 여부만 본다.
-    representativeEmail: { configured: Boolean(envOrNull('REPRESENTATIVE_EMAIL')) },
     channels: mergeChannels(storedChannels),
     naverBlog: {
       // 블로그 주소는 공개된 확정 값이다(촬영후기 취입 스크립트의 BLOG_ID 와 같은 계정).
@@ -229,10 +217,6 @@ export async function listOutstandingItems(): Promise<OutstandingItem[]> {
   }
   if (!s.fromAirport) {
     out.push({ key: 'fromAirport', label: '공항에서 걸리는 시간', token: TBC });
-  }
-  if (!s.representativeEmail.configured) {
-    // 주소 자체는 표시하지 않는다. "설정되지 않았다"는 사실만 알린다.
-    out.push({ key: 'representativeEmail', label: '대표 이메일 (비공개 · 폼 수신용)', token: TBC });
   }
   if (!s.logoSvg) {
     out.push({ key: 'logoSvg', label: '로고 SVG', token: TBC });
@@ -272,19 +256,11 @@ export function validateChannelOrder(locale: Locale, order: ChannelId[]): Channe
     });
   }
 
-  if (order[0] === SECONDARY_EVERYWHERE) {
-    warnings.push({
-      locale,
-      level: 'rule',
-      message: 'Instagram 은 모든 언어에서 보조 채널입니다. 1순위로 둘 수 없습니다.',
-    });
-  }
-
-  if (!order.includes(SECONDARY_EVERYWHERE)) {
+  if (!order.includes(EVERYWHERE)) {
     warnings.push({
       locale,
       level: 'notice',
-      message: 'Instagram 이 빠져 있습니다. 보조 채널로 모든 언어에 두는 것이 기본입니다.',
+      message: 'Instagram 이 빠져 있습니다. 모든 언어에 두는 것이 기본입니다.',
     });
   }
 

@@ -56,9 +56,9 @@ export const TOKUSHOHO_ROWS: Row[] = [
   {
     label: { ja: 'お問い合わせ', en: 'Contact', ko: '문의' },
     value: {
-      ja: '当サイトのお問い合わせフォーム、LINE、Instagram（@usherinmaking）よりご連絡いただけます。',
-      en: 'Through the enquiry form on this site or Instagram (@usherinmaking).',
-      ko: '이 사이트의 문의 폼, 카카오톡, Instagram(@usherinmaking)으로 연락하실 수 있습니다.',
+      ja: 'LINE、Instagram（@usherinmaking）よりご連絡いただけます。',
+      en: 'Through Instagram (@usherinmaking).',
+      ko: '카카오톡, Instagram(@usherinmaking)으로 연락하실 수 있습니다.',
     },
   },
   {

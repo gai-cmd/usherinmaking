@@ -353,13 +353,16 @@ export const LOCATION_NOTES: L10nList = {
 /* ---------------- 언어별 상담 채널 ---------------- */
 
 export type Channel = {
-  id: 'kakao' | 'line' | 'instagram' | 'form';
+  id: 'kakao' | 'line' | 'instagram';
   label: L10n;
   note: L10n;
   primary: boolean;
 };
 
-/** 1순위 채널만 검은 블록으로 강조한다. 이메일 주소는 노출하지 않는다. */
+/**
+ * 상담 창구는 메신저뿐이다 — 문의 폼과 메일 접수는 운영하지 않는다.
+ * 1순위 채널만 검은 블록으로 강조한다. 이메일 주소는 어느 언어에서도 노출하지 않는다.
+ */
 export const CHANNELS: Record<Locale, Channel[]> = {
   ko: [
     {
@@ -372,12 +375,6 @@ export const CHANNELS: Record<Locale, Channel[]> = {
       id: 'instagram',
       label: { ja: 'Instagram', en: 'Instagram', ko: 'Instagram' },
       note: { ja: '', en: '', ko: '@usherinmaking DM' },
-      primary: false,
-    },
-    {
-      id: 'form',
-      label: { ja: 'お問い合わせフォーム', en: 'Contact form', ko: '문의 폼' },
-      note: { ja: '', en: '', ko: '내용을 남겨주시면 순서대로 답변드립니다' },
       primary: false,
     },
   ],
@@ -394,26 +391,14 @@ export const CHANNELS: Record<Locale, Channel[]> = {
       note: { ja: '@usherinmaking へDM', en: '', ko: '' },
       primary: false,
     },
-    {
-      id: 'form',
-      label: { ja: 'お問い合わせフォーム', en: 'Contact form', ko: '문의 폼' },
-      note: { ja: '順にお返事いたします', en: '', ko: '' },
-      primary: false,
-    },
   ],
-  // 영어권은 Instagram이 1순위다. 이메일 주소는 어느 언어에서도 노출하지 않는다.
+  // 영어권 창구는 Instagram 하나다.
   en: [
     {
       id: 'instagram',
       label: { ja: 'Instagram', en: 'Instagram', ko: 'Instagram' },
       note: { ja: '', en: 'DM @usherinmaking — usually the quickest way to reach us.', ko: '' },
       primary: true,
-    },
-    {
-      id: 'form',
-      label: { ja: 'お問い合わせフォーム', en: 'Contact form', ko: '문의 폼' },
-      note: { ja: '', en: 'We reply in the order messages arrive.', ko: '' },
-      primary: false,
     },
   ],
 };

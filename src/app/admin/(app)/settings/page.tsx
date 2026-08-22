@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { Badge, PageHeader, Panel } from '@/components/admin';
+import { PageHeader, Panel } from '@/components/admin';
 import { getSiteSettings, listOutstandingItems } from '@/server/settings';
 import { ChannelLinksForm } from './ChannelLinksForm';
 import s from './settings.module.css';
@@ -98,29 +98,15 @@ export default async function AdminSettingsPage() {
                   )}
                 </dd>
               </div>
-              <div className={s.field}>
-                <dt>대표 이메일</dt>
-                <dd>
-                  {/* 주소 자체는 이 화면에도 찍지 않는다. 설정 여부만 본다. */}
-                  {settings.representativeEmail.configured ? (
-                    <Badge tone="default">설정됨 (비공개)</Badge>
-                  ) : (
-                    <Badge tone="warn">미설정</Badge>
-                  )}
-                  <span className={s.dim}>
-                    {' '}
-                    문의 폼 수신용입니다. 주소는 어떤 페이지에도 출력하지 않습니다.
-                  </span>
-                </dd>
-              </div>
             </dl>
           </Panel>
 
           {/* ---------------- 언어별 상담 채널 ---------------- */}
           <Panel title="언어별 상담 채널" aside={<span className={s.eyebrow}>CHANNEL</span>}>
             <div className={s.channelRule}>
-              1순위는 언어별 업무 규칙으로 고정입니다 — KO 카카오톡 · JA LINE · EN 문의 폼, Instagram은
-              모든 언어에서 보조. 여기서는 핸들과 링크만 바꿉니다.
+              상담은 메신저로만 받습니다(문의 폼·메일 접수 없음). 1순위는 언어별 업무 규칙으로
+              고정입니다 — KO 카카오톡 · JA LINE · EN Instagram. Instagram은 모든 언어에 둡니다.
+              여기서는 핸들과 링크만 바꿉니다.
             </div>
             <ChannelLinksForm
               initialChannels={settings.channels}

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { EnquiryForm } from '@/components/contact/EnquiryForm';
 import { CHANNELS, STUDIO_INFO, NAVER_BLOG_NOTICE_LOCALE, type Channel } from '@/content/site';
 import { getSiteSettings } from '@/server/settings';
 import { LOCALES, SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
@@ -29,8 +28,8 @@ const MAP_OPEN: Record<Locale, string> = {
 
 const DOT: Record<Locale, string> = { ja: ' ・ ', en: ' · ', ko: ' · ' };
 
-/** 각 채널의 실제 브랜드 로고. 폼은 사이트 자체 채널이라 로고를 두지 않는다. */
-const CHANNEL_ICON: Partial<Record<Channel['id'], string>> = {
+/** 각 채널의 실제 브랜드 로고. */
+const CHANNEL_ICON: Record<Channel['id'], string> = {
   kakao: '/images/sns/kakao.png',
   line: '/images/sns/line.png',
   instagram: '/images/sns/instagram.png',
@@ -98,21 +97,23 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
       </header>
 
       <div className={s.layout}>
-        {/* 모바일에서는 메신저 카드가 폼보다 위에 온다 */}
         <section className={s.direct}>
           <p className="u-label">{CONTACT.directLabel}</p>
           <h2 className={`u-h2 ${s.blockTitle}`}>{text['direct.title']}</h2>
 
           <ul className={s.channels}>
             {channels.map((channel) => {
-              const icon = CHANNEL_ICON[channel.id];
               const content = (
                 <span className={s.channelMain}>
-                  {icon && (
-                    <span className={s.channelIcon} data-brand={channel.id} aria-hidden="true">
-                      <Image src={icon} alt="" width={20} height={20} className={s.channelIconImg} />
-                    </span>
-                  )}
+                  <span className={s.channelIcon} data-brand={channel.id} aria-hidden="true">
+                    <Image
+                      src={CHANNEL_ICON[channel.id]}
+                      alt=""
+                      width={20}
+                      height={20}
+                      className={s.channelIconImg}
+                    />
+                  </span>
                   <span className={s.channelText}>
                     <span className={s.channelName}>{channel.label[locale]}</span>
                     {channel.note[locale] && (
@@ -122,30 +123,17 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 </span>
               );
 
-              // 로고가 있는 채널만 그 브랜드 색을 입힌다 — 폼은 사이트 자체 채널이라 색을 바꾸지 않는다.
-              const brand = icon ? channel.id : undefined;
-              const externalUrl = channel.id === 'form' ? null : (urlById.get(channel.id) ?? null);
+              const externalUrl = urlById.get(channel.id) ?? null;
 
               return (
                 <li key={channel.id}>
-                  {/* 폼은 같은 페이지 안이라 앵커로 잇는다. 외부 채널은 관리자 설정에
-                      링크가 있을 때만 <a> 가 된다 — 죽은 버튼을 만들지 않는다. */}
-                  {channel.id === 'form' ? (
-                    <a
-                      href="#enquiry-form"
-                      className={s.channel}
-                      data-primary={channel.primary || undefined}
-                      data-tap
-                    >
-                      {content}
-                      <span className={s.channelOpen}>OPEN →</span>
-                    </a>
-                  ) : externalUrl ? (
+                  {/* 관리자 설정에 링크가 있을 때만 <a> 가 된다 — 죽은 버튼을 만들지 않는다. */}
+                  {externalUrl ? (
                     <a
                       href={externalUrl}
                       className={s.channel}
                       data-primary={channel.primary || undefined}
-                      data-brand={brand}
+                      data-brand={channel.id}
                       target="_blank"
                       rel="noreferrer"
                       data-tap
@@ -157,7 +145,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                     <div
                       className={s.channel}
                       data-primary={channel.primary || undefined}
-                      data-brand={brand}
+                      data-brand={channel.id}
                     >
                       {content}
                     </div>
@@ -205,16 +193,6 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           <p className={`u-meta ${s.noBooking}`}>{UI.noAutoBooking[locale]}</p>
         </section>
 
-        <section className={s.formCol} id="enquiry-form">
-          <p className="u-label">{CONTACT.formLabel}</p>
-          <h2 className={`u-h2 ${s.blockTitle}`}>{text['form.title']}</h2>
-          <EnquiryForm
-            locale={locale}
-            privacyNote={text['form.privacyNote']}
-            submitLabel={text['form.submit']}
-          />
-        </section>
-
         <section className={s.faq}>
           <p className="u-label">{CONTACT.faqLabel}</p>
           <div className={s.faqList}>
@@ -237,7 +215,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           <p className={s.studioBody}>
             {STUDIO_INFO.address[locale]}
             <br />
-            {/* 한국 고객은 스튜디오로 오지 않는다 — 찾아오는 길 대신 거점 안내를 둔다 */}
+            {/* 한국 고객은 스튜디오로 찾아오지 않는다 — 찾아오는 길 대신 거점 안내를 둔다 */}
             {locale === 'ko' ? (
               CONTACT.koStudioNote
             ) : (

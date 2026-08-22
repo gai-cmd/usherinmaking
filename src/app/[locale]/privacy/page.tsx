@@ -23,9 +23,9 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
 
   const description: Record<Locale, string> = {
-    ja: 'usherinmaking がお問い合わせフォーム等を通じて取得する個人情報の取り扱いについて定めた方針です。',
-    en: 'How usherinmaking handles the personal information received through the enquiry form on this site.',
-    ko: 'usherinmaking이 문의 폼 등을 통해 취득하는 개인정보의 취급을 정한 방침입니다.',
+    ja: 'usherinmaking がメッセージでのお問い合わせを通じて取得する個人情報の取り扱いについて定めた方針です。',
+    en: 'How usherinmaking handles the personal information received through messages you send us.',
+    ko: 'usherinmaking이 메신저 문의를 통해 취득하는 개인정보의 취급을 정한 방침입니다.',
   };
 
   return {

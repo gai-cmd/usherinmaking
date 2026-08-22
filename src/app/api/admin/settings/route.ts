@@ -37,7 +37,7 @@ const ChannelSchema = z
       .array(
         z
           .object({
-            id: z.enum(['kakao', 'line', 'instagram', 'form']),
+            id: z.enum(['kakao', 'line', 'instagram']),
             handle: z.string().max(80).nullable(),
             url: HttpUrl.nullable(),
             order: z.number().int().min(0).max(20),
@@ -74,7 +74,6 @@ export async function GET(req: Request) {
         parking: settings.parking,
         languages: settings.languages,
         geo: settings.geo,
-        representativeEmailConfigured: settings.representativeEmail.configured,
       },
       channels: settings.channels,
       naverBlog: settings.naverBlog,

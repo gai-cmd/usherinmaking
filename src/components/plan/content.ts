@@ -357,7 +357,7 @@ export const FLOW = {
       'Session day and balance payment',
     ],
     ko: [
-      '상담 (카카오톡 amipaek · 문의 폼)',
+      '상담 (카카오톡 amipaek · 인스타그램 DM)',
       '계약금 입금 (촬영 플랜의 50%)',
       '계약서 작성 · 예약 확정',
       '잔금 입금 · 촬영일',

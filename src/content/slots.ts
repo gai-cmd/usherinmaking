@@ -770,27 +770,6 @@ const CONTACT_SLOTS: SlotDef[] = [
     default: (l) => lines(CONTACT.lead[l]),
   },
   {
-    slot: 'form.title',
-    label: '문의 폼 · 제목',
-    kind: 'short',
-    group: '문의 폼',
-    default: (l) => CONTACT.formTitle[l],
-  },
-  {
-    slot: 'form.privacyNote',
-    label: '문의 폼 · 개인정보 안내',
-    kind: 'long',
-    group: '문의 폼',
-    default: (l) => CONTACT.privacyNote[l],
-  },
-  {
-    slot: 'form.submit',
-    label: '문의 폼 · 보내기 버튼',
-    kind: 'short',
-    group: '문의 폼',
-    default: (l) => CONTACT.submit[l],
-  },
-  {
     slot: 'direct.title',
     label: '메시지 상담 · 제목',
     kind: 'short',

@@ -20,7 +20,6 @@ const CHANNEL_LABEL: Record<string, string> = {
   kakao: '카카오톡',
   line: 'LINE',
   instagram: 'Instagram',
-  form: '문의 폼',
 };
 
 export function ChannelLinksForm({
@@ -88,25 +87,21 @@ export function ChannelLinksForm({
               <li key={c.id} className={s.channelItem}>
                 <span className={s.channelOrder}>{i + 1}</span>
                 <span className={s.channelFormLabel}>{CHANNEL_LABEL[c.id] ?? c.id}</span>
-                {c.id === 'form' ? (
-                  <span className={s.dim}>내부 폼 — 링크가 필요 없습니다</span>
-                ) : (
-                  <span className={s.channelInputs}>
-                    <input
-                      className={s.input}
-                      placeholder="핸들 (예: @usherinmaking)"
-                      value={c.handle ?? ''}
-                      onChange={(e) => setField(locale, c.id, 'handle', e.target.value)}
-                    />
-                    <input
-                      className={s.input}
-                      placeholder="https:// 링크"
-                      inputMode="url"
-                      value={c.url ?? ''}
-                      onChange={(e) => setField(locale, c.id, 'url', e.target.value)}
-                    />
-                  </span>
-                )}
+                <span className={s.channelInputs}>
+                  <input
+                    className={s.input}
+                    placeholder="핸들 (예: @usherinmaking)"
+                    value={c.handle ?? ''}
+                    onChange={(e) => setField(locale, c.id, 'handle', e.target.value)}
+                  />
+                  <input
+                    className={s.input}
+                    placeholder="https:// 링크"
+                    inputMode="url"
+                    value={c.url ?? ''}
+                    onChange={(e) => setField(locale, c.id, 'url', e.target.value)}
+                  />
+                </span>
               </li>
             ))}
           </ul>

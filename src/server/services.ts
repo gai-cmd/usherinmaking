@@ -73,15 +73,6 @@ export const SERVICES: ServiceDef[] = [
     secretFields: [],
   },
   {
-    id: 'resend',
-    label: '이메일 발송 (Resend)',
-    category: 'infra',
-    purpose: '문의가 들어오면 운영자에게 알림 메일을, 문의한 손님에게 접수 확인 메일을 보낸다.',
-    consoleUrl: 'https://resend.com/api-keys',
-    envKeys: ['RESEND_API_KEY', 'NOTIFY_TO'],
-    secretFields: [{ key: 'apiKey', label: 'API 키 (RESEND_API_KEY)' }],
-  },
-  {
     id: 'google-auth',
     label: '관리자 로그인 (Google)',
     category: 'infra',

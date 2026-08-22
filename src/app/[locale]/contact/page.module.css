@@ -23,40 +23,27 @@
   margin-top: 2px;
 }
 
-/* 데스크톱: 폼이 왼쪽 한 칸을 세로로 차지하고, 오른쪽에 채널·FAQ·스튜디오가 쌓인다.
-   모바일: DOM 순서 그대로 흘러 메신저 카드가 폼 위에 온다. */
+/* 폼을 없앤 뒤로 한 칸짜리 흐름이다 — 상담 채널 · FAQ · 스튜디오가 위에서 아래로 쌓인다.
+   가운데 한 컬럼으로 폭을 좁혀 읽기 좋은 길이를 유지한다. */
 .layout {
   display: grid;
-  grid-template-columns: 1.25fr 1fr;
+  grid-template-columns: minmax(0, 720px);
+  justify-content: center;
   max-width: var(--content-max);
   margin-inline: auto;
 }
 
-.formCol {
-  grid-column: 1;
-  grid-row: 1 / span 3;
-  padding: 52px var(--gutter) 60px;
-  border-right: 1px solid var(--hairline);
-  border-bottom: 1px solid var(--hairline);
-}
-
 .direct {
-  grid-column: 2;
-  grid-row: 1;
   padding: 52px 44px 30px;
   background: var(--bg-alt);
 }
 
 .faq {
-  grid-column: 2;
-  grid-row: 2;
   padding: 0 44px 22px;
   background: var(--bg-alt);
 }
 
 .studio {
-  grid-column: 2;
-  grid-row: 3;
   padding: 0 44px 60px;
   background: var(--bg-alt);
   border-bottom: 1px solid var(--hairline);
@@ -308,7 +295,6 @@
     display: block;
   }
 
-  .formCol,
   .direct,
   .faq,
   .studio {
