@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { ContactCta } from '@/components/ContactCta';
 import { DressCollection } from '@/components/dress/DressCollection';
 import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
+import { breadcrumbLd, ldJson, webPageLd } from '@/lib/structured-data';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
@@ -54,8 +55,16 @@ export default async function DressPage({ params }: { params: Promise<{ locale: 
     C.HERO.imageAlt[locale],
   );
 
+  // 드레스 대여 안내 페이지라는 것과 사이트 안의 위치. 개별 드레스는 가격이 상담으로
+  // 정해져 Product/Offer 로 못박을 수 없으므로 WebPage 까지만 선언한다.
+  const ld = ldJson(
+    webPageLd(locale, 'dress', text['meta.title'], text['hero.lead']),
+    breadcrumbLd(locale, [{ name: text['meta.title'], page: 'dress' }]),
+  );
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld }} />
       {/* 히어로 — 왼쪽 사진 520px, 오른쪽에 정의형 리드문 */}
       <header className={s.hero}>
         {hero && (

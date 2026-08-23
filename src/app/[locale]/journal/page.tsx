@@ -14,6 +14,7 @@ import {
   usedCategories,
 } from '@/content/journal';
 import { JOURNAL_LOCALES, LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
+import { breadcrumbLd, collectionPageLd, ldJson } from '@/lib/structured-data';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { getJournalContentPosts } from '@/server/journal-content';
 import s from './page.module.css';
@@ -63,8 +64,15 @@ export default async function JournalPage({ params }: { params: Promise<{ locale
   // 대표 글은 위에서 크게 보여주므로 그리드에서는 뺀다.
   const rest = listPosts(locale, all).filter((p) => p.slug !== featured?.slug);
 
+  // 글 하나하나는 상세가 BlogPosting 으로 말한다. 여기서는 목록이라는 것과 위치만 선언한다.
+  const ld = ldJson(
+    collectionPageLd(locale, 'journal', text['meta.title'], text['meta.description']),
+    breadcrumbLd(locale, [{ name: text['heading'], page: 'journal' }]),
+  );
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld }} />
       <section className={s.head}>
         <div className="u-wrap">
           <p className="u-label">{ui.eyebrow}</p>

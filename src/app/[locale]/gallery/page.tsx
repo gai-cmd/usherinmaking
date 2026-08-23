@@ -4,6 +4,7 @@ import { ContactCta } from '@/components/ContactCta';
 import { GalleryView } from '@/components/gallery/GalleryView';
 import { GALLERY } from '@/components/gallery/content';
 import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { breadcrumbLd, collectionPageLd, ldJson } from '@/lib/structured-data';
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -47,8 +48,16 @@ export default async function GalleryPage({
   const { page } = await searchParams;
   const pageNumber = Math.max(1, Number(page) || 1);
 
+  // 목록 페이지라는 것과 사이트 안의 위치를 검색엔진에 알린다. 작품 하나하나는
+  // 상세 페이지가 ImageObject 로 말하므로 여기서는 묶음만 선언한다.
+  const ld = ldJson(
+    collectionPageLd(locale, 'gallery', TITLE[locale], GALLERY.definition[locale]),
+    breadcrumbLd(locale, [{ name: TITLE[locale], page: 'gallery' }]),
+  );
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld }} />
       <GalleryView locale={locale} selection={{}} page={pageNumber} />
       <ContactCta locale={locale} />
     </>

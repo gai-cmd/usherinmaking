@@ -61,11 +61,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const entries: MetadataRoute.Sitemap = [];
 
+  // 정적 페이지에는 lastModified 를 싣지 않는다. 이 함수는 한 시간마다 다시 돌고,
+  // 그때마다 now 를 찍으면 바뀐 적 없는 페이지가 매시간 "방금 바뀐 것"으로 나간다.
+  // 구글은 lastmod 가 믿을 수 없다고 판단하면 사이트맵 전체의 lastmod 를 무시한다 —
+  // 그러면 진짜 날짜를 가진 작품·저널까지 함께 신호를 잃는다. 없는 편이 정확하다.
   for (const { key, priority } of PAGES) {
     for (const locale of localesFor(key)) {
       entries.push({
         url: `${SITE_URL}${path(locale, key)}`,
-        lastModified: now,
         changeFrequency: key === 'home' || key === 'gallery' ? 'weekly' : 'monthly',
         priority,
         alternates: { languages: withAlternates(key) },
@@ -75,14 +78,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 갤러리 필터 조합과 작품/저널 상세는 각 콘텐츠 모듈에서 읽어 확장한다.
   // 모듈이 아직 없거나 형태가 달라도 사이트맵 생성 자체는 실패하지 않아야 한다.
-  entries.push(...(await galleryFilterEntries(now)));
+  entries.push(...(await galleryFilterEntries()));
   entries.push(...(await photoEntries(now)));
   entries.push(...(await journalEntries(now)));
 
   return entries;
 }
 
-async function galleryFilterEntries(now: Date): Promise<MetadataRoute.Sitemap> {
+async function galleryFilterEntries(): Promise<MetadataRoute.Sitemap> {
   try {
     // 필터 조합은 taxonomy 모듈이 정한다. 여기서 축 구조를 다시 추측하면 두 곳이 어긋난다.
     const { staticFilterCombinations, findTerm } = await import('@/content/taxonomy');
@@ -100,9 +103,9 @@ async function galleryFilterEntries(now: Date): Promise<MetadataRoute.Sitemap> {
           languages[l] = `${SITE_URL}${path(l, 'gallery', ...segments)}`;
         }
 
+        // 필터 조합 페이지도 같은 이유로 lastModified 를 싣지 않는다.
         out.push({
           url: `${SITE_URL}${path(locale, 'gallery', ...segments)}`,
-          lastModified: now,
           changeFrequency: 'weekly',
           priority: 0.5,
           alternates: { languages },
