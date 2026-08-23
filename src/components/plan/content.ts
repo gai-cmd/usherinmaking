@@ -43,6 +43,25 @@ export const PLAN_LIST_SECTION: L10n = {
   ko: '플랜 목록',
 };
 
+/**
+ * en 로케이션 카드 문안 — 사용자가 확정한 영문 그대로 쓴다(ja/ko 는 site.ts 값 유지).
+ * 촬영 시간·컷 수 표기가 다른 언어와 달라, 여기서만 덧입힌다.
+ */
+export const EN_LOCATION_CARD: Record<string, { duration: string; includes: string[] }> = {
+  'location-simple': {
+    duration: 'One hour, 1 spot shooting',
+    includes: ['30 edited images + approximately 200–300 original image files (JPEG) provided'],
+  },
+  'location-basic': {
+    duration: '2 hours, 2 spot shooting',
+    includes: ['40 edited images + approximately 300–400 original image files (JPEG) provided'],
+  },
+  'location-afterfull': {
+    duration: '3 hours, 3 spot shooting',
+    includes: ['50 edited images + approximately 400–500 original image files (JPEG) provided'],
+  },
+};
+
 export const TABS = {
   studio: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' } satisfies L10n,
   location: { ja: 'ウェディングフォト', en: 'WEDDING PHOTO', ko: '로케이션' } satisfies L10n,

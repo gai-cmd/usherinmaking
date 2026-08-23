@@ -88,11 +88,16 @@ function LocationPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
   // en 은 카드 세 장의 상품명이 모두 같아 제목이 정보를 주지 못한다 — 등급명을 제목 자리로 올린다.
   const plans =
     locale === 'en'
-      ? LOCATION_PLANS.map((plan) => ({
-          ...plan,
-          title: { ...plan.title, en: `${plan.badge} PLAN` },
-          badge: '',
-        }))
+      ? LOCATION_PLANS.map((plan) => {
+          const copy = C.EN_LOCATION_CARD[plan.code];
+          return {
+            ...plan,
+            title: { ...plan.title, en: `${plan.badge} PLAN` },
+            badge: '',
+            duration: copy ? { ...plan.duration, en: copy.duration } : plan.duration,
+            includes: copy ? { ...plan.includes, en: copy.includes } : plan.includes,
+          };
+        })
       : LOCATION_PLANS;
 
   return (
