@@ -10,7 +10,7 @@ import { listPhotos, missingAltLocales } from '@/server/photos';
 import { listAllFilterUrls, listUntranslatedTerms } from '@/server/taxonomy';
 
 import { LeadEditor } from './LeadEditor';
-import { LEAD_REQUIRED_PAGES, PAGE_LABEL, listLeadRows } from './leads';
+import { LEAD_REQUIRED_PAGES, META_DESC_MAX, META_TITLE_MAX, PAGE_LABEL, listLeadRows, listMetaRows } from './leads';
 import s from './seo.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -37,6 +37,8 @@ export default async function SeoPage({ searchParams }: { searchParams: SearchPa
   // 리드문은 이제 페이지 문구(코드 기본값 + 관리자 덮어쓰기)를 실제로 읽는다.
   // 한 번 읽어 두 곳에서 나눠 쓴다 — getPageCopy 는 요청 단위 캐시라 중복 조회가 아니다.
   const rows = await listLeadRows();
+  const metaRows = await listMetaRows();
+  const metaIssues = metaRows.filter((m) => !m.title || !m.description || m.titleOver || m.descOver);
   const leadsMissing = rows.filter((r) => r.lead === null);
   const leads = { written: rows.length - leadsMissing.length, total: rows.length, missing: leadsMissing };
 
@@ -80,6 +82,12 @@ export default async function SeoPage({ searchParams }: { searchParams: SearchPa
             </span>
           </li>
           <li>
+            <span>검색 결과 제목·설명 (비었거나 잘림)</span>
+            <span className={metaIssues.length ? s.bad : s.ok}>
+              <b className={s.num}>{metaIssues.length}</b> / {metaRows.length}칸
+            </span>
+          </li>
+          <li>
             <span>FAQ 스키마에 실을 수 있는 항목</span>
             <span className={schemaReadyFaqs === 0 ? s.bad : s.ok}>
               <b className={s.num}>{schemaReadyFaqs}</b> / {faqs.length}문
@@ -110,8 +118,8 @@ export default async function SeoPage({ searchParams }: { searchParams: SearchPa
             </span>
           </li>
           <li>
-            <span>LocalBusiness / Service / ImageObject 구조화 데이터</span>
-            <span className={s.unknown}>페이지별 구현 — 이 화면에서 집계하지 않습니다</span>
+            <span>Organization · LocalBusiness 구조화 데이터</span>
+            <span className={s.ok}>홈(ja/en) · 한국어 메인에서 내보냄 — 좌표는 설정 화면에 넣으면 함께 나갑니다</span>
           </li>
         </ul>
         <p className={s.note}>
@@ -167,6 +175,38 @@ export default async function SeoPage({ searchParams }: { searchParams: SearchPa
               />
             </>
           ) : null}
+        </Panel>
+
+        {/* ---------- 검색 결과 미리보기 ---------- */}
+        <Panel title="검색 결과 미리보기 (제목 · 설명)">
+          <p className={s.note}>
+            구글 검색 결과에 보이는 두 줄입니다. 제목 {META_TITLE_MAX}자 · 설명 {META_DESC_MAX}자를
+            넘으면 뒤가 잘립니다(한·일 문자는 더 일찍). 고치는 자리는 페이지 문구 편집기의{' '}
+            <code>meta.title</code> · <code>meta.description</code> 입니다.
+          </p>
+          <ul className={s.serpList}>
+            {metaRows.map((m) => {
+              const bad = !m.title || !m.description || m.titleOver || m.descOver;
+              return (
+                <li key={`${m.pageKey}-${m.locale}`} className={bad ? s.serpBad : s.serpItem}>
+                  <span className={s.serpMeta}>
+                    {m.pageLabel} · {LOCALE_SHORT[m.locale]} · <code>{m.url}</code>
+                  </span>
+                  <span className={s.serpTitle} lang={m.locale}>
+                    {m.title ?? <em className={s.missingText}>제목 비어 있음</em>}
+                    {m.titleOver && <Badge tone="warn">{m.title!.length}자 — 잘림</Badge>}
+                  </span>
+                  <span className={s.serpDesc} lang={m.locale}>
+                    {m.description ?? <em className={s.missingText}>설명 비어 있음</em>}
+                    {m.descOver && <Badge tone="warn">{m.description!.length}자 — 잘림</Badge>}
+                  </span>
+                  <Link href={`${m.editHref}?locale=${m.locale}`} className={s.leadEditLink}>
+                    페이지 문구에서 고치기 →
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </Panel>
 
         <div className={s.right}>

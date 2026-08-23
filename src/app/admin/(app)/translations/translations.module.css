@@ -101,3 +101,68 @@
   flex-wrap: wrap;
 }
 
+
+/* ---------- 인라인 편집 칸 ---------- */
+
+.editCell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.editInput {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--a-line);
+  background: var(--a-field);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--a-ink);
+  resize: vertical;
+}
+
+.editInput:focus-visible {
+  outline: 2px solid var(--a-accent);
+  outline-offset: -1px;
+}
+
+.editFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editSave {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--a-line);
+  background: var(--a-panel);
+  font: inherit;
+  font-size: 11px;
+  color: var(--a-accent);
+  cursor: pointer;
+}
+
+.editSave:disabled {
+  color: var(--a-muted-2);
+  cursor: default;
+}
+
+.editMsg {
+  font-size: 11px;
+  color: var(--a-muted);
+}
+
+.howList {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--a-body);
+}
+
+.howList b {
+  font-weight: 500;
+  color: var(--a-ink);
+}

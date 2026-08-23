@@ -295,3 +295,57 @@
 .crossLink:hover {
   border-color: var(--a-ink);
 }
+
+/* ---------- 검색 결과 미리보기 ---------- */
+
+.serpList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.serpItem,
+.serpBad {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--a-line);
+  background: var(--a-bg);
+}
+
+.serpBad {
+  border-color: var(--a-danger);
+  background: var(--a-danger-soft);
+}
+
+.serpMeta {
+  font-size: 10.5px;
+  color: var(--a-muted-2);
+}
+
+.serpTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a0dab;
+}
+
+.serpDesc {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--a-body);
+}
+
+.missingText {
+  font-style: normal;
+  color: var(--a-danger);
+}

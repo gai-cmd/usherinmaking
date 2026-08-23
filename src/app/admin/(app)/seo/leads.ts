@@ -108,3 +108,60 @@ export async function countLeads(): Promise<{
   const missing = rows.filter((r) => r.lead === null);
   return { written: rows.length - missing.length, total: rows.length, missing };
 }
+
+/* ------------------------------------------------------------------ */
+/* 검색 결과 미리보기 — 제목 · 설명 메타                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 검색 결과에 실제로 보이는 두 줄. 구글은 제목 약 60자, 설명 약 155자(영문 기준)까지
+ * 보여 주고 그 뒤는 자른다. 한·일 문자는 폭이 넓어 더 일찍 잘리므로 경계를 보수적으로 둔다.
+ * 이 표의 목적은 문장을 다듬는 것이 아니라 "잘리거나 비어 있는 칸"을 드러내는 것이다.
+ */
+export const META_TITLE_MAX = 60;
+export const META_DESC_MAX = 155;
+
+/** 메타 제목·설명을 페이지 문구 슬롯으로 관리하는 페이지. 나머지는 코드가 직접 적는다. */
+const META_PAGES: PageKey[] = ['home', 'studio', 'location', 'dress', 'plan', 'photographer', 'gallery'];
+
+export type MetaRow = {
+  pageKey: PageKey;
+  pageLabel: string;
+  locale: Locale;
+  url: string;
+  title: string | null;
+  description: string | null;
+  /** 어느 쪽이든 상한을 넘으면 검색 결과에서 잘린다 */
+  titleOver: boolean;
+  descOver: boolean;
+  editHref: string;
+};
+
+export async function listMetaRows(): Promise<MetaRow[]> {
+  const rows: MetaRow[] = [];
+  for (const pageKey of META_PAGES) {
+    for (const locale of LOCALES) {
+      let title: string | null = null;
+      let description: string | null = null;
+      try {
+        const copy = await getPageCopy(pageKey as ContentPage, locale);
+        title = copy['meta.title']?.trim() || null;
+        description = copy['meta.description']?.trim() || null;
+      } catch {
+        // 조회 실패를 "비어 있음"으로 보고하지 않는다 — 없는 결함을 만드는 셈이다.
+      }
+      rows.push({
+        pageKey,
+        pageLabel: PAGE_LABEL[pageKey] ?? pageKey,
+        locale,
+        url: path(locale, pageKey),
+        title,
+        description,
+        titleOver: (title?.length ?? 0) > META_TITLE_MAX,
+        descOver: (description?.length ?? 0) > META_DESC_MAX,
+        editHref: `/admin/content/${pageKey}`,
+      });
+    }
+  }
+  return rows;
+}

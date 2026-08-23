@@ -5,7 +5,6 @@ import {
   Badge,
   DataTable,
   FilterChip,
-  NotWired,
   PageHeader,
   Panel,
   StatTile,
@@ -22,21 +21,23 @@ import {
   type TranslationField,
   type TranslationGroup,
 } from '@/server/translations';
+import { TranslationCell } from './TranslationCell';
 import s from './translations.module.css';
 import { checkAdminPageAccess } from '@/server/auth';
 
 export const metadata = { title: '번역 관리 · 관리자' };
 
 function cell(field: TranslationField, locale: Locale) {
-  const value = field.values[locale];
-  if (!value || !value.trim()) {
-    // 비어 있는 것을 일본어로 대신 채워 보여 주지 않는다. 빈 곳은 빈 곳으로 보여야 한다.
-    return <span className={s.missing}>미작성 — 입력 필요</span>;
-  }
+  // 비어 있는 것을 일본어로 대신 채워 보여 주지 않는다. 빈 곳은 빈 곳으로 보여야 한다.
   return (
-    <span className={s.value} lang={locale}>
-      {value}
-    </span>
+    <TranslationCell
+      fieldKey={field.key}
+      locale={locale}
+      value={field.values[locale] ?? ''}
+      editable={field.editable}
+      editHint={field.editHint}
+      multiline={field.key.endsWith('.includes')}
+    />
   );
 }
 
@@ -97,15 +98,12 @@ export default async function AdminTranslationsPage({
     <>
       <PageHeader
         title="번역 관리"
-        description="JA / EN / KO 가 각각 어디까지 채워졌는지 봅니다. 비어 있는 곳을 드러내는 화면이지, 자동으로 채우는 화면이 아닙니다."
+        description="JA / EN / KO 가 각각 어디까지 채워졌는지 봅니다. 플랜 항목은 칸에서 바로 고쳐 저장하고, 코드가 원본인 항목은 어디서 고치는지 알려 줍니다."
         actions={
           <>
             <Link href={qs({ missing: missingOnly ? undefined : '1' })} className={s.toggle}>
               {missingOnly ? '전체 보기' : '미작성만 보기'}
             </Link>
-            <AdminButton variant="primary" disabled title="저장 경로가 아직 연결되지 않았습니다">
-              저장
-            </AdminButton>
           </>
         }
       />
@@ -180,17 +178,23 @@ export default async function AdminTranslationsPage({
           </div>
         </Panel>
 
-        <NotWired
-          what="번역 편집 저장"
-          hint={
-            <>
-              Prisma 연결 후 열립니다. 값은 <code className={s.key}>@/content/site</code> ·{' '}
-              <code className={s.key}>@/content/dress</code> ·{' '}
-              <code className={s.key}>@/content/journal</code> 에서 직접 읽으므로, 위 빈칸은
-              예시가 아니라 실제로 비어 있는 항목입니다.
-            </>
-          }
-        />
+        <Panel title="어디서 고치나">
+          <ul className={s.howList}>
+            <li>
+              <b>플랜</b> (제목 · 촬영시간 · 포함사항) — 위 표의 칸에서 바로 고치고 저장합니다. 홈·플랜
+              페이지에 즉시 반영됩니다.
+            </li>
+            <li>
+              <b>촬영후기</b> — 제목만 바꾸려 해도 본문과 함께 저장해야 하므로 글 편집 화면에서
+              언어별로 고칩니다.
+            </li>
+            <li>
+              <b>스튜디오 세트 · 옵션 · 로케이션 주의사항 · 드레스 · 채널 문구</b> — 코드
+              (<code className={s.key}>src/content</code>)가 원본이라 이 화면에서 저장할 수 없습니다.
+              위 빈칸은 예시가 아니라 실제로 비어 있는 항목이니, 개발자에게 값을 전달해 주세요.
+            </li>
+          </ul>
+        </Panel>
       </div>
     </>
   );

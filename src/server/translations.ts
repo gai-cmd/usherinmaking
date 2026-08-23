@@ -1,16 +1,10 @@
-import { NotImplementedError } from '@/server/errors';
+import { NotFoundError, NotImplementedError, ValidationError } from '@/server/errors';
 import { LOCALES, type Locale } from '@/lib/i18n';
-import {
-  ANNIVERSARY_PLANS,
-  CHANNELS,
-  LOCATION_NOTES,
-  LOCATION_PLANS,
-  STUDIO_OPTIONS,
-  STUDIO_PLANS,
-  STUDIO_SETS,
-} from '@/content/site';
+import { CHANNELS, LOCATION_NOTES, STUDIO_OPTIONS, STUDIO_SETS } from '@/content/site';
 import { DRESS_COLLECTIONS, DRESS_ITEMS, FITTING_STEPS, RENTAL_CONDITIONS } from '@/content/dress';
 import { listJournalGroups } from '@/server/journal';
+import { getPlan, listPlans, upsertPlan } from '@/server/plans';
+import { logAdminAction } from '@/server/activity';
 
 /**
  * 번역 관리.
@@ -60,10 +54,12 @@ export type TranslationField = {
   /** 값이 어느 모듈에서 오는지 */
   origin: 'content' | 'journal';
   /**
-   * 저장 경로가 연결되어 있는지. Prisma 이관 전까지 전부 false 이고,
-   * 화면은 이 값을 그대로 읽어 "편집 불가" 사실을 표시한다.
+   * 이 화면에서 바로 저장할 수 있는지. DB 테이블이 있는 플랜만 true 다.
+   * 나머지는 코드(src/content/*.ts)가 원본이라 여기서 못 고친다 — editHint 가 어디서 고치는지 알려 준다.
    */
   editable: boolean;
+  /** editable 이 false 일 때, 어디서 고쳐야 하는지 */
+  editHint?: string;
 };
 
 const ALL: Locale[] = [...LOCALES];
@@ -78,6 +74,7 @@ function field(
   label: string,
   values: PartialL10n,
   origin: TranslationField['origin'] = 'content',
+  edit: { editable: boolean; editHint?: string } = { editable: false, editHint: CODE_HINT },
 ): TranslationField {
   return {
     key,
@@ -86,10 +83,13 @@ function field(
     values,
     missing: ALL.filter((l) => !has(values[l])),
     origin,
-    // TODO(prisma): 각 도메인 저장 경로가 붙으면 true 로 바꾼다.
-    editable: false,
+    ...edit,
   };
 }
+
+const CODE_HINT = '코드(src/content)가 원본입니다. 개발자에게 요청하세요.';
+const JOURNAL_HINT = '촬영후기 글 편집 화면에서 언어별로 고칩니다.';
+const PLAN_EDIT = { editable: true } as const;
 
 /** 문장 배열은 줄 단위로 쪼개지 않고 한 필드로 본다 — 언어마다 문장 수가 다를 수 있기 때문이다. */
 function joinList(v: Record<Locale, string[]> | Partial<Record<Locale, string[]>>): PartialL10n {
@@ -107,14 +107,6 @@ function collectContentFields(): TranslationField[] {
     out.push(field(`studio.set.${s.slug}.note`, 'studio', `세트 · ${s.slug} 설명`, s.note));
   }
 
-  // 플랜 3종
-  for (const p of [...STUDIO_PLANS, ...LOCATION_PLANS, ...ANNIVERSARY_PLANS]) {
-    out.push(field(`plan.${p.code}.title`, 'plan', `플랜 · ${p.code} 제목`, p.title));
-    out.push(field(`plan.${p.code}.duration`, 'plan', `플랜 · ${p.code} 촬영시간`, p.duration));
-    out.push(
-      field(`plan.${p.code}.includes`, 'plan', `플랜 · ${p.code} 포함사항`, joinList(p.includes)),
-    );
-  }
 
   // 옵션
   STUDIO_OPTIONS.forEach((o, i) => {
@@ -162,12 +154,41 @@ function collectContentFields(): TranslationField[] {
   return out;
 }
 
+/**
+ * 플랜은 DB(Plan 테이블)가 원본이라 이 화면에서 바로 저장된다.
+ * 시드만 있는 상태여도 listPlans 가 시드를 돌려주므로 목록은 비지 않는다.
+ */
+async function collectPlanFields(): Promise<TranslationField[]> {
+  const plans = await listPlans();
+  const out: TranslationField[] = [];
+  for (const p of plans) {
+    out.push(field(`plan.${p.code}.title`, 'plan', `플랜 · ${p.code} 제목`, p.title, 'content', PLAN_EDIT));
+    out.push(
+      field(`plan.${p.code}.duration`, 'plan', `플랜 · ${p.code} 촬영시간`, p.duration, 'content', PLAN_EDIT),
+    );
+    out.push(
+      field(
+        `plan.${p.code}.includes`,
+        'plan',
+        `플랜 · ${p.code} 포함사항`,
+        joinList(p.includes),
+        'content',
+        PLAN_EDIT,
+      ),
+    );
+  }
+  return out;
+}
+
 async function collectJournalFields(): Promise<TranslationField[]> {
   const groups = await listJournalGroups();
   return groups.map((g) => {
     const values: PartialL10n = {};
     for (const l of ALL) values[l] = g.posts[l]?.title ?? '';
-    return field(`journal.${g.slug}.title`, 'journal', `촬영후기 · ${g.slug}`, values, 'journal');
+    return field(`journal.${g.slug}.title`, 'journal', `촬영후기 · ${g.slug}`, values, 'journal', {
+      editable: false,
+      editHint: JOURNAL_HINT,
+    });
   });
 }
 
@@ -184,7 +205,11 @@ export type ListTranslationOptions = {
 export async function listTranslationFields(
   opts: ListTranslationOptions = {},
 ): Promise<TranslationField[]> {
-  let fields = [...collectContentFields(), ...(await collectJournalFields())];
+  let fields = [
+    ...(await collectPlanFields()),
+    ...collectContentFields(),
+    ...(await collectJournalFields()),
+  ];
   if (opts.group) fields = fields.filter((f) => f.group === opts.group);
   if (opts.missingOnly) fields = fields.filter((f) => f.missing.length > 0);
   if (opts.missingLocale) {
@@ -233,9 +258,47 @@ export type TranslationSaveInput = {
   reviewed: boolean;
 };
 
-export async function saveTranslationField(_input: TranslationSaveInput): Promise<TranslationField> {
-  // TODO(prisma): 키의 앞 세그먼트로 대상 모델을 정하고 해당 Json 컬럼을 갱신한다.
-  throw new NotImplementedError('번역 저장');
+/**
+ * 키의 앞 세그먼트로 대상을 정한다. 지금 저장할 수 있는 건 `plan.<code>.<field>` 뿐이다 —
+ * 나머지는 DB 테이블이 없어 코드가 원본이고, 그 사실을 editable=false 로 화면에 이미 알렸다.
+ * 기계 초안(reviewed=false)은 저장하지 않는다 — 사람이 읽고 고친 뒤에만 들어온다.
+ */
+export async function saveTranslationField(input: TranslationSaveInput): Promise<TranslationField> {
+  if (!input.reviewed) {
+    throw new ValidationError('사람이 확인하지 않은 값은 저장할 수 없습니다.');
+  }
+
+  const m = /^plan\.([a-z0-9-]+)\.(title|duration|includes)$/u.exec(input.key);
+  if (!m) {
+    throw new ValidationError('이 항목은 이 화면에서 저장할 수 없습니다. 코드가 원본입니다.', {
+      key: input.key,
+    });
+  }
+  const code = m[1];
+  const fieldName = m[2] as 'title' | 'duration' | 'includes';
+
+  const current = await getPlan(code);
+  if (!current) throw new NotFoundError(`플랜을 찾을 수 없습니다 (${code}).`);
+
+  const value = input.value.trim();
+  const next = { ...current };
+  if (fieldName === 'includes') {
+    next.includes = {
+      ...current.includes,
+      [input.locale]: value ? value.split('\n').map((l) => l.trim()).filter(Boolean) : [],
+    };
+  } else {
+    next[fieldName] = { ...current[fieldName], [input.locale]: value };
+  }
+
+  await upsertPlan(next);
+  // 본문은 남기지 않는다 — 어느 칸의 어느 언어를 고쳤는지만.
+  await logAdminAction('번역 저장', input.key, { locale: input.locale });
+
+  const saved = await getPlan(code);
+  if (!saved) throw new NotFoundError(`플랜을 찾을 수 없습니다 (${code}).`);
+  const values = fieldName === 'includes' ? joinList(saved.includes) : saved[fieldName];
+  return field(input.key, 'plan', `플랜 · ${code}`, values, 'content', PLAN_EDIT);
 }
 
 /* --------------------------------------------------- 기계번역 초안 (seam) */
