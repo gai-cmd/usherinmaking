@@ -54,6 +54,18 @@ function withAlternates(key: PageKey, ...rest: string[]) {
   return languages;
 }
 
+
+/** 임의의 로케일 목록으로 hreflang 맵을 만든다. withAlternates 와 같은 키 규칙(HTML_LANG + x-default). */
+function languagesFor(available: readonly Locale[], build: (l: Locale) => string) {
+  const languages: Record<string, string> = {};
+  for (const l of available) languages[HTML_LANG[l]] = build(l);
+  if (available.length > 0) {
+    const xDefault = available.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : available[0];
+    languages['x-default'] = build(xDefault);
+  }
+  return languages;
+}
+
 /**
  * 사이트맵을 빌드 시점에 고정하지 않는다.
  *
@@ -107,10 +119,10 @@ async function galleryFilterEntries(): Promise<MetadataRoute.Sitemap> {
     const out: MetadataRoute.Sitemap = [];
     for (const locale of LOCALES) {
       for (const segments of staticFilterCombinations(locale)) {
-        const languages: Record<string, string> = {};
-        for (const l of localesWith(segments)) {
-          languages[l] = `${SITE_URL}${path(l, 'gallery', ...segments)}`;
-        }
+        const languages = languagesFor(
+          localesWith(segments),
+          (l) => `${SITE_URL}${path(l, 'gallery', ...segments)}`,
+        );
 
         // 필터 조합 페이지도 같은 이유로 lastModified 를 싣지 않는다.
         out.push({
@@ -148,8 +160,10 @@ async function photoEntries(now: Date): Promise<MetadataRoute.Sitemap> {
     const out: MetadataRoute.Sitemap = [];
     for (const photo of photos) {
       if (!photo?.slug) continue;
-      const languages: Record<string, string> = {};
-      for (const l of LOCALES) languages[l] = `${SITE_URL}${path(l, 'gallery', 'g', photo.slug)}`;
+      const languages = languagesFor(
+        LOCALES,
+        (l) => `${SITE_URL}${path(l, 'gallery', 'g', photo.slug)}`,
+      );
 
       // 촬영일이 있으면 그것이 이 페이지의 갱신 신호다. 매 빌드 now 로 찍으면
       // 모든 사진이 "방금 바뀐 것"처럼 보여 재크롤 우선순위 정보가 사라진다.
