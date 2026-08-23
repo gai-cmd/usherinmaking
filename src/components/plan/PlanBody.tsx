@@ -90,7 +90,7 @@ function LocationPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
     locale === 'en'
       ? LOCATION_PLANS.map((plan) => ({
           ...plan,
-          title: { ...plan.title, en: plan.badge },
+          title: { ...plan.title, en: `${plan.badge} PLAN` },
           badge: '',
         }))
       : LOCATION_PLANS;
