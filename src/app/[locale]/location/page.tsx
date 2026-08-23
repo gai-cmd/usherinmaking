@@ -14,7 +14,7 @@ import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
 import { getSiteSettings } from '@/server/settings';
 import { getWorksImages } from '@/server/works';
-import { ORG_ID, ldJson, localBusinessLd, organizationLd } from '@/lib/structured-data';
+import { ORG_ID, ldJson, localBusinessLd, organizationLd, SEARCH_TERMS } from '@/lib/structured-data';
 import { KO_ETC_PLANS, KO_WEDDING_PLANS } from '@/components/plan/content';
 import { ARCHIVE, CATEGORIES, DETAILS, HERO, WORKS } from './content';
 import s from './page.module.css';
@@ -87,6 +87,7 @@ export default async function LocationPage({ params }: { params: Promise<{ local
     name: text['meta.title'],
     description: text['meta.description'],
     serviceType: 'Outdoor location photography',
+    keywords: SEARCH_TERMS[locale].join(', '),
     url: `${SITE_URL}${path(locale, 'location')}`,
     areaServed: { '@type': 'Place', name: 'Okinawa, Japan' },
     // 전역 Organization 노드를 @id 로 참조한다 — 이름만 적으면 별개 주체로 읽힌다.

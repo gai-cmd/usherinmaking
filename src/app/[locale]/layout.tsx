@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SEARCH_TERMS } from '@/lib/structured-data';
 import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/Header';
@@ -35,16 +36,29 @@ const NAVER_SITE_VERIFICATION = [
   '566734477f882ab5e1abed8a0f562eaf1d391d86', // www.usherinmaking.co.kr
 ];
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: { default: 'usherinmaking', template: '%s | usherinmaking' },
-  icons: { icon: '/favicon.png', apple: '/apple-touch-icon.png' },
-  verification: {
-    google: GOOGLE_SITE_VERIFICATION,
-    // 네이버는 Next.js 가 이름을 아는 항목이 아니라서 other 로 직접 내보낸다.
-    other: { 'naver-site-verification': NAVER_SITE_VERIFICATION },
-  },
-};
+/**
+ * 언어별로 달라지는 항목은 keywords 뿐이다. 구글은 이 태그를 무시하지만 네이버·Bing 은
+ * 읽는다(Bing 은 구조화 신호를 공식 인정하는 유일한 엔진이다). 화면에는 보이지 않으므로
+ * 본문 문구를 건드리지 않고 검색어 정확 형태를 둘 수 있는 자리다.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: { default: 'usherinmaking', template: '%s | usherinmaking' },
+    icons: { icon: '/favicon.png', apple: '/apple-touch-icon.png' },
+    ...(isLocale(locale) ? { keywords: [...SEARCH_TERMS[locale]] } : {}),
+    verification: {
+      google: GOOGLE_SITE_VERIFICATION,
+      // 네이버는 Next.js 가 이름을 아는 항목이 아니라서 other 로 직접 내보낸다.
+      other: { 'naver-site-verification': NAVER_SITE_VERIFICATION },
+    },
+  };
+}
 
 export default async function LocaleLayout({
   children,

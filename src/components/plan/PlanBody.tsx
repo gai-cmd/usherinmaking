@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ORG_ID, SEARCH_TERMS } from '@/lib/structured-data';
 import { Fragment, type ReactNode } from 'react';
 import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
@@ -52,7 +53,9 @@ function serviceLd(locale: Locale) {
     serviceType: C.META_TITLE[locale],
     name: C.META_TITLE[locale],
     description: C.HERO.lead[locale],
-    provider: { '@type': 'LocalBusiness', name: 'usherinmaking' },
+    keywords: SEARCH_TERMS[locale].join(', '),
+    // 전역 Organization 노드를 @id 로 참조한다 — 이름만 적으면 별개 주체로 읽힌다.
+    provider: { '@id': ORG_ID },
     url: `${SITE_URL}${path(locale, 'plan')}`,
     offers,
   };

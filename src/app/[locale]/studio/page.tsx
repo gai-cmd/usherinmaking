@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ORG_ID } from '@/lib/structured-data';
+import { ORG_ID, SEARCH_TERMS } from '@/lib/structured-data';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -73,6 +73,7 @@ export default async function StudioPage({ params }: { params: Promise<{ locale:
     name: text['meta.title'],
     description: text['meta.description'],
     serviceType: 'Indoor wedding photography',
+    keywords: SEARCH_TERMS[locale].join(', '),
     url: `${SITE_URL}${path(locale, 'studio')}`,
     areaServed: { '@type': 'Place', name: 'Okinawa, Japan' },
     // 전역 Organization 노드를 @id 로 참조한다 — 이름만 적으면 별개 주체로 읽힌다.

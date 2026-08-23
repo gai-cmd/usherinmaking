@@ -56,6 +56,56 @@ export const BRAND_SAME_AS = [
   'https://blog.naver.com/usherinmaking',
 ] as const;
 
+/**
+ * 검색어 사전 — 구조화 데이터의 keywords / alternateName 에만 쓴다.
+ *
+ * 화면에 보이는 문장은 작가의 말투를 지키느라 "오키나와에서 스냅 촬영" 처럼 조사가 들어가고,
+ * 일본어는 "ウェディングフォト" 어순을 쓴다. 그런데 손님이 실제로 검색창에 치는 말은
+ * "오키나와 웨딩스냅", "沖縄 フォトウェディング" 처럼 붙여 쓰거나 어순이 다르다.
+ * 이 사전은 그 간극을 메운다 — 본문을 건드리지 않고, 검색엔진만 읽는 자리에 정확한 형태를 둔다.
+ *
+ * 전부 이 사이트가 실제로 하는 일을 다른 말로 쓴 것이다. 하지 않는 서비스는 넣지 않는다.
+ */
+export const SEARCH_TERMS: Record<Locale, readonly string[]> = {
+  ko: [
+    '오키나와 스냅',
+    '오키나와 웨딩스냅',
+    '오키나와 웨딩 스냅',
+    '오키나와 웨딩촬영',
+    '오키나와 허니문 스냅',
+    '오키나와 셀프웨딩',
+    '오키나와 커플 스냅',
+    '오키나와 가족사진',
+    '오키나와 만삭 촬영',
+    '오키나와 한국인 작가',
+  ],
+  ja: [
+    '沖縄 フォトウェディング',
+    '沖縄 ウェディングフォト',
+    '沖縄 前撮り',
+    '沖縄 ロケーションフォト',
+    '沖縄 スナップ',
+    '沖縄 セルフウェディング',
+    '沖縄 マタニティフォト',
+    '沖縄 家族写真',
+    '沖縄 記念日 撮影',
+    '沖縄 韓国人 カメラマン',
+  ],
+  en: [
+    'Okinawa wedding photographer',
+    'Okinawa wedding photography',
+    'Okinawa elopement photographer',
+    'Okinawa pre-wedding photos',
+    'Okinawa couple photoshoot',
+    'Okinawa family photographer',
+    'Okinawa maternity photos',
+    'Okinawa photographer',
+  ],
+};
+
+/** 브랜드의 다른 표기. 검색자가 한글로 치거나 띄어쓰기를 달리 해도 같은 주체로 묶인다. */
+export const BRAND_ALTERNATE_NAMES = ['어셔린메이킹', 'usherin making', 'Usherin Making'] as const;
+
 /** 사이트 전역에서 하나뿐인 Organization 노드의 @id. 다른 스키마가 provider/creator 로 참조한다. */
 export const ORG_ID = `${SITE_URL}/#organization`;
 
@@ -81,6 +131,7 @@ export function organizationLd() {
     '@type': 'Organization',
     '@id': ORG_ID,
     name: BRAND.name,
+    alternateName: [...BRAND_ALTERNATE_NAMES],
     url: SITE_URL,
     logo: { '@type': 'ImageObject', url: `${SITE_URL}/brand/logo.png` },
     sameAs: [...BRAND_SAME_AS],
@@ -117,7 +168,10 @@ export function localBusinessLd(input: LocalBusinessInput) {
     '@type': ['LocalBusiness', 'ProfessionalService'],
     '@id': `${SITE_URL}/#business`,
     name: BRAND.name,
+    alternateName: [...BRAND_ALTERNATE_NAMES],
     description,
+    // 검색자가 실제로 치는 형태. 본문은 작가 말투를 지키고, 검색엔진용 자리에만 정확 형태를 둔다.
+    keywords: SEARCH_TERMS[locale].join(', '),
     url: `${SITE_URL}${homePath(locale)}`,
     logo: `${SITE_URL}/brand/logo.png`,
     image,
