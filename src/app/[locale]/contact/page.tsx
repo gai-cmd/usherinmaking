@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { CHANNELS, STUDIO_INFO, NAVER_BLOG_NOTICE_LOCALE, type Channel } from '@/content/site';
 import { getSiteSettings } from '@/server/settings';
-import { LOCALES, SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { LOCALES, SITE_URL, UI, alternates, isLocale, path, type Locale, metaDescription } from '@/lib/i18n';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { CONTACT } from './content';
 import s from './page.module.css';
@@ -46,7 +46,7 @@ export async function generateMetadata({
 
   return {
     title: TITLE[locale],
-    description: text['definition'],
+    description: metaDescription(text['definition']),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'contact')}`,
       languages: alternates('contact'),

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ContactCta } from '@/components/ContactCta';
 import { DressCollection } from '@/components/dress/DressCollection';
-import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
+import { LOCALES, SITE_URL, alternates, isLocale, path, metaDescription } from '@/lib/i18n';
 import { breadcrumbLd, ldJson, webPageLd } from '@/lib/structured-data';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
@@ -29,7 +29,7 @@ export async function generateMetadata({
 
   return {
     title: text['meta.title'],
-    description: text['hero.lead'],
+    description: metaDescription(text['hero.lead']),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'dress')}`,
       languages: alternates('dress'),

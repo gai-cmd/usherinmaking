@@ -10,7 +10,7 @@ import { RecentWorks } from '@/components/home/RecentWorks';
 import { HomeFaq } from '@/components/home/HomeFaq';
 import { NaverNotice } from '@/components/home/NaverNotice';
 import { StickyCta } from '@/components/home/StickyCta';
-import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale, metaDescription } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
@@ -43,7 +43,8 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
   const text = await getPageCopy('home', locale);
   const title = text['meta.title'];
-  const description = text['meta.description'];
+  // 검색 결과·링크 미리보기용으로만 줄인다. 본문(JSON-LD·화면)은 원문을 쓴다.
+  const description = metaDescription(text['meta.description']);
 
   return {
     // layout 의 title.template 은 같은 세그먼트의 page 에는 적용되지 않는다(Next.js 사양).

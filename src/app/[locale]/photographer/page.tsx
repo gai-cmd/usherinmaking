@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ContactCta } from '@/components/ContactCta';
-import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale, metaDescription } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
@@ -24,14 +24,14 @@ export async function generateMetadata({
   const text = await getPageCopy('photographer', locale);
   return {
     title: text['meta.title'],
-    description: text['meta.description'],
+    description: metaDescription(text['meta.description']),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'photographer')}`,
       languages: alternates('photographer'),
     },
     openGraph: {
       title: `${text['meta.title']} | usherinmaking`,
-      description: text['meta.description'],
+      description: metaDescription(text['meta.description']),
       url: `${SITE_URL}${path(locale, 'photographer')}`,
       type: 'profile',
     },

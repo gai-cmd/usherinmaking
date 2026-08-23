@@ -149,3 +149,28 @@ export const UI = {
     ko: '자동 예약 · 캘린더 예약은 없습니다. 문의를 주시면 상담을 통해 일정을 확정해 드립니다.',
   },
 } as const satisfies Record<string, Record<Locale, string>>;
+
+/**
+ * 검색 결과·링크 미리보기용 설명문 자르기.
+ *
+ * 네이버 서치어드바이저는 설명이 80자를 넘으면 경고하고, 카카오톡·라인 미리보기도 그쯤에서
+ * 잘린다. 본문 문장은 그대로 두고 내보낼 때만 줄인다 — 문장 끝(。.!?)에서 끊어 의미가
+ * 반으로 잘리지 않게 하고, 첫 문장이 이미 상한을 넘으면 상한에서 자르고 줄임표를 붙인다.
+ */
+export const META_DESCRIPTION_MAX = 80;
+
+export function metaDescription(text: string, max = META_DESCRIPTION_MAX): string {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  const head = t.slice(0, max);
+  // 상한 안에서 가장 뒤쪽 문장 끝을 찾는다. 너무 앞(절반 미만)이면 문장 단위로 자르는 의미가 없다.
+  const cut = Math.max(
+    head.lastIndexOf('。'),
+    head.lastIndexOf('. '),
+    head.lastIndexOf('.'),
+    head.lastIndexOf('!'),
+    head.lastIndexOf('?'),
+  );
+  if (cut >= max / 2) return t.slice(0, cut + 1).trim();
+  return `${head.slice(0, max - 1).trimEnd()}…`;
+}

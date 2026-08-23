@@ -13,6 +13,16 @@ const LOCALE_COOKIE = 'uim_locale';
  */
 const FALLBACK_LOCALE: Locale = 'en';
 
+/**
+ * 주요 검색·AI 봇. 루트 `/` 에서 메타가 있는 페이지를 받아야 하는 쪽이다.
+ * 일반 브라우저는 여기 없으므로 언어 감지 리다이렉트를 그대로 탄다.
+ */
+const SEARCH_BOT = /googlebot|bingbot|yeti|naverbot|daumoa|yandex|duckduckbot|baiduspider|applebot|oai-searchbot|perplexitybot|claudebot|gptbot|facebookexternalhit|twitterbot|linkedinbot|slackbot|kakaotalk-scrap|line-poker/i;
+
+function isSearchBot(ua: string | null): boolean {
+  return Boolean(ua && SEARCH_BOT.test(ua));
+}
+
 /** Accept-Language 헤더에서 지원 로케일 중 가장 앞선 것을 고른다. */
 function pickLocale(header: string | null): Locale {
   if (!header) return FALLBACK_LOCALE;
@@ -132,6 +142,13 @@ export function middleware(req: NextRequest) {
     (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`),
   );
   if (hasLocale) return NextResponse.next();
+
+  // 루트 `/` 는 검색 봇에게만 진짜 페이지를 준다. 307 로 넘겨 버리면 네이버 서치어드바이저는
+  // "이 주소에 제목·설명이 없다" 고 판정한다(첫 응답만 본다). 봇은 app/page.tsx 가 내보내는
+  // 메타·hreflang 을 읽고, 사람은 아래에서 지금처럼 언어 페이지로 넘어간다.
+  if (pathname === '/' && isSearchBot(req.headers.get('user-agent'))) {
+    return NextResponse.next();
+  }
 
   // 선택한 언어는 쿠키에 저장하고, 없으면 브라우저 언어로 감지한다.
   const cookie = req.cookies.get(LOCALE_COOKIE)?.value;

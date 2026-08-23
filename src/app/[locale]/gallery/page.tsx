@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { ContactCta } from '@/components/ContactCta';
 import { GalleryView } from '@/components/gallery/GalleryView';
 import { GALLERY } from '@/components/gallery/content';
-import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale, metaDescription } from '@/lib/i18n';
 import { breadcrumbLd, collectionPageLd, ldJson } from '@/lib/structured-data';
 
 export function generateStaticParams() {
@@ -27,7 +27,7 @@ export async function generateMetadata({
 
   return {
     title: TITLE[locale],
-    description: GALLERY.definition[locale],
+    description: metaDescription(GALLERY.definition[locale]),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'gallery')}`,
       languages: alternates('gallery'),

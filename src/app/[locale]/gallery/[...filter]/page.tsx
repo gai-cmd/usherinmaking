@@ -13,7 +13,7 @@ import {
   type Selection,
   type Term,
 } from '@/content/taxonomy';
-import { SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { SITE_URL, alternates, isLocale, path, type Locale, metaDescription } from '@/lib/i18n';
 
 /**
  * 필터 조합마다 실제 URL을 갖는다 — /ja/gallery/studio/wedding 형태.
@@ -58,7 +58,7 @@ export async function generateMetadata({
 
   return {
     title: `${label} | ${locale === 'ja' ? 'ギャラリー' : locale === 'ko' ? '갤러리' : 'Gallery'}`,
-    description: description[locale],
+    description: metaDescription(description[locale]),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'gallery', ...segments)}`,
       languages: alternates('gallery', ...segments),

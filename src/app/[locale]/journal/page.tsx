@@ -13,7 +13,7 @@ import {
   listPosts,
   usedCategories,
 } from '@/content/journal';
-import { JOURNAL_LOCALES, LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
+import { JOURNAL_LOCALES, LOCALES, SITE_URL, alternates, isLocale, path, metaDescription } from '@/lib/i18n';
 import { breadcrumbLd, collectionPageLd, ldJson } from '@/lib/structured-data';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { getJournalContentPosts } from '@/server/journal-content';
@@ -34,14 +34,14 @@ export async function generateMetadata({
   const text = await getPageCopy('journal', locale);
   return {
     title: text['meta.title'],
-    description: text['meta.description'],
+    description: metaDescription(text['meta.description']),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'journal')}`,
       languages: alternates('journal'),
     },
     openGraph: {
       title: `${text['meta.title']} | usherinmaking`,
-      description: text['meta.description'],
+      description: metaDescription(text['meta.description']),
       url: `${SITE_URL}${path(locale, 'journal')}`,
       type: 'website',
     },

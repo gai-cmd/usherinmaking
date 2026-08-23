@@ -7,7 +7,7 @@ import { Section } from '@/components/Section';
 import { PlanCard } from '@/components/PlanCard';
 import { ContactCta } from '@/components/ContactCta';
 import { STUDIO_SETS, STUDIO_PLANS, STUDIO_INFO, TBC, planOptions } from '@/content/site';
-import { SITE_URL, STUDIO_LOCALES, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { SITE_URL, STUDIO_LOCALES, alternates, isLocale, path, type Locale, metaDescription } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
@@ -31,14 +31,14 @@ export async function generateMetadata({
 
   return {
     title: text['meta.title'],
-    description: text['meta.description'],
+    description: metaDescription(text['meta.description']),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'studio')}`,
       languages: alternates('studio'),
     },
     openGraph: {
       title: text['meta.title'],
-      description: text['meta.description'],
+      description: metaDescription(text['meta.description']),
       url: `${SITE_URL}${path(locale, 'studio')}`,
       images: [{ url: HERO.image }],
     },

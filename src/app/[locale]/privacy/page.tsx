@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale, metaDescription } from '@/lib/i18n';
 import {
   PRIVACY_CLAUSES,
   PRIVACY_DATES,
@@ -30,7 +30,7 @@ export async function generateMetadata({
 
   return {
     title: PRIVACY_TITLE[locale],
-    description: description[locale],
+    description: metaDescription(description[locale]),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'privacy')}`,
       languages: alternates('privacy'),

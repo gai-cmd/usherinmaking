@@ -13,7 +13,7 @@ import {
   relatedPosts,
 } from '@/content/journal';
 import { ANNIVERSARY_PLANS, LOCATION_PLANS, STUDIO_PLANS, type Plan } from '@/content/site';
-import { JOURNAL_LOCALES, SITE_URL, UI, alternates, isLocale, path, type Locale } from '@/lib/i18n';
+import { JOURNAL_LOCALES, SITE_URL, UI, alternates, isLocale, path, type Locale, metaDescription } from '@/lib/i18n';
 import { getPageCopy } from '@/server/page-content';
 import { getJournalContentPosts } from '@/server/journal-content';
 import s from './page.module.css';
@@ -97,7 +97,7 @@ export async function generateMetadata({
 
   return {
     title: post.title,
-    description: post.excerpt,
+    description: metaDescription(post.excerpt),
     /*
      * 얇은 글은 색인에서 뺀다 — 사람에게는 그대로 보인다.
      *
@@ -114,7 +114,7 @@ export async function generateMetadata({
     },
     openGraph: {
       title: `${post.title} | usherinmaking`,
-      description: post.excerpt,
+      description: metaDescription(post.excerpt),
       url: `${SITE_URL}${path(locale, 'journal', post.slug)}`,
       type: 'article',
       images: [{ url: absoluteUrl(post.cover.src), alt: post.cover.alt }],

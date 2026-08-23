@@ -9,7 +9,7 @@ import {
   LOCATION_PLANS,
   type Plan,
 } from '@/content/site';
-import { SITE_URL, alternates, path, type Locale } from '@/lib/i18n';
+import { SITE_URL, alternates, path, type Locale, metaDescription } from '@/lib/i18n';
 import { getPageCopy, toLines, type PageCopy } from '@/server/page-content';
 import * as C from './content';
 import s from './PlanBody.module.css';
@@ -20,7 +20,7 @@ export async function planMetadata(locale: Locale): Promise<Metadata> {
   const text = await getPageCopy('plan', locale);
   return {
     title: text['meta.title'],
-    description: text['hero.lead'],
+    description: metaDescription(text['hero.lead']),
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'plan')}`,
       languages: alternates('plan'),
