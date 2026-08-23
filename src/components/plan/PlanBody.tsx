@@ -134,15 +134,36 @@ function LocationPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
 }
 
 function AnniversaryPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
+  // en 은 촬영 시간·컷 수 문안도 확정본으로 갈아끼운다(ja 는 site.ts 값 유지).
+  const withEnCopy =
+    locale === 'en'
+      ? ANNIVERSARY_PLANS.map((plan) => {
+          const copy = C.EN_ANNIVERSARY_CARD[plan.code];
+          if (!copy) return plan;
+          return {
+            ...plan,
+            duration: { ...plan.duration, en: copy.duration },
+            includes: { ...plan.includes, en: copy.includes },
+          };
+        })
+      : ANNIVERSARY_PLANS;
+
   return (
     <div className="u-wrap">
       <div className={s.grid}>
-        {gradeTitled(ANNIVERSARY_PLANS, locale).map((plan) => (
+        {gradeTitled(withEnCopy, locale).map((plan) => (
           <div key={plan.code} className={s.cardSlot}>
             <PlanCard plan={plan} locale={locale} />
           </div>
         ))}
       </div>
+      {locale === 'en' && (
+        <ul className={s.noteList}>
+          {C.EN_ANNIVERSARY_NOTES.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )}
       <p className={s.panelNote}>{C.ANNIVERSARY_PANEL.surcharge[locale]}</p>
       <p className={s.panelNote}>{text['anniversaryPanel.note']}</p>
     </div>

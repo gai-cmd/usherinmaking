@@ -62,6 +62,21 @@ export const EN_LOCATION_CARD: Record<string, { duration: string; includes: stri
   },
 };
 
+/** en 기념사진 카드 문안 — 사용자가 확정한 영문 그대로(ja/ko 는 site.ts 값 유지). */
+export const EN_ANNIVERSARY_CARD: Record<string, { duration: string; includes: string[] }> = {
+  'anniversary-standard': {
+    duration: 'One hour, 1 spot shooting',
+    includes: ['20 edited images + approximately 200–300 original image files (JPEG) provided'],
+  },
+  'anniversary-half': {
+    duration: '2 hours, 2 spot shooting',
+    includes: ['30 edited images + approximately 300–400 original image files (JPEG) provided'],
+  },
+};
+
+/** en 기념사진 절 주의사항 — 웨딩 의상 착장 불가 */
+export const EN_ANNIVERSARY_NOTES = ['Wedding dress costumes are not allowed.'];
+
 export const TABS = {
   studio: { ja: 'STUDIO', en: 'STUDIO', ko: '스튜디오' } satisfies L10n,
   location: { ja: 'ウェディングフォト', en: 'WEDDING PHOTO', ko: '로케이션' } satisfies L10n,
