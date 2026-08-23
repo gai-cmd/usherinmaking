@@ -84,21 +84,35 @@ function faqLd(locale: Locale) {
 /** 한 페이지에 이어 붙이는 플랜 묶음 (구 탭 하나에 해당) */
 type PlanGroup = { id: string; label: string; panel: ReactNode };
 
+/**
+ * 로케이션 카드 제목을 등급명(SIMPLE PLAN 등)으로 올리고 배지 줄을 비운다.
+ * ja·en 은 세 카드의 상품명이 모두 같아 제목이 정보를 주지 못한다 — ko 는 상품명이 달라 그대로 둔다.
+ * 기념사진 카드는 상품명이 서로 달라 이 처리를 하지 않는다.
+ */
+function gradeTitled(plans: Plan[], locale: Locale): Plan[] {
+  if (locale !== 'ja' && locale !== 'en') return plans;
+  return plans.map((plan) => ({
+    ...plan,
+    title: { ...plan.title, [locale]: `${plan.badge} PLAN` },
+    badge: '',
+  }));
+}
+
 function LocationPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
-  // en 은 카드 세 장의 상품명이 모두 같아 제목이 정보를 주지 못한다 — 등급명을 제목 자리로 올린다.
-  const plans =
+  // en 은 촬영 시간·컷 수 문안도 확정본으로 갈아끼운다(ja 는 site.ts 값 유지).
+  const withEnCopy =
     locale === 'en'
       ? LOCATION_PLANS.map((plan) => {
           const copy = C.EN_LOCATION_CARD[plan.code];
+          if (!copy) return plan;
           return {
             ...plan,
-            title: { ...plan.title, en: `${plan.badge} PLAN` },
-            badge: '',
-            duration: copy ? { ...plan.duration, en: copy.duration } : plan.duration,
-            includes: copy ? { ...plan.includes, en: copy.includes } : plan.includes,
+            duration: { ...plan.duration, en: copy.duration },
+            includes: { ...plan.includes, en: copy.includes },
           };
         })
       : LOCATION_PLANS;
+  const plans = gradeTitled(withEnCopy, locale);
 
   return (
     <div className="u-wrap">
