@@ -410,23 +410,20 @@ export function planOptions(code: string): PlanOptionGroup | undefined {
 export const LOCATION_NOTES: L10nList = {
   ja: [
     'ロケーションプランに含まれるのは撮影データのみです。衣装代・ヘアメイク代は別途かかります。',
-    'ドレスレンタル ¥10,000 〜 ¥50,000（タキシードのご用意はありません）',
-    '新郎新婦 ヘアセット + メイク ¥23,000〜（所要 約2時間）',
-    '動画 + ドローン撮影 1分30秒 ¥35,000（動画単独のご依頼は承っていません）',
+    'ドレスレンタル ¥10,000 〜 ¥50,000',
+    'オープニングムービー撮影 ¥35,000（期間限定）',
     '土日祝 ＋¥18,000',
   ],
   en: [
     'A location plan covers the photography data only. Outfits and hair and make-up are charged separately.',
-    'Dress rental from around ¥10,000 to ¥50,000. We do not carry tuxedos.',
-    'Hair and make-up for both partners from ¥23,000, taking about two hours.',
-    'Video with drone footage, 90 seconds, ¥35,000. Video cannot be booked on its own.',
+    'Dress rental from around ¥10,000 to ¥50,000.',
+    'Opening movie ¥35,000 (limited-time offer)',
     'Weekends and public holidays: +¥18,000',
   ],
   ko: [
     '로케이션 플랜은 촬영 데이터만 포함됩니다. 의상비·헤어메이크업 비용은 별도입니다.',
-    '드레스 대여 ¥10,000 ~ ¥50,000 (턱시도는 없습니다)',
-    '남녀 헤어세팅 + 메이크업 ¥23,000~ (소요 2시간)',
-    '영상 + 드론 촬영 1분 30초 ¥35,000 (영상 단독 의뢰는 불가)',
+    '드레스 대여 ¥10,000 ~ ¥50,000',
+    '오프닝 무비 촬영 ¥35,000 (기간 한정)',
     '주말·공휴일 +¥18,000',
   ],
 };
