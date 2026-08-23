@@ -128,10 +128,6 @@ export default async function MediaPage() {
               </li>
             ))}
           </ul>
-          <NotWired
-            what="새 활동은 아직 기록되지 않습니다."
-            hint="위 목록은 시드 데이터이며 ActivityLog 쓰기 경로가 아직 비어 있습니다"
-          />
         </Panel>
       </div>
     </>

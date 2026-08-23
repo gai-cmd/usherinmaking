@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { PageHeader, Panel } from '@/components/admin';
 import { getSiteSettings, listOutstandingItems } from '@/server/settings';
 import { ChannelLinksForm } from './ChannelLinksForm';
+import { SiteInfoForm } from './SiteInfoForm';
 import s from './settings.module.css';
 import { checkAdminPageAccess } from '@/server/auth';
 
@@ -67,18 +68,6 @@ export default async function AdminSettingsPage() {
                 </dd>
               </div>
               <div className={s.field}>
-                <dt>주소 · 일본어</dt>
-                <dd>{orTbc(settings.address.ja)}</dd>
-              </div>
-              <div className={s.field}>
-                <dt>주소 · 로마자 (EN / KO 공용)</dt>
-                <dd>{orTbc(settings.address.latin)}</dd>
-              </div>
-              <div className={s.field}>
-                <dt>공항에서</dt>
-                <dd>{orTbc(settings.fromAirport)}</dd>
-              </div>
-              <div className={s.field}>
                 <dt>주차</dt>
                 <dd>{settings.parking.ko}</dd>
               </div>
@@ -86,19 +75,18 @@ export default async function AdminSettingsPage() {
                 <dt>대응 언어</dt>
                 <dd>{settings.languages.ko}</dd>
               </div>
-              <div className={s.field}>
-                <dt>구글맵 좌표</dt>
-                <dd>
-                  {settings.geo.lat !== null && settings.geo.lng !== null ? (
-                    <span className={s.num}>
-                      {settings.geo.lat} · {settings.geo.lng}
-                    </span>
-                  ) : (
-                    orTbc(null)
-                  )}
-                </dd>
-              </div>
             </dl>
+
+            {/* 주소·공항·좌표는 여기서 직접 고친다. 저장값이 없으면 코드 확정값(STUDIO_INFO)이 보인다. */}
+            <SiteInfoForm
+              initial={{
+                addressJa: settings.address.ja,
+                addressLatin: settings.address.latin,
+                fromAirport: settings.fromAirport,
+                lat: settings.geo.lat,
+                lng: settings.geo.lng,
+              }}
+            />
           </Panel>
 
           {/* ---------------- 언어별 상담 채널 ---------------- */}

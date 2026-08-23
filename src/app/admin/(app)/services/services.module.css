@@ -143,7 +143,8 @@
 }
 
 .code,
-.codeMissing {
+.codeMissing,
+.codeOptional {
   display: inline-block;
   margin-right: 6px;
   padding: 1px 6px;
@@ -151,6 +152,12 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10.5px;
   color: var(--a-body);
+}
+
+/* 선택 변수가 비어 있는 건 경고가 아니다 — 흐리게만 표시한다 */
+.codeOptional {
+  opacity: 0.55;
+  border-style: dashed;
 }
 
 /* 서버에 값이 없는 환경변수는 눈에 띄어야 한다 — 이 화면의 핵심 신호다 */

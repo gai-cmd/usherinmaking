@@ -25,6 +25,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/seo', label: 'SEO / AEO' },
   { href: '/admin/media', label: '미디어 · 로그' },
   { href: '/admin/services', label: '외부 서비스' },
+  { href: '/admin/members', label: '관리자 계정' },
   { href: '/admin/settings', label: '설정' },
 ];
 

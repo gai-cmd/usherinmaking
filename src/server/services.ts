@@ -1,4 +1,5 @@
 import { prisma, isDatabaseConfigured } from '@/server/db';
+import { logAdminAction } from '@/server/activity';
 import {
   isVaultReady,
   maskSecret,
@@ -40,6 +41,11 @@ export type ServiceDef = {
    * 값은 절대 읽어서 내보내지 않는다 — 존재 여부만 본다.
    */
   envKeys: string[];
+  /**
+   * 있으면 기능이 더 켜지지만 없어도 서비스 자체는 도는 환경변수들.
+   * 연결 판정에는 쓰지 않고, 화면에 "선택" 으로 따로 보여준다.
+   */
+  optionalEnvKeys?: string[];
   /** 관리자가 값을 보관할 수 있는 자격 증명 칸. 비워 두면 메모만 남길 수 있다. */
   secretFields: { key: string; label: string }[];
 };
@@ -50,15 +56,16 @@ export const SERVICES: ServiceDef[] = [
     label: '호스팅 · 배포 (Vercel)',
     category: 'infra',
     purpose: '사이트가 실제로 돌아가는 곳. 배포와 도메인 연결, 환경변수 관리를 여기서 한다.',
-    consoleUrl: 'https://vercel.com/dashboard',
-    envKeys: [],
+    consoleUrl: 'https://vercel.com/gai-cmds-projects/usherinmaking',
+    envKeys: ['NEXT_PUBLIC_SITE_URL', 'CRON_SECRET'],
+    optionalEnvKeys: ['SERVICE_VAULT_KEY'],
     secretFields: [],
   },
   {
     id: 'neon',
     label: '데이터베이스 (Neon · PostgreSQL)',
     category: 'infra',
-    purpose: '문의·사진·후기 등 모든 데이터가 저장되는 원본. 여기가 비면 사이트 내용이 사라진다.',
+    purpose: '사진·후기·플랜·설정 등 모든 데이터가 저장되는 원본. 여기가 비면 사이트 내용이 사라진다.',
     consoleUrl: 'https://console.neon.tech',
     envKeys: ['DATABASE_URL'],
     secretFields: [{ key: 'databaseUrl', label: '접속 문자열 (DATABASE_URL)' }],
@@ -67,8 +74,9 @@ export const SERVICES: ServiceDef[] = [
     id: 'domain',
     label: '도메인',
     category: 'infra',
-    purpose: 'usherinmaking.com · usherinmaking.jp 주소. 갱신을 놓치면 사이트 주소를 잃는다.',
-    consoleUrl: 'https://vercel.com/domains',
+    purpose:
+      'usherinmaking.com(정본) · usherinmaking.jp · usherinmaking.co.kr. .com/.jp 은 Vercel DNS, .co.kr 은 가비아가 관리한다. 갱신을 놓치면 주소를 잃는다.',
+    consoleUrl: 'https://vercel.com/gai-cmds-projects/~/domains',
     envKeys: [],
     secretFields: [],
   },
@@ -76,18 +84,20 @@ export const SERVICES: ServiceDef[] = [
     id: 'google-auth',
     label: '관리자 로그인 (Google)',
     category: 'infra',
-    purpose: '이 관리자 화면에 들어오는 통로. 허용된 구글 계정만 열린다.',
+    purpose:
+      '이 관리자 화면에 들어오는 통로. ADMIN_ALLOWED_EMAILS 에 적힌 구글 계정만 열린다 — 관리자를 늘리거나 줄이려면 이 값을 Vercel 에서 고치고 재배포한다.',
     consoleUrl: 'https://console.cloud.google.com/apis/credentials',
-    envKeys: ['AUTH_GOOGLE_ID', 'AUTH_GOOGLE_SECRET', 'ADMIN_ALLOWED_EMAILS'],
+    envKeys: ['AUTH_GOOGLE_ID', 'AUTH_GOOGLE_SECRET', 'AUTH_SECRET', 'ADMIN_ALLOWED_EMAILS'],
     secretFields: [{ key: 'clientSecret', label: 'OAuth 클라이언트 시크릿' }],
   },
   {
     id: 'blob',
     label: '이미지 저장소 (Vercel Blob)',
     category: 'content',
-    purpose: '인스타에서 가져온 원본 사진과 변환본이 보관되는 곳.',
-    consoleUrl: 'https://vercel.com/dashboard/stores',
+    purpose: '인스타에서 가져온 원본 사진과 변환본, 관리자가 올린 이미지가 보관되는 곳.',
+    consoleUrl: 'https://vercel.com/gai-cmds-projects/~/stores',
     envKeys: ['BLOB_READ_WRITE_TOKEN'],
+    optionalEnvKeys: ['BLOB_STORE_ID'],
     secretFields: [{ key: 'token', label: '읽기·쓰기 토큰' }],
   },
   {
@@ -97,6 +107,7 @@ export const SERVICES: ServiceDef[] = [
     purpose: '@usherinmaking 게시물을 하루 한 번 자동으로 가져와 갤러리에 채운다.',
     consoleUrl: 'https://developers.facebook.com/apps',
     envKeys: ['IG_USER_ID', 'IG_ACCESS_TOKEN'],
+    optionalEnvKeys: ['IG_API_VERSION', 'INGEST_SINCE', 'INGEST_MAX_ITEMS'],
     secretFields: [{ key: 'accessToken', label: '액세스 토큰' }],
   },
   {
@@ -110,12 +121,35 @@ export const SERVICES: ServiceDef[] = [
   },
   {
     id: 'naver-blog',
-    label: '네이버 블로그',
+    label: '네이버 블로그 · 서치어드바이저',
     category: 'content',
-    purpose: '촬영 후기 원본. 한국어 페이지에서 안내한다.',
-    consoleUrl: 'https://blog.naver.com/usherinmaking',
+    purpose:
+      '촬영 후기 원본. 한국어 페이지에서 안내한다. 블로그 글을 자동으로 가져오려면 네이버 개발자 센터 API 키가 필요하다(선택).',
+    consoleUrl: 'https://developers.naver.com/apps',
     envKeys: [],
-    secretFields: [],
+    optionalEnvKeys: ['NAVER_BLOG_ID', 'NAVER_CLIENT_ID', 'NAVER_CLIENT_SECRET', 'NAVER_BLOG_URL'],
+    secretFields: [{ key: 'clientSecret', label: '네이버 API 클라이언트 시크릿' }],
+  },
+  {
+    id: 'search-console',
+    label: '구글 서치콘솔 (자동 재제출)',
+    category: 'content',
+    purpose:
+      '사이트맵은 한 번 등록해 두면 구글이 알아서 다시 읽어 간다. 이 항목은 그 위에 "매일 새벽 재제출을 프로그램으로 요청" 하는 보조 기능이며, 없어도 색인에는 지장이 없다.',
+    consoleUrl: 'https://search.google.com/search-console',
+    envKeys: [],
+    optionalEnvKeys: ['GSC_SERVICE_ACCOUNT_JSON', 'GSC_PROPERTY'],
+    secretFields: [{ key: 'serviceAccountJson', label: '서비스 계정 JSON' }],
+  },
+  {
+    id: 'translation',
+    label: '기계 번역 엔진',
+    category: 'ai',
+    purpose: '번역 화면의 초안 생성에 쓴다(선택). 없으면 번역은 전부 손으로 한다.',
+    consoleUrl: 'https://www.deepl.com/pro-api',
+    envKeys: [],
+    optionalEnvKeys: ['TRANSLATION_ENGINE', 'TRANSLATION_API_KEY'],
+    secretFields: [{ key: 'apiKey', label: 'API 키' }],
   },
   {
     id: 'ai',
@@ -124,6 +158,7 @@ export const SERVICES: ServiceDef[] = [
     purpose: '수집된 사진의 분류·대체텍스트 초안을 제안한다. 확정은 항상 관리자가 한다.',
     consoleUrl: 'https://console.anthropic.com/settings/keys',
     envKeys: ['AI_API_KEY'],
+    optionalEnvKeys: ['AI_MODEL'],
     secretFields: [{ key: 'apiKey', label: 'API 키' }],
   },
 ];
@@ -195,6 +230,9 @@ export type ServiceView = ServiceDef & {
   connected: boolean;
   /** 비어 있는 환경변수 이름들. 무엇을 채워야 하는지 화면이 그대로 보여준다. */
   missingEnvKeys: string[];
+  /** 선택 환경변수 중 서버에 들어가 있는 것 / 비어 있는 것. 연결 판정과 무관하다. */
+  optionalPresent: string[];
+  optionalMissing: string[];
   secrets: SecretView[];
 };
 
@@ -203,10 +241,14 @@ export async function listServices(): Promise<ServiceView[]> {
 
   return SERVICES.map((def) => {
     const rec = store[def.id];
-    const missingEnvKeys = def.envKeys.filter((k) => {
+    const isSet = (k: string) => {
       const v = process.env[k];
-      return !v || v.trim().length === 0;
-    });
+      return Boolean(v && v.trim().length > 0);
+    };
+    const missingEnvKeys = def.envKeys.filter((k) => !isSet(k));
+    const optional = def.optionalEnvKeys ?? [];
+    const optionalPresent = optional.filter(isSet);
+    const optionalMissing = optional.filter((k) => !isSet(k));
 
     const secrets: SecretView[] = def.secretFields.map((f) => {
       const sealed = rec?.secrets?.[f.key];
@@ -231,6 +273,8 @@ export async function listServices(): Promise<ServiceView[]> {
       // 그런 항목까지 "미설정"으로 칠하면 경고가 무뎌지므로 연결된 것으로 둔다.
       connected: missingEnvKeys.length === 0,
       missingEnvKeys,
+      optionalPresent,
+      optionalMissing,
       secrets,
     };
   });
@@ -306,6 +350,12 @@ export async function updateService(input: ServiceUpdate): Promise<VaultOutcome>
 
     store[input.serviceId] = next;
     await writeStore(store);
+    await logAdminAction('외부 서비스 저장', input.serviceId, {
+      account: input.account !== undefined,
+      memo: input.memo !== undefined,
+      // 자격 증명은 "어느 칸을 바꿨는지" 이름만 남긴다. 값은 로그에 절대 넣지 않는다.
+      secretFields: Object.keys(input.secrets ?? {}),
+    });
     return { ok: true };
   } catch (err) {
     console.error(`[services] 저장 실패 (${input.serviceId})`, err);

@@ -93,9 +93,15 @@ export function ServiceCard({
           <p className={s.purpose}>{service.purpose}</p>
         </div>
         {service.envKeys.length === 0 ? (
-          <Badge tone="muted" title="서버 값으로 확인할 수 있는 항목이 아닙니다">
-            확인 대상 아님
-          </Badge>
+          service.optionalMissing.length > 0 && service.optionalPresent.length === 0 ? (
+            <Badge tone="muted" title="필수 값은 없고, 선택 기능은 아직 켜지 않았습니다">
+              선택 기능 꺼짐
+            </Badge>
+          ) : (
+            <Badge tone="muted" title="서버 값으로 확인할 수 있는 필수 항목이 없습니다">
+              확인 대상 아님
+            </Badge>
+          )
         ) : service.connected ? (
           <Badge tone="default">연결됨</Badge>
         ) : (
@@ -114,7 +120,7 @@ export function ServiceCard({
         </div>
         {service.envKeys.length > 0 && (
           <div className={s.metaRow}>
-            <dt>서버 환경변수</dt>
+            <dt>필수 환경변수</dt>
             <dd>
               {service.envKeys.map((k) => (
                 <code
@@ -122,6 +128,23 @@ export function ServiceCard({
                   className={service.missingEnvKeys.includes(k) ? s.codeMissing : s.code}
                   title={service.missingEnvKeys.includes(k) ? '서버에 값이 없습니다' : '서버에 들어가 있습니다'}
                 >
+                  {k}
+                </code>
+              ))}
+            </dd>
+          </div>
+        )}
+        {(service.optionalPresent.length > 0 || service.optionalMissing.length > 0) && (
+          <div className={s.metaRow}>
+            <dt>선택 환경변수</dt>
+            <dd>
+              {service.optionalPresent.map((k) => (
+                <code key={k} className={s.code} title="서버에 들어가 있습니다">
+                  {k}
+                </code>
+              ))}
+              {service.optionalMissing.map((k) => (
+                <code key={k} className={s.codeOptional} title="없어도 서비스는 돕니다 — 이 기능만 꺼져 있습니다">
                   {k}
                 </code>
               ))}

@@ -12,7 +12,10 @@ import { LOCALES, SITE_URL, alternates, isLocale, path } from '@/lib/i18n';
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
+import { getSiteSettings } from '@/server/settings';
 import { getWorksImages } from '@/server/works';
+import { ORG_ID, ldJson, localBusinessLd, organizationLd } from '@/lib/structured-data';
+import { KO_ETC_PLANS, KO_WEDDING_PLANS } from '@/components/plan/content';
 import { ARCHIVE, CATEGORIES, DETAILS, HERO, WORKS } from './content';
 import s from './page.module.css';
 
@@ -53,11 +56,12 @@ export default async function LocationPage({ params }: { params: Promise<{ local
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  const [text, images, works] = await Promise.all([
+  const [text, images, works, settings] = await Promise.all([
     getPageCopy('location', locale),
     resolvePageImages('location'),
     // 작품 그리드 — 'location' 태그 사진이 정원(5장)을 채우면 사진 풀, 아니면 코드 배열.
     getWorksImages('location'),
+    getSiteSettings(),
   ]);
 
   // 히어로는 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
@@ -85,17 +89,51 @@ export default async function LocationPage({ params }: { params: Promise<{ local
     serviceType: 'Outdoor location photography',
     url: `${SITE_URL}${path(locale, 'location')}`,
     areaServed: { '@type': 'Place', name: 'Okinawa, Japan' },
-    provider: { '@type': 'Organization', name: 'usherinmaking', url: SITE_URL },
+    // 전역 Organization 노드를 @id 로 참조한다 — 이름만 적으면 별개 주체로 읽힌다.
+    provider: { '@id': ORG_ID },
     // 요금은 플랜 페이지가 정본이라 이 페이지의 구조화 데이터에는 offers 를 싣지 않는다.
   };
 
-  const jsonLd = isKo ? [serviceJsonLd, faqJsonLd] : serviceJsonLd;
+  // 한국어는 /ko 가 이 페이지로 넘어오므로 여기가 한국어 메인이다. 홈(ja/en)이 내보내는
+  // Organization · LocalBusiness 를 여기서도 내보내지 않으면 한국 검색자에게 사업장 정보가
+  // 아예 없는 사이트가 된다.
+  const geo =
+    settings.geo.lat !== null && settings.geo.lng !== null
+      ? { lat: settings.geo.lat, lng: settings.geo.lng }
+      : null;
+  const koBusinessLd = isKo
+    ? [
+        organizationLd(),
+        localBusinessLd({
+          locale,
+          description: text['meta.description'],
+          image: `${SITE_URL}${heroImage.src}`,
+          geo,
+          offers: [
+            {
+              '@type': 'Offer',
+              itemOffered: { '@type': 'Service', name: '웨딩 촬영' },
+              priceCurrency: 'KRW',
+              price: KO_WEDDING_PLANS[0].price,
+            },
+            {
+              '@type': 'Offer',
+              itemOffered: { '@type': 'Service', name: '기타 촬영' },
+              priceCurrency: 'KRW',
+              price: KO_ETC_PLANS[0].price,
+            },
+          ],
+        }),
+      ]
+    : [];
+
+  const jsonLd = isKo ? [...koBusinessLd, serviceJsonLd, faqJsonLd] : [serviceJsonLd];
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: ldJson(...jsonLd) }}
       />
 
       <header className={s.hero}>

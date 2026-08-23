@@ -1,4 +1,5 @@
 import { LOCALES, type Locale } from '@/lib/i18n';
+import { logAdminAction } from '@/server/activity';
 import { BRAND, STUDIO_INFO, TBC } from '@/content/site';
 import { prisma, isDatabaseConfigured } from '@/server/db';
 import type { L10n } from '@/server/translations';
@@ -316,6 +317,8 @@ export async function updateSiteSettings(input: SiteSettingsInput): Promise<Site
     else (next as Record<string, unknown>)[key] = value;
   }
   await writeStored(SITE_KEY, next);
+  // 어떤 항목을 고쳤는지만 남긴다. 값 자체(주소 등)는 공개 정보지만 로그를 늘릴 이유가 없다.
+  await logAdminAction('사업장 정보 저장', null, { keys: Object.keys(input) });
   return getSiteSettings();
 }
 
@@ -330,5 +333,8 @@ export async function updateChannels(input: ChannelUpdateInput): Promise<Channel
   const list = input.channels.map((c) => ({ ...c }));
   stored[input.locale] = list;
   await writeStored(CHANNELS_KEY, stored);
+  await logAdminAction('상담 채널 저장', input.locale, {
+    channels: list.map((c) => c.id),
+  });
   return list;
 }

@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import {
+  DEFAULT_LOCALE,
   HOME_LOCALES,
+  HTML_LANG,
   JOURNAL_LOCALES,
   LOCALES,
   SITE_URL,
@@ -38,10 +40,17 @@ function localesFor(key: PageKey): readonly Locale[] {
   return LOCALES;
 }
 
-/** 페이지가 있는 언어끼리만 hreflang 상호 지정 */
+/**
+ * 페이지가 있는 언어끼리만 hreflang 상호 지정.
+ * 키는 HTML 의 <link rel=alternate> 와 같은 HTML_LANG(ja-JP / en / ko-KR) 을 쓴다 —
+ * 사이트맵과 HTML 이 서로 다른 언어 태그를 내면 검색엔진이 두 신호를 하나로 묶지 못한다.
+ */
 function withAlternates(key: PageKey, ...rest: string[]) {
   const languages: Record<string, string> = {};
-  for (const l of localesFor(key)) languages[l] = `${SITE_URL}${path(l, key, ...rest)}`;
+  const available = localesFor(key);
+  for (const l of available) languages[HTML_LANG[l]] = `${SITE_URL}${path(l, key, ...rest)}`;
+  const xDefault = available.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : available[0];
+  languages['x-default'] = `${SITE_URL}${path(xDefault, key, ...rest)}`;
   return languages;
 }
 

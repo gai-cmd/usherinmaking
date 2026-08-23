@@ -205,8 +205,8 @@ export default async function PlansPage({ searchParams }: { searchParams: Search
               ))}
             </ul>
             <p className={s.note}>
-              저장이 DB에 연결되면 이 주소들이 함께 재검증(revalidatePath)됩니다. 지금은 저장
-              자체가 되지 않으므로 무효화도 일어나지 않습니다.
+              가격을 저장하면 이 주소들이 함께 재검증(revalidatePath)되어 공개 페이지에 바로
+              반영됩니다. 제목·소요시간·포함내역은 그대로 유지됩니다.
             </p>
           </Panel>
         </div>

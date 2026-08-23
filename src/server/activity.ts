@@ -94,19 +94,19 @@ export async function listActivity(limit = 10): Promise<ActivityLog[]> {
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
-    if (rows.length > 0) {
-      return rows.map((r) => ({
-        id: r.id,
-        actor: r.actor,
-        action: r.action,
-        target: r.target,
-        detail: toDetail(r.detail),
-        createdAt: r.createdAt,
-      }));
-    }
+    // DB 가 붙어 있으면 실제 기록만 보여 준다. 비어 있으면 빈 목록이 맞다 —
+    // 예시 행을 섞으면 "2026-06-14 에 누가 무엇을 했다" 는 거짓 기록이 화면에 남는다.
+    return rows.map((r) => ({
+      id: r.id,
+      actor: r.actor,
+      action: r.action,
+      target: r.target,
+      detail: toDetail(r.detail),
+      createdAt: r.createdAt,
+    }));
   }
 
-  // DB가 없거나 아직 한 줄도 쌓이지 않은 상태. 빈 화면 대신 구조를 보여 준다.
+  // DB 가 없는 개발 환경에서만 구조를 보여 주기 위한 예시다.
   return SEED_ACTIVITY.slice()
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, limit);

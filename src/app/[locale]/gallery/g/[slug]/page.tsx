@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ORG_ID } from '@/lib/structured-data';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -122,15 +123,9 @@ export default async function WorkDetailPage({
     datePublished: photo.takenAt,
     // schema.org 표준 필드만 쓴다. keywords 는 정제된 상위 태그 — AI 검색 전용 스키마는 없다.
     ...(igTags.length ? { keywords: igTags.join(', ') } : {}),
-    creator: {
-      '@type': 'Organization',
-      name: 'usherinmaking',
-      sameAs: [
-        'https://www.instagram.com/usherinmaking/',
-        'https://www.instagram.com/usherindress/',
-      ],
-    },
-    copyrightHolder: { '@type': 'Organization', name: 'usherinmaking' },
+    // 전역 Organization 노드를 @id 로 참조한다. sameAs 는 그 노드가 이미 들고 있다.
+    creator: { '@id': ORG_ID },
+    copyrightHolder: { '@id': ORG_ID },
   };
 
   return (

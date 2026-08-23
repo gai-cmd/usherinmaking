@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ORG_ID } from '@/lib/structured-data';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -182,11 +183,8 @@ export default async function JournalPostPage({
           '@id': `${SITE_URL}${path(locale, 'journal', post.slug)}`,
         },
         author: { '@type': 'Person', name: 'usherinmaking' },
-        publisher: {
-          '@type': 'Organization',
-          name: 'usherinmaking',
-          url: `${SITE_URL}${path(locale, 'home')}`,
-        },
+        // 전역 Organization 노드를 @id 로 참조한다 — 이름만 적으면 별개 주체로 읽힌다.
+        publisher: { '@id': ORG_ID },
         // 촬영지는 사이트 전체가 오키나와·미야코지마로 한정되어 있어 사실이다.
         contentLocation: { '@type': 'Place', name: 'Okinawa, Japan' },
         ...(naverOrigin ? { isBasedOn: naverOrigin } : {}),

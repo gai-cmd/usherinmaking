@@ -377,6 +377,29 @@ export async function upsertPlan(input: UpsertPlanInput): Promise<AdminPlan> {
   return planFromDb(row as DbPlan);
 }
 
+/** 가격 화면이 실제로 고치는 네 칸. 나머지(제목·소요시간·포함내역)는 번역 화면 몫이다. */
+export type PlanPricingPatch = Pick<AdminPlan, 'scope' | 'price' | 'listPrice' | 'taxIncluded'>;
+
+/**
+ * 가격만 갱신한다 — 다국어 본문은 기존 행에서 그대로 가져온다.
+ *
+ * 이전에는 가격 화면이 upsertPlan 에 title/duration/includes 를 빈 값으로 보냈고,
+ * upsert 는 받은 data 를 통째로 쓰므로 EN·KO 제목과 포함내역이 지워졌다.
+ * 화면이 바꾸는 칸만 받아 기존 행과 합치면 그 경로가 구조적으로 막힌다.
+ * 플랜이 아직 DB 에 없으면(시드만 있는 상태) 시드를 바탕으로 첫 행을 만든다.
+ */
+export async function updatePlanPricing(code: string, patch: PlanPricingPatch): Promise<AdminPlan> {
+  const conflict = taxFlagConflict(patch.scope, patch.taxIncluded);
+  if (conflict) throw new Error(`updatePlanPricing: ${conflict}`);
+
+  if (!isDatabaseConfigured()) throw new NotImplementedError('플랜 저장');
+
+  const current = await getPlan(code);
+  if (!current) throw new Error(`updatePlanPricing: 플랜을 찾을 수 없습니다 (${code})`);
+
+  return upsertPlan({ ...current, ...patch, code });
+}
+
 /** 옵션은 자연 유일키가 없다. 기존 항목을 고칠 때는 id 를 함께 보낸다. */
 export type UpsertOptionInput = Omit<AdminOption, 'id'> & { id?: string };
 

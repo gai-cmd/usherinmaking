@@ -9,6 +9,7 @@
 // 스토리지에만 올라가고 목록에 없는 파일은 아무도 찾을 수 없는 쓰레기가 되기 때문이다.
 
 import { randomUUID } from 'node:crypto';
+import { logAdminAction } from '@/server/activity';
 
 import { isDatabaseConfigured, prisma } from '@/server/db';
 import { DependencyUnavailableError, NotFoundError, ValidationError } from '@/server/errors';
@@ -245,6 +246,7 @@ export async function uploadMedia(input: UploadInput): Promise<UploadResult> {
       },
     });
 
+    await logAdminAction('미디어 업로드', row.id, { mimeType: input.mimeType, source: input.source ?? null });
     return { asset: fromDb(row), variants };
   } catch (err) {
     // 기록에 실패했으면 방금 올린 것을 되돌린다. 원본만이 아니라 파생본까지 —
@@ -295,4 +297,5 @@ export async function deleteMedia(id: string): Promise<void> {
   }
 
   await prisma.mediaAsset.delete({ where: { id } });
+  await logAdminAction('미디어 삭제', id);
 }

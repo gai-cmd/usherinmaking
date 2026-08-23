@@ -66,8 +66,10 @@ export function PlanEditor({
   async function save() {
     setState({ kind: 'pending' });
     try {
+      // 이 화면이 바꾸는 네 칸만 보낸다. 제목·소요시간·포함내역은 서버가 기존 행에서 잇는다 —
+      // 예전처럼 빈 값을 되보내면 EN·KO 본문이 지워졌다.
       const res = await fetch('/api/admin/plans', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           code: plan.code,
@@ -75,12 +77,6 @@ export function PlanEditor({
           price: Number(price),
           listPrice: listPrice === '' ? null : Number(listPrice),
           taxIncluded,
-          cuts: plan.cuts,
-          order: plan.order,
-          // 제목·소요시간·포함내역의 다국어 편집은 번역 화면 담당이라 여기서는 그대로 되보낸다.
-          title: { ja: plan.titleJa, en: '', ko: '' },
-          duration: { ja: plan.durationJa, en: '', ko: '' },
-          includes: { ja: [], en: [], ko: [] },
         }),
       });
 

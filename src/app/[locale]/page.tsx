@@ -14,6 +14,8 @@ import { LOCALES, SITE_URL, alternates, isLocale, path, type Locale } from '@/li
 import { pickImage } from '@/lib/image-slot';
 import { getPageCopy, toLines } from '@/server/page-content';
 import { resolvePageImages } from '@/server/page-images';
+import { getSiteSettings } from '@/server/settings';
+import { ldJson, localBusinessLd, organizationLd } from '@/lib/structured-data';
 import { getWorksImages } from '@/server/works';
 import {
   ANNIVERSARY_PLANS,
@@ -23,7 +25,6 @@ import {
   STUDIO_OPTIONS,
   STUDIO_PLANS,
   STUDIO_SETS,
-  STUDIO_INFO,
 } from '@/content/site';
 import { KO_ETC_PLANS, KO_WEDDING_PLANS } from '@/components/plan/content';
 import { HOME, KO_HOME_PLAN_NOTES } from './home-content';
@@ -66,7 +67,7 @@ export async function generateMetadata({
 }
 
 /** 확정된 사실만 구조화한다. 주소처럼 아직 못 받은 값은 TBC 토큰 그대로 내보낸다. */
-function jsonLd(locale: Locale) {
+function jsonLd(locale: Locale, geo: { lat: number; lng: number } | null) {
   const copy = HOME[locale];
 
   // 한국 고객 상품은 원화 상품(웨딩/기타 촬영)이 정본이다 — 엔화 스튜디오 플랜은 팔지 않는다.
@@ -101,44 +102,19 @@ function jsonLd(locale: Locale) {
           },
         ];
 
+  // 주소·채널·사업장 정보는 structured-data 가 한 곳에서 만든다 — 여기서 따로 적지 않는다.
   return [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'LocalBusiness',
-      '@id': `${SITE_URL}${path(locale, 'home')}#business`,
-      name: 'usherinmaking',
+    organizationLd(),
+    localBusinessLd({
+      locale,
       description: copy.meta.description,
-      url: `${SITE_URL}${path(locale, 'home')}`,
-      logo: `${SITE_URL}/brand/logo.png`,
       image:
         locale === 'ko'
           ? `${SITE_URL}/images/up/0f62c6d466bcea42.jpg`
           : `${SITE_URL}/images/studio/IMG_0766.png`,
-      // 같은 주체가 운영하는 채널임을 검색·AI 엔진에 알린다. 갤러리 사진의 출처가
-      // 이 계정이므로, 연결이 없으면 같은 사진이 서로 무관한 두 곳에 있는 것으로 읽힌다.
-      // 작품 계정 + 드레스 계정 둘 다 이 브랜드의 공식 채널이다 — 엔티티 일관성 신호.
-      sameAs: [
-        'https://www.instagram.com/usherinmaking/',
-        'https://www.instagram.com/usherindress/',
-      ],
-      telephone: STUDIO_INFO.phoneIntl,
-      // 주소는 구성 요소를 쪼개서 넣는다. 한 줄로 뭉치면 지역 검색이 시·군을 읽어내지 못한다.
-      address: {
-        '@type': 'PostalAddress',
-        addressCountry: 'JP',
-        addressRegion: 'Okinawa',
-        addressLocality: 'Kitanakagusuku, Nakagami District',
-        postalCode: '901-2302',
-        streetAddress: '1868 Toguchi',
-      },
-      knowsLanguage: ['ja', 'en', 'ko'],
-      amenityFeature: {
-        '@type': 'LocationFeatureSpecification',
-        name: STUDIO_INFO.parking[locale],
-        value: true,
-      },
-      makesOffer: offers,
-    },
+      geo,
+      offers,
+    }),
     {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
@@ -161,7 +137,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // 관리자가 건 사진을 한 번에 읽는다. 행이 없는 자리는 지금 쓰던 경로가 그대로 나온다.
   // 세트 그리드는 스튜디오 페이지와 같은 사진이므로 그쪽 슬롯을 함께 읽는다 —
   // 한 장을 갈아끼웠는데 홈에만 옛 사진이 남는 어긋남을 만들지 않기 위해서다.
-  const [text, images, studioImages, works] = await Promise.all([
+  const [text, images, studioImages, works, settings] = await Promise.all([
     // 관리자가 고친 문구. 손대지 않은 자리는 코드 기본값이 그대로 담겨 온다.
     getPageCopy('home', locale),
     resolvePageImages('home'),
@@ -169,7 +145,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     // 최근 작품 그리드 — 사진 풀이 정원을 채우면 그쪽, 아니면 코드 배열.
     // 한국어 홈은 로케이션 태그 사진만 고른다 (스튜디오 컷이 섞이지 않게).
     getWorksImages(isKo ? 'location' : 'home'),
+    // 사업장 좌표. 관리자가 넣어 두면 LocalBusiness 에 geo 로 나간다 — 없으면 내보내지 않는다.
+    getSiteSettings(),
   ]);
+  const geo =
+    settings.geo.lat !== null && settings.geo.lng !== null
+      ? { lat: settings.geo.lat, lng: settings.geo.lng }
+      : null;
 
   // 작가 소개 옆 사진도 관리자에서 갈아끼운다. 코드 경로는 폴백일 뿐이다.
   const photographerImage = pickImage(
@@ -184,7 +166,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(locale)) }}
+        dangerouslySetInnerHTML={{ __html: ldJson(...jsonLd(locale, geo)) }}
       />
 
       <HeroGate locale={locale} images={images} text={text} />

@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+import { touchAdminMember } from '@/server/admin-members';
 import { auth, isAllowedAdminEmail, isSsoConfigured } from '@/auth';
 import { UnauthorizedError } from './errors';
 
@@ -112,7 +113,24 @@ export async function checkAdminPageAccess(): Promise<AdminPageAccess> {
     };
   }
 
+  // 실제 접속 기록. 요청마다 쓰지 않도록 이메일+시각(분 단위)을 키로 한 번만 남긴다.
+  // 실패해도 접근은 허용한다 — 기록은 부가 정보이지 관문이 아니다.
+  void touchOnce(email, session?.user?.name ?? null);
+
   return { allowed: true, guarded: true, email };
+}
+
+const touched = new Map<string, number>();
+const TOUCH_INTERVAL_MS = 10 * 60 * 1000;
+
+/** 같은 계정의 접속 기록은 10분에 한 번만 DB 에 쓴다. 페이지마다 쓰면 로그인 한 번에 수십 행이 생긴다. */
+async function touchOnce(email: string, name: string | null): Promise<void> {
+  const key = email.toLowerCase();
+  const now = Date.now();
+  const last = touched.get(key) ?? 0;
+  if (now - last < TOUCH_INTERVAL_MS) return;
+  touched.set(key, now);
+  await touchAdminMember(email, name);
 }
 
 /**
