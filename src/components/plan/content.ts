@@ -17,7 +17,7 @@ const koOnlyList = (v: string[]): L10nList => ({ ja: v, en: v, ko: v });
 export const HERO = {
   label: {
     ja: 'PLAN & OPTION',
-    en: 'PLANS & ADD-ONS',
+    en: 'OUTDOOR',
     ko: 'PLAN & OPTION',
   } satisfies L10n,
   title: { ja: 'Plans', en: 'Plans', ko: '플랜 안내' } satisfies L10n,

@@ -85,10 +85,20 @@ function faqLd(locale: Locale) {
 type PlanGroup = { id: string; label: string; panel: ReactNode };
 
 function LocationPanel({ locale, text }: { locale: Locale; text: PageCopy }) {
+  // en 은 카드 세 장의 상품명이 모두 같아 제목이 정보를 주지 못한다 — 등급명을 제목 자리로 올린다.
+  const plans =
+    locale === 'en'
+      ? LOCATION_PLANS.map((plan) => ({
+          ...plan,
+          title: { ...plan.title, en: plan.badge },
+          badge: '',
+        }))
+      : LOCATION_PLANS;
+
   return (
     <div className="u-wrap">
       <div className={s.grid}>
-        {LOCATION_PLANS.map((plan) => (
+        {plans.map((plan) => (
           <div key={plan.code} className={s.cardSlot}>
             <PlanCard plan={plan} locale={locale} />
           </div>

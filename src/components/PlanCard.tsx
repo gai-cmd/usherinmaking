@@ -18,7 +18,7 @@ export function PlanCard({
 }) {
   return (
     <article className={s.root}>
-      <p className={s.badge}>{plan.badge}</p>
+      {plan.badge && <p className={s.badge}>{plan.badge}</p>}
       <h3 className={s.title}>{plan.title[locale]}</h3>
       <p className={s.duration}>{plan.duration[locale]}</p>
 
