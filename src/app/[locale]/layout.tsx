@@ -21,7 +21,19 @@ export function generateStaticParams() {
  * 값을 바꾸지 말 것 — 각 도구에 등록된 토큰과 한 글자라도 다르면 확인에 실패한다.
  */
 const GOOGLE_SITE_VERIFICATION = 'qar5pssLealM36EvEUxv6LImy0b94Ots9VzoiFTUpIw';
-const NAVER_SITE_VERIFICATION = '9cd087cb75bfafd1c182ed79bed0c84792cec2e0';
+/**
+ * 네이버는 호스트마다 별도 사이트로 등록하므로 토큰이 여러 개다. 정본이 아닌 호스트는
+ * 전부 usherinmaking.com 으로 308 집결되어 결국 이 페이지가 응답하니, 네이버가
+ * 리다이렉트를 따라오는 경우에 대비해 모든 토큰을 함께 내보낸다(메타 태그 중복 허용).
+ * 권장 방식인 HTML 파일은 public/naver*.html 에 두었고, 점이 든 경로라 미들웨어의
+ * 호스트 리다이렉트를 타지 않아 각 호스트에서 200 으로 바로 나간다.
+ */
+const NAVER_SITE_VERIFICATION = [
+  '9cd087cb75bfafd1c182ed79bed0c84792cec2e0', // usherinmaking.com (옛 Wix 에서 이전)
+  'eaf6c233aa8d2013805a14648defdfce8dd68e7b', // www.usherinmaking.com
+  'bea0c8543760497312fd42338319fa5381b180b6', // www.usherinmaking.jp
+  '566734477f882ab5e1abed8a0f562eaf1d391d86', // www.usherinmaking.co.kr
+];
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
