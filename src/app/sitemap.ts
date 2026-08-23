@@ -215,10 +215,10 @@ async function journalEntries(now: Date): Promise<MetadataRoute.Sitemap> {
     }
 
     return known.map((p) => {
-      const languages: Record<string, string> = {};
-      for (const l of localesBySlug.get(p.slug) ?? []) {
-        languages[l] = `${SITE_URL}${path(l, 'journal', p.slug)}`;
-      }
+      const languages = languagesFor(
+        (localesBySlug.get(p.slug) ?? []) as Locale[],
+        (l) => `${SITE_URL}${path(l, 'journal', p.slug)}`,
+      );
 
       return {
         url: `${SITE_URL}${path(p.locale as Locale, 'journal', p.slug)}`,
