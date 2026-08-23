@@ -273,8 +273,8 @@ export const ANNIVERSARY_PLANS: Plan[] = [
   {
     code: 'anniversary-half',
     scope: 'anniversary',
-    badge: 'HALF',
-    title: { ja: '記念写真 ハーフ', en: 'Anniversary Half', ko: '기념사진 하프' },
+    badge: 'UP TO',
+    title: { ja: '記念写真アップ・トゥー', en: 'Anniversary Half', ko: '기념사진 하프' },
     duration: {
       ja: '撮影時間 2時間 ・ 2ヶ所 ・ 日中 / 夕方〜サンセット',
       en: 'approx. 2 hours · 2 locations · daytime or into sunset',
