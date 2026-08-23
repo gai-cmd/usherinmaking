@@ -71,12 +71,15 @@ done
 
 step "05 공개 사이트 정적 미러"
 mkdir -p "$OUT/05-mirror"
+# 정본 도메인을 받는다. vercel.app 을 받으면 전부 정본으로 308 되어 wget 이 멈춘다
+# (2026-08-23 백업 도중 도메인이 전환되며 실제로 겪었다).
+SITE="$(envval NEXT_PUBLIC_SITE_URL)"; SITE="${SITE:-https://usherinmaking.com}"
 # 같은 도메인 안의 HTML·CSS·JS 만 받는다. 이미지·영상은 03-blob 이 원본을 갖고 있다.
 wget --quiet --mirror --page-requisites --adjust-extension --no-parent \
      --wait=0.2 --timeout=30 --tries=2 -e robots=off \
      --reject-regex '/admin|/api/' \
      --directory-prefix="$OUT/05-mirror" \
-     https://usherinmaking.vercel.app/sitemap.xml https://usherinmaking.vercel.app/ || echo "(미러 일부 실패 — 비상용이라 계속 진행)"
+     "$SITE/sitemap.xml" "$SITE/" || echo "(미러 일부 실패 — 비상용이라 계속 진행)"
 echo "미러 $(find "$OUT/05-mirror" -type f | wc -l | tr -d ' ') 파일"
 
 step "무결성"
