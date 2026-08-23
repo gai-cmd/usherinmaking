@@ -71,16 +71,14 @@ done
 
 step "05 공개 사이트 정적 미러"
 mkdir -p "$OUT/05-mirror"
-# 정본 도메인을 받는다. vercel.app 을 받으면 전부 정본으로 308 되어 wget 이 멈춘다
-# (2026-08-23 백업 도중 도메인이 전환되며 실제로 겪었다).
+# 정본 도메인을 받는다. vercel.app 을 받으면 전부 정본으로 308 되어 멈춘다.
+# 이 맥의 라우터가 옛 네임서버를 오래 캐시하는 일이 있어(2026-08-24) 리졸버를 우회해
+# 권위 서버가 주는 IP 로 못박는다. wget 은 그게 안 되므로 자체 스크립트를 쓴다.
 SITE="$(envval NEXT_PUBLIC_SITE_URL)"; SITE="${SITE:-https://usherinmaking.com}"
-# 같은 도메인 안의 HTML·CSS·JS 만 받는다. 이미지·영상은 03-blob 이 원본을 갖고 있다.
-wget --quiet --mirror --page-requisites --adjust-extension --no-parent \
-     --wait=0.2 --timeout=30 --tries=2 -e robots=off \
-     --reject-regex '/admin|/api/' \
-     --directory-prefix="$OUT/05-mirror" \
-     "$SITE/sitemap.xml" "$SITE/" || echo "(미러 일부 실패 — 비상용이라 계속 진행)"
-echo "미러 $(find "$OUT/05-mirror" -type f | wc -l | tr -d ' ') 파일"
+SITE_HOST="${SITE#https://}"
+SITE_IP="$(dig +short @ns1.vercel-dns.com "$SITE_HOST" A | head -1)"
+python3 scripts/backup/mirror.py "$SITE" "$OUT/05-mirror" ${SITE_IP:+"$SITE_IP"} \
+  || echo "(미러 일부 실패 — 비상용이라 계속 진행)"
 
 step "무결성"
 ( cd "$OUT" && find . -type f ! -name SHA256SUMS -print0 | xargs -0 shasum -a 256 > SHA256SUMS )
