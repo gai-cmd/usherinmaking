@@ -87,7 +87,7 @@ type PlanGroup = { id: string; label: string; panel: ReactNode };
 /**
  * 로케이션 카드 제목을 등급명(SIMPLE PLAN 등)으로 올리고 배지 줄을 비운다.
  * ja·en 은 세 카드의 상품명이 모두 같아 제목이 정보를 주지 못한다 — ko 는 상품명이 달라 그대로 둔다.
- * 기념사진 카드는 상품명이 서로 달라 이 처리를 하지 않는다.
+ * 기념사진 카드는 ja 에서만 같은 처리를 한다(en 은 상품명이 서로 달라 그대로 둔다).
  */
 function gradeTitled(plans: Plan[], locale: Locale): Plan[] {
   if (locale !== 'ja' && locale !== 'en') return plans;
@@ -137,7 +137,7 @@ function AnniversaryPanel({ locale, text }: { locale: Locale; text: PageCopy }) 
   return (
     <div className="u-wrap">
       <div className={s.grid}>
-        {ANNIVERSARY_PLANS.map((plan) => (
+        {(locale === 'ja' ? gradeTitled(ANNIVERSARY_PLANS, locale) : ANNIVERSARY_PLANS).map((plan) => (
           <div key={plan.code} className={s.cardSlot}>
             <PlanCard plan={plan} locale={locale} />
           </div>
