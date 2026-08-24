@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { SEARCH_TERMS } from '@/lib/structured-data';
+import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/Header';
@@ -74,6 +75,7 @@ export default async function LocaleLayout({
     // 서체는 애플 시스템 서체를 쓰므로 외부 폰트 요청이 없다 (globals.css 참조).
     <html lang={HTML_LANG[locale]}>
       <body>
+        <GoogleAnalytics />
         <Header locale={locale} />
         <main>{children}</main>
         <Footer locale={locale} />

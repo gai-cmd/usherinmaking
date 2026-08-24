@@ -132,14 +132,25 @@ export const SERVICES: ServiceDef[] = [
   },
   {
     id: 'search-console',
-    label: '구글 서치콘솔 (자동 재제출)',
+    label: '구글 서치콘솔 · 애널리틱스',
     category: 'content',
     purpose:
-      '사이트맵은 한 번 등록해 두면 구글이 알아서 다시 읽어 간다. 이 항목은 그 위에 "매일 새벽 재제출을 프로그램으로 요청" 하는 보조 기능이며, 없어도 색인에는 지장이 없다.',
+      '사이트맵 자동 재제출과 아침 데일리 인사이트 이메일(검색 유입 + 트래픽)이 이 자격 증명을 쓴다. 서비스 계정 이메일을 서치콘솔 사용자와 GA4 뷰어로 추가해야 한다.',
     consoleUrl: 'https://search.google.com/search-console',
     envKeys: [],
-    optionalEnvKeys: ['GSC_SERVICE_ACCOUNT_JSON', 'GSC_PROPERTY'],
+    optionalEnvKeys: ['GSC_SERVICE_ACCOUNT_JSON', 'GSC_PROPERTY', 'GA4_PROPERTY_ID', 'NEXT_PUBLIC_GA4_ID'],
     secretFields: [{ key: 'serviceAccountJson', label: '서비스 계정 JSON' }],
+  },
+  {
+    id: 'resend',
+    label: '이메일 발송 (Resend · 보고서용)',
+    category: 'content',
+    purpose:
+      '아침 데일리 인사이트를 이메일로 보낸다. 손님에게 가는 메일은 없다 — 운영 보고서 전용. 도메인 인증까지 마쳐야 임의 수신자에게 발송된다.',
+    consoleUrl: 'https://resend.com/api-keys',
+    envKeys: [],
+    optionalEnvKeys: ['RESEND_API_KEY', 'REPORT_RECIPIENTS', 'REPORT_FROM'],
+    secretFields: [{ key: 'apiKey', label: 'API 키' }],
   },
   {
     id: 'translation',
