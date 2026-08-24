@@ -446,7 +446,9 @@ export const CHANNELS: Record<Locale, Channel[]> = {
     {
       id: 'kakao',
       label: { ja: 'KakaoTalk', en: 'KakaoTalk', ko: '카카오톡' },
-      note: { ja: '', en: '', ko: '가장 빠르게 답변드립니다' },
+      // 개인 계정 링크는 친구추가를 거친다 — "클릭하면 채팅창"이라고 약속하면 거짓이 된다.
+      // PC 에서는 QR 이 떠서 ID 검색이 더 빠르므로 ID 를 함께 적는다.
+      note: { ja: '', en: '', ko: '친구추가 후 메시지 · ID: amipaek' },
       primary: true,
     },
     {
@@ -460,7 +462,7 @@ export const CHANNELS: Record<Locale, Channel[]> = {
     {
       id: 'line',
       label: { ja: 'LINE', en: 'LINE', ko: 'LINE' },
-      note: { ja: 'いちばん早くお返事できます', en: '', ko: '' },
+      note: { ja: '友だち追加からメッセージ ・ いちばん早くお返事できます', en: '', ko: '' },
       primary: true,
     },
     {

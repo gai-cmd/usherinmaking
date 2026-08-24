@@ -89,7 +89,10 @@ function envOrNull(name: string): string | null {
  * "미설정이라 죽은 버튼"을 만들지 않기 위한 코드 확정값이다(naverBlog 폴백과 같은 계열).
  */
 const CONFIRMED_CHANNEL_URLS: Record<string, string> = {
-  line: 'https://line.me/ti/p/8Udy1kYg1l',
+  // /R/ 프리픽스는 모바일에서 웹 랜딩("LINE으로 열기" 화면)을 거치지 않고 앱을 바로 연다.
+  // 개인 계정 링크라 열리는 곳은 프로필(친구추가 + 메시지 버튼)까지다 — 채팅창 직행은
+  // LINE 공식계정의 oaMessage 링크만 가능하고, 그 URL 이 생기면 관리자 설정에 붙여넣으면 된다.
+  line: 'https://line.me/R/ti/p/8Udy1kYg1l',
   // 콘택트의 인스타 창구는 프로필이 아니라 DM 입구다 — ig.me 는 DM 화면을 바로 연다.
   instagram: `https://ig.me/m/${BRAND.instagram}`,
   // 카카오톡 "바로 친구 추가" QR 코드에서 확인한 고정 링크 (2026-08-22 사장님 전달).
