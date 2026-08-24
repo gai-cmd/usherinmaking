@@ -462,7 +462,7 @@ export const CHANNELS: Record<Locale, Channel[]> = {
     {
       id: 'line',
       label: { ja: 'LINE', en: 'LINE', ko: 'LINE' },
-      note: { ja: '友だち追加からメッセージ ・ いちばん早くお返事できます', en: '', ko: '' },
+      note: { ja: '友だち追加からメッセージ ・ ID: usehrinmaking', en: '', ko: '' },
       primary: true,
     },
     {
