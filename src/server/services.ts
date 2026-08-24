@@ -142,6 +142,17 @@ export const SERVICES: ServiceDef[] = [
     secretFields: [{ key: 'serviceAccountJson', label: '서비스 계정 JSON' }],
   },
   {
+    id: 'kakao-report',
+    label: '카카오톡 보고서 (나에게 보내기)',
+    category: 'content',
+    purpose:
+      '데일리 인사이트 요약을 각자의 카카오톡 "나와의 채팅"으로 보낸다. 수신자 본인이 /api/kakao/connect?who=이름 링크로 1회 동의하면 연결된다. 매일 발송이 토큰을 자동 연장한다.',
+    consoleUrl: 'https://developers.kakao.com/console/app',
+    envKeys: [],
+    optionalEnvKeys: ['KAKAO_REST_API_KEY'],
+    secretFields: [{ key: 'restKey', label: 'REST API 키' }],
+  },
+  {
     id: 'resend',
     label: '이메일 발송 (Resend · 보고서용)',
     category: 'content',

@@ -1,5 +1,6 @@
 import { SITE_URL } from '@/lib/i18n';
 import { googleAccessToken, readServiceAccount } from '@/server/google-token';
+import { sendKakaoToAll } from '@/server/kakao-report';
 
 /**
  * 데일리 인사이트 보고서 — 구글 검색 유입(Search Console) + 사이트 트래픽(GA4).
@@ -235,7 +236,7 @@ function insights(gsc: GscSection, ga4: Ga4Section): string[] {
   return out;
 }
 
-export type DailyReport = { subject: string; text: string; html: string };
+export type DailyReport = { subject: string; text: string; html: string; kakaoSummary: string };
 
 export async function composeDailyReport(): Promise<DailyReport> {
   const [gsc, ga4] = await Promise.all([fetchGsc(), fetchGa4()]);
@@ -275,42 +276,64 @@ export async function composeDailyReport(): Promise<DailyReport> {
   insights(gsc, ga4).forEach((s, i) => L.push(`  ${i + 1}. ${s}`));
 
   const text = L.join('\n');
+
+  // 카카오톡 "나에게 보내기" 기본 템플릿은 200자 제한 — 핵심 숫자만 추린 요약.
+  const K: string[] = [`📈 usherinmaking ${today}`];
+  if (gsc.totals) K.push(`검색: 클릭 ${n(gsc.totals.clicks)} · 노출 ${n(gsc.totals.impressions)} · ${gsc.totals.position.toFixed(1)}위`);
+  if (ga4.totals) K.push(`어제 세션 ${n(ga4.totals.sessions)}${delta(ga4.totals.sessions, ga4.prevWeekSessions ?? 0)}`);
+  const kTop = gsc.topQueries.find((q) => q.clicks > 0);
+  if (kTop) K.push(`인기 검색어: "${kTop.keys[0]}"`);
+  K.push('상세는 이메일함을 확인하세요');
+  const kakaoSummary = K.join('\n');
   // HTML 은 텍스트를 그대로 <pre> 계열로 감싼다 — 이메일 클라이언트마다 CSS 지원이 갈려서
   // 표 레이아웃보다 고정폭 텍스트가 어디서나 같게 보인다.
   const html = `<div style="font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.9;white-space:pre-wrap;color:#3f3a33;max-width:680px">${text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')}</div>`;
 
-  return { subject, text, html };
+  return { subject, text, html, kakaoSummary };
 }
 
 /* ---------------------------------------------------------------- 발송 */
 
 export type SendOutcome = { sent: boolean; detail: string };
+export type DeliveryOutcome = {
+  email: SendOutcome;
+  kakao: { label: string; sent: boolean; detail?: string }[];
+  subject?: string;
+};
 
 /**
  * Resend 로 발송한다. 도메인(usherinmaking.com) 인증이 끝나면 어떤 수신자에게도 보낼 수 있다.
  * RESEND_API_KEY / REPORT_RECIPIENTS 가 없으면 발송만 건너뛰고 그 사실을 돌려준다.
  */
-export async function sendDailyReport(): Promise<SendOutcome & { subject?: string }> {
+export async function sendDailyReport(): Promise<DeliveryOutcome> {
+  if (!readServiceAccount()) {
+    return {
+      email: { sent: false, detail: 'GSC_SERVICE_ACCOUNT_JSON 미설정 — 데이터를 읽을 수 없어 발송하지 않습니다.' },
+      kakao: [],
+    };
+  }
+
+  const report = await composeDailyReport();
+
+  // 이메일과 카톡은 독립 채널이다 — 한쪽 실패가 다른 쪽을 막지 않는다.
+  const [email, kakao] = await Promise.all([
+    sendEmail(report),
+    sendKakaoToAll(report.kakaoSummary, SITE_URL),
+  ]);
+  return { email, kakao, subject: report.subject };
+}
+
+async function sendEmail(report: DailyReport): Promise<SendOutcome> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const recipients = (process.env.REPORT_RECIPIENTS ?? '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
 
-  if (!readServiceAccount()) {
-    return { sent: false, detail: 'GSC_SERVICE_ACCOUNT_JSON 미설정 — 데이터를 읽을 수 없어 발송하지 않습니다.' };
-  }
-
-  const report = await composeDailyReport();
-
   if (!apiKey || recipients.length === 0) {
-    return {
-      sent: false,
-      subject: report.subject,
-      detail: !apiKey ? 'RESEND_API_KEY 미설정' : 'REPORT_RECIPIENTS 미설정',
-    };
+    return { sent: false, detail: !apiKey ? 'RESEND_API_KEY 미설정' : 'REPORT_RECIPIENTS 미설정' };
   }
 
   const from = process.env.REPORT_FROM?.trim() || 'usherinmaking 리포트 <report@usherinmaking.com>';
@@ -321,7 +344,7 @@ export async function sendDailyReport(): Promise<SendOutcome & { subject?: strin
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
-    return { sent: false, subject: report.subject, detail: `Resend ${res.status} ${detail.slice(0, 200)}` };
+    return { sent: false, detail: `Resend ${res.status} ${detail.slice(0, 200)}` };
   }
-  return { sent: true, subject: report.subject, detail: `${recipients.length}명에게 발송` };
+  return { sent: true, detail: `${recipients.length}명에게 발송` };
 }
