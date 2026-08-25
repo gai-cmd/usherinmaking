@@ -36,6 +36,9 @@ const FIGURE_LINE = /^!\[([^\]]*)\]\((\S+)\)$/;
  */
 const NOTE_LINE = /^\*+([^*][\s\S]*?[^*])\*+$/;
 
+/** 질문–답 블록 — `Q: …` 줄 다음에 `A: …`. 답은 여러 줄이어도 된다(같은 문단 안에서). */
+const FAQ_BLOCK = /^Q:\s*(.+)\nA:\s*([\s\S]+)$/;
+
 /**
  * DB 의 본문 문자열을 블록으로 되돌린다. 직렬화 규칙(`server/journal.ts` 의 blocksToText)의 역이다:
  * 빈 줄로 문단을 나누고, `> ` 로 시작하면 인용, `![alt](src)` 한 줄이면 사진으로 읽는다.
@@ -52,6 +55,8 @@ function toBlocks(body: string): JournalBlock[] {
       const fig = t.match(FIGURE_LINE);
       if (fig) return { kind: 'figure', image: { src: fig[2], alt: fig[1] } };
       if (t.startsWith('> ')) return { kind: 'quote', text: t.slice(2).trim() };
+      const faq = t.match(FAQ_BLOCK);
+      if (faq) return { kind: 'faq', q: faq[1].trim(), a: faq[2].trim() };
       const note = t.match(NOTE_LINE);
       if (note) return { kind: 'note', text: note[1].trim() };
       return { kind: 'p', text: t };
@@ -105,9 +110,11 @@ const THIN_BODY_CHARS = 200;
 const THIN_MIN_IMAGES = 3;
 
 function bodyChars(blocks: JournalBlock[]): number {
-  return blocks
-    .filter((b): b is Extract<JournalBlock, { kind: 'p' | 'quote' }> => b.kind === 'p' || b.kind === 'quote')
-    .reduce((n, b) => n + b.text.length, 0);
+  return blocks.reduce((n, b) => {
+    if (b.kind === 'p' || b.kind === 'quote') return n + b.text.length;
+    if (b.kind === 'faq') return n + b.q.length + b.a.length;
+    return n;
+  }, 0);
 }
 
 function imageCount(blocks: JournalBlock[]): number {

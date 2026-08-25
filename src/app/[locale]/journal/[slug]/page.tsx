@@ -215,8 +215,31 @@ export default async function JournalPostPage({
     ],
   };
 
+  /**
+   * 글 안의 Q&A 쌍을 FAQPage 로 내보낸다. 문의·홈 페이지의 FAQ 와 같은 모양이며,
+   * 쌍이 하나도 없는 글(사진 기록)에는 붙이지 않는다 — 빈 FAQPage 는 오류로 잡힌다.
+   */
+  const faqs = post.body.filter((b): b is Extract<typeof b, { kind: 'faq' }> => b.kind === 'faq');
+  const faqPage = faqs.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      }
+    : null;
+
   return (
     <article>
+      {faqPage && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPage) }}
+        />
+      )}
       {blogPosting && (
         <script
           type="application/ld+json"
@@ -293,6 +316,14 @@ export default async function JournalPostPage({
               <p key={i} className={s.note}>
                 {linkify(block.text)}
               </p>
+            );
+          }
+          if (block.kind === 'faq') {
+            return (
+              <section key={i} className={s.faq}>
+                <h2 className={s.faqQ}>{block.q}</h2>
+                <p className={s.faqA}>{linkify(block.a)}</p>
+              </section>
             );
           }
           if (block.kind === 'figure') {

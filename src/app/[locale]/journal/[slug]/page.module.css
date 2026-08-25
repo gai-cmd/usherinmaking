@@ -154,6 +154,25 @@
 }
 
 /* 곁말 — 본문이 아니라 이 글의 출처를 밝히는 한 줄. 본문보다 작고 옅게 흘려 쓴다. */
+/* 질문–답: 질문은 제목 서체, 답은 본문 서체. 구조화 데이터(FAQPage)와 같은 쌍이 화면에도 보인다 */
+.faq {
+  margin-top: 34px;
+}
+
+.faqQ {
+  font-family: var(--ff-heading);
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.faqA {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 2.3;
+  color: var(--text-body);
+}
+
 .note {
   margin-top: 4px;
   font-size: 12.5px;

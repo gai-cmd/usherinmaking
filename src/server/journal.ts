@@ -84,6 +84,7 @@ function blocksToText(post: ContentPost): string {
       if (b.kind === 'figure') return `![${b.image.alt}](${b.image.src})`;
       // 곁말은 `*…*` 로 감싸 왕복한다.
       if (b.kind === 'note') return `*${b.text}*`;
+      if (b.kind === 'faq') return `Q: ${b.q}\nA: ${b.a}`;
       // 2컷 비교(pair)는 시드 전용이라 문자열로 되살릴 수 없다. 캡션만 남긴다.
       return b.caption;
     })
