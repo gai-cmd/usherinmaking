@@ -35,7 +35,13 @@ export type JournalBlock =
    * DB 에서는 `*…*` 로 감싸 두고, 화면에서는 별표를 떼고 작게 흘려 쓴다.
    * (이 블록이 없던 동안 별표가 화면에 그대로 찍혔다.)
    */
-  | { kind: 'note'; text: string };
+  | { kind: 'note'; text: string }
+  /**
+   * 질문–답 한 쌍. 본문에서는 `Q: 질문` 줄 바로 다음 줄에 `A: 답` 으로 쓴다(한 문단 안).
+   * 상세 페이지가 이 블록들을 모아 FAQPage 구조화 데이터로 내보낸다 — 검색·AI 답변 엔진이
+   * 인용하는 단위가 "질문 + 답" 이기 때문이다. 글 하나에 몇 쌍이든 둘 수 있다.
+   */
+  | { kind: 'faq'; q: string; a: string };
 
 export type JournalPost = {
   slug: string;
