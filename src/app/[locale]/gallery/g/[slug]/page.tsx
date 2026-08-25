@@ -62,6 +62,9 @@ export async function generateMetadata({
   return {
     title: photo.alt[locale],
     description,
+    // 얇은 페이지(사진 한 장 + 캡션)라 색인 대상에서 뺀다. follow 는 남겨 목록·필터
+    // 갤러리로 링크 신호가 계속 흐르게 한다. 사이트맵에서도 함께 뺐다(sitemap.ts).
+    robots: { index: false, follow: true },
     alternates: {
       canonical: `${SITE_URL}${path(locale, 'gallery', 'g', cover.slug)}`,
       languages: alternates('gallery', 'g', cover.slug),

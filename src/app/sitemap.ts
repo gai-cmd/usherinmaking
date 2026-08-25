@@ -100,7 +100,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 갤러리 필터 조합과 작품/저널 상세는 각 콘텐츠 모듈에서 읽어 확장한다.
   // 모듈이 아직 없거나 형태가 달라도 사이트맵 생성 자체는 실패하지 않아야 한다.
   entries.push(...(await galleryFilterEntries()));
-  entries.push(...(await photoEntries(now)));
+  // 작품 상세(/gallery/g/<slug>)는 싣지 않는다. 촬영 대표컷만 골라도 615건 × 3언어로
+  // 사이트맵의 8할을 차지했고, 본문은 사진 한 장과 캡션뿐인 얇은 페이지라 검색엔진이
+  // "크롤링됨 - 색인 생성되지 않음"으로 밀어냈다. 그 크롤 예산이 핵심 페이지·필터
+  // 갤러리·촬영후기로 가야 한다. 상세 페이지 자체는 noindex,follow 로 두어
+  // 목록에서 링크를 타고 들어가는 사람과 봇 모두 여전히 닿는다(page.tsx 참조).
+  void photoEntries;
   entries.push(...(await journalEntries(now)));
 
   return entries;
