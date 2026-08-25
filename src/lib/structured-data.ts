@@ -54,6 +54,10 @@ export const BRAND_SAME_AS = [
   `https://www.instagram.com/${BRAND.instagram}/`,
   'https://www.instagram.com/usherindress/',
   'https://blog.naver.com/usherinmaking',
+  // 구글 비즈니스 프로필(지도 업체 카드)과 LINE 공식계정. 검색엔진이 사이트·지도·SNS 를
+  // 한 주체로 묶는 근거가 된다 — 브랜드명 검색에서 지식 패널이 이 목록을 참조한다.
+  STUDIO_INFO.map.place,
+  'https://line.me/R/ti/p/8Udy1kYg1l',
 ] as const;
 
 /**
