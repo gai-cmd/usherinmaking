@@ -126,9 +126,16 @@ export default async function WorkDetailPage({
     datePublished: photo.takenAt,
     // schema.org 표준 필드만 쓴다. keywords 는 정제된 상위 태그 — AI 검색 전용 스키마는 없다.
     ...(igTags.length ? { keywords: igTags.join(', ') } : {}),
-    // 전역 Organization 노드를 @id 로 참조한다. sameAs 는 그 노드가 이미 들고 있다.
-    creator: { '@id': ORG_ID },
-    copyrightHolder: { '@id': ORG_ID },
+    // 전역 Organization 노드를 @id 로 참조하되 @type·name 을 함께 적는다 — @id 만 두면
+    // Search Console 이 "creator 개체 유형이 잘못됨"으로 판정했다(2026-08-24 메일).
+    creator: { '@type': 'Organization', '@id': ORG_ID, name: 'usherinmaking' },
+    copyrightHolder: { '@type': 'Organization', '@id': ORG_ID, name: 'usherinmaking' },
+    // 이미지 라이선스 메타데이터(구글 이미지 검색의 "라이선스 가능" 배지 요건).
+    // 별도 약관 페이지가 없어 두 URL 모두 문의 페이지로 둔다 — 사용 허락은 문의로만 이뤄진다.
+    creditText: 'usherinmaking',
+    copyrightNotice: `© ${new Date(photo.takenAt ?? Date.now()).getFullYear()} usherinmaking`,
+    license: `${SITE_URL}${path(locale, 'contact')}`,
+    acquireLicensePage: `${SITE_URL}${path(locale, 'contact')}`,
   };
 
   return (
