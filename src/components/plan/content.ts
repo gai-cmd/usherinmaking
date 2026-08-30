@@ -410,7 +410,6 @@ export const KO_WEDDING_PLANS: Plan[] = [
     priceText: '88만원',
     taxIncluded: false,
     includes: koOnlyList([
-      '의상 2벌 이내',
       '장소 2곳 (탈착의 시간 · 이동 시간 포함)',
       '원본 + 몸매보정 25컷 제공',
     ]),
@@ -426,7 +425,6 @@ export const KO_WEDDING_PLANS: Plan[] = [
     priceText: '110만원',
     taxIncluded: false,
     includes: koOnlyList([
-      '의상 3~4벌 이내',
       '장소 3곳 (탈착의 시간 · 이동 시간 포함)',
       '원본 + 몸매보정 35컷 제공',
     ]),
@@ -476,13 +474,13 @@ export const KO_OPTION_ROWS: OptionRow[] = [
   },
   {
     label: '헤어/메이크업 기본형',
-    price: '25만원',
+    price: '25만원~29만원',
     note: '신랑 신부 헤어/메이크업 · 오키나와 현지 숍 이용',
   },
   {
-    label: '헤어/메이크업 헬퍼형',
-    price: '42만원부터',
-    note: '신랑 신부 헤어/메이크업 + 헬퍼 (신부 헤어 체인지 1회 포함)',
+    label: '헤어/메이크업 헬퍼 및 헤어체인지',
+    price: '베이직 18만원 · 에프터풀 24만원',
+    note: '신랑 신부 헤어/메이크업 + 헬퍼 및 헤어 체인지',
   },
   {
     label: '주말 · 휴일 추가 요금 (일본 기준)',
