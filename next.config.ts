@@ -99,13 +99,17 @@ const nextConfig: NextConfig = {
               "media-src 'self' https://1twhnamsdw7uymz2.public.blob.vercel-storage.com",
               // dev 는 소스맵·HMR 이 eval 을 쓴다 — 막으면 하이드레이션이 죽어
               // 클릭이 무반응이 된다(로컬 전용, 프로덕션 헤더에는 붙지 않는다).
-              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+              // GA4 태그는 googletagmanager 에서 내려온다 — 'self' 만으로는 브라우저가
+              // 스크립트 로드를 거부해서, 태그를 심어도 수집이 한 건도 일어나지 않는다.
+              `script-src 'self' 'unsafe-inline' https://*.googletagmanager.com${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
               // 애플 시스템 서체를 쓰므로 외부 폰트 도메인을 열 필요가 없다
               "style-src 'self' 'unsafe-inline'",
               "font-src 'self'",
               // 구글맵 임베드 (아쿠세스 · 문의 페이지)
               'frame-src https://www.google.com https://maps.google.com',
-              "connect-src 'self'",
+              // 수집 비콘(/g/collect)이 나가는 곳. script-src 만 열고 여기를 닫아두면
+              // 스크립트는 뜨는데 히트가 전송되지 않아 여전히 "수신된 데이터 없음"이 된다.
+              "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
               'upgrade-insecure-requests',
             ].join('; '),
           },
